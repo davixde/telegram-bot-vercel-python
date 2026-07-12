@@ -1,6 +1,7 @@
 import asyncio
 import json
 from django.http import HttpResponse
+from django.shortcuts import render
 from .bot import bot_tele
 
 def index(request):
@@ -17,3 +18,7 @@ def index(request):
         return HttpResponse("error", status=500)
 
     return HttpResponse("ok")
+
+
+def webapp(request):
+    return render(request, "example/webapp.html")

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telegram Mini App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 24px; background: #f7f9fc; color: #202124; }
+        .card { max-width: 720px; margin: 0 auto; background: white; border-radius: 18px; padding: 24px; box-shadow: 0 24px 60px rgba(0,0,0,0.08); }
+        h1 { margin-top: 0; }
+        button { background: #0088cc; border: none; color: white; padding: 12px 18px; border-radius: 12px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #006fa1; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Mini App Telegram</h1>
+        <p>Questa è una pagina di esempio per la tua mini app Telegram.</p>
+        <p>Puoi utilizzare le API Web App di Telegram qui.</p>
+        <button id="sendData">Invia dati a Telegram</button>
+        <p id="status"></p>
+    </div>
+    <script>
+        const status = document.getElementById('status');
+        const sendData = document.getElementById('sendData');
+
+        sendData.addEventListener('click', () => {
+            status.textContent = 'Invio dati a Telegram...';
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.sendData(JSON.stringify({ action: 'mini-app-data', value: 'ciao dal web app' }));
+                status.textContent = 'Dati inviati a Telegram.';
+            } else {
+                status.textContent = 'Telegram Web App non disponibile in questo browser.';
+            }
+        });
+    </script>
+</body>
+</html>
