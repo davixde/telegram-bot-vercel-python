@@ -1,0 +1,59 @@
+name: Build World Pianos
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set date
+        id: date
+        run: echo "today=$(date +'%d-%m-%Y')" >> $GITHUB_OUTPUT
+
+      - name: Fetch World Data with Retry
+        run: |
+          MAX_RETRIES=3
+          RETRY_DELAY=30
+          SUCCESS=false
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i of $MAX_RETRIES..."
+            curl -X POST -H "User-Agent: osm-piano-telegram" \
+              --max-time 300 \
+              -d '[out:json][timeout:300];(node["amenity"="piano"];way["amenity"="piano"];relation["amenity"="piano"];);out center;' \
+              https://overpass.private.coffee/api/interpreter > temp_world_pianos.json
+            if jq -e '.elements' temp_world_pianos.json >/dev/null 2>&1; then
+              mv temp_world_pianos.json world_pianos.json
+              echo "Success!"
+              SUCCESS=true
+              break
+            else
+              echo "Attempt $i failed. Retrying in $RETRY_DELAY seconds..."
+              sleep $RETRY_DELAY
+            fi
+          done
+          if [ "$SUCCESS" = false ]; then
+            echo "Error: Failed to fetch data after $MAX_RETRIES attempts."
+            exit 1
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: world_pianos.json
+          tag_name: "latest"
+          name: "World Piano Data"
+          body: |
+            Weekly update of all piano locations worldwide.
+            Generated on: ${{ steps.date.outputs.today }}
+          draft: false
+          prerelease: false
+          make_latest: true
