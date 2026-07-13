@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -45,15 +45,10 @@ jobs:
             exit 1
           fi
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: world_pianos.json
-          tag_name: "latest"
-          name: "World Piano Data"
-          body: |
-            Weekly update of all piano locations worldwide.
-            Generated on: ${{ steps.date.outputs.today }}
-          draft: false
-          prerelease: false
-          make_latest: true
+      - name: Commit and push to root
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add world_pianos.json
+          git commit -m "data: update world_pianos.json (${{ steps.date.outputs.today }})" || exit 0
+          git push
