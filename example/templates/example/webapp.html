@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Telegram Mini App - Piano Map</title>
+    <title>Piano Map</title>
     
     <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
     
@@ -29,6 +29,26 @@
 
         .maplibregl-canvas {
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+        }
+
+        #loading-indicator {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(31, 31, 31, 0.95);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            z-index: 20;
+            display: block;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            pointer-events: none;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .locate-btn {
@@ -134,9 +154,10 @@
 </head>
 <body>
 
+    <div id="loading-indicator">Loading world pianos...</div>
     <div id="map"></div>
-       
-    <button class="locate-btn" id="locateBtn" aria-label="Trova la mia posizione">
+        
+    <button class="locate-btn" id="locateBtn" aria-label="Find my location">
         <svg viewBox="0 0 24 24">
             <path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
         </svg>
@@ -146,15 +167,17 @@
     <script>
         let userCoords = null;
         let userMarker = null;
-        
         const markers = {};
         let markersOnScreen = {};
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        const DATA_URL = "https://github.com/davixde/telegram-bot-vercel-python/releases/download/latest/world_pianos.json";
 
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://tiles.openfreemap.org/styles/liberty',
             center: [12.4964, 41.9028],
-            zoom: 14,
+            zoom: 12,
             pitchWithRotate: false,
             dragRotate: false,
             touchZoomRotate: false,
@@ -177,15 +200,16 @@
 
         function getAccessLabel(access) {
             switch(access) {
-                case 'public': return 'Pubblico';
-                case 'customers': return 'Solo Clienti';
-                case 'private': return 'Privato';
-                case 'permissive': return 'Permissivo';
-                default: return 'Non specificato';
+                case 'public': return 'Public';
+                case 'customers': return 'Customers Only';
+                case 'private': return 'Private';
+                case 'permissive': return 'Permissive';
+                default: return 'Not specified';
             }
         }
 
         function updateUserMarker(lat, lng) {
+            if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) return;
             if (!userMarker) {
                 const el = document.createElement('div');
                 el.className = 'user-location-marker';
@@ -195,50 +219,50 @@
             }
         }
 
-        async function fetchPianos() {
-            if (!map.getSource('pianos')) return;
-            const bounds = map.getBounds();
-            const bbox = `${bounds.getSouth()},${bounds.getWest()},${bounds.getNorth()},${bounds.getEast()}`;
-            const query = `[out:json][timeout:25];(node["amenity"="piano"](${bbox});way["amenity"="piano"](${bbox}););out center;`;
-            
+        async function loadGlobalPianos() {
             try {
-                const response = await fetch("https://overpass.private.coffee/api/interpreter", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                        "X-Requested-With": "PianoMiniApp"
-                    },
-                    body: `data=${encodeURIComponent(query)}`
-                });
+                const response = await fetch(DATA_URL);
+                if (!response.ok) throw new Error(`Status: ${response.status}`);
                 
-                if (!response.ok) return;
                 const data = await response.json();
-                
-                const features = data.elements.map(el => {
-                    const lon = el.lon || el.center.lon;
-                    const lat = el.lat || el.center.lat;
-                    return {
-                        type: 'Feature',
-                        geometry: { type: 'Point', coordinates: [lon, lat] },
-                        properties: {
-                            id: Number(el.id),
-                            name: el.tags.name || 'Pianoforte',
-                            access: el.tags.access || 'unknown',
-                            description: el.tags.description || ''
-                        }
-                    };
-                });
+
+                const features = (data.elements || [])
+                    .filter(el => {
+                        const lon = el.lon || (el.center && el.center.lon);
+                        const lat = el.lat || (el.center && el.center.lat);
+                        return el.id && lon !== undefined && lat !== undefined;
+                    })
+                    .map(el => {
+                        const lon = el.lon || (el.center && el.center.lon);
+                        const lat = el.lat || (el.center && el.center.lat);
+                        return {
+                            type: 'Feature',
+                            geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
+                            properties: {
+                                id: Number(el.id),
+                                name: (el.tags && el.tags.name) || 'Piano',
+                                access: (el.tags && el.tags.access) || 'unknown',
+                                description: (el.tags && el.tags.description) || ''
+                            }
+                        };
+                    });
 
                 map.getSource('pianos').setData({
                     type: 'FeatureCollection',
                     features: features
                 });
+
+                loadingIndicator.style.display = 'none';
+
             } catch (e) {
-                console.error(e);
+                loadingIndicator.innerText = "Error loading data.";
+                loadingIndicator.style.background = "#dc3545";
             }
         }
 
         function updateMarkers() {
+            if (!map.getSource('pianos') || !map.isSourceLoaded('pianos')) return;
+
             const newMarkers = {};
             const features = map.querySourceFeatures('pianos');
 
@@ -246,8 +270,15 @@
                 const coords = features[i].geometry.coordinates;
                 const props = features[i].properties;
                 
+                if (!coords || coords[0] === null || coords[1] === null || isNaN(coords[0]) || isNaN(coords[1])) continue;
+
                 const isCluster = !!props.cluster;
-                const id = isCluster ? `c_${props.cluster_id}` : `p_${props.id}`;
+                const currentId = isCluster ? props.cluster_id : props.id;
+                if (currentId === undefined || currentId === null) continue;
+
+                const id = isCluster ? `c_${currentId}` : `p_${currentId}`;
+
+                if (newMarkers[id]) continue;
 
                 let marker = markers[id];
                 if (!marker) {
@@ -268,10 +299,12 @@
                         el.innerHTML = pianoSvg;
 
                         const popup = new maplibregl.Popup({ offset: 10 })
-                            .setHTML(`<strong>${props.name}</strong><br>Accesso: ${getAccessLabel(props.access)}<br>${props.description}`);
+                            .setHTML(`<strong>${props.name}</strong><br>Access: ${getAccessLabel(props.access)}<br>${props.description}`);
 
                         marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords).setPopup(popup);
                     }
+                } else if (isCluster) {
+                    marker.getElement().innerText = props.point_count;
                 }
                 
                 newMarkers[id] = marker;
@@ -297,7 +330,6 @@
 
                         if (shouldCenter) {
                             map.flyTo({ center: userCoords, zoom: 14, essential: true });
-                            setTimeout(fetchPianos, 600);
                         }
                     },
                     (error) => { console.error(error); },
@@ -315,17 +347,17 @@
                 clusterRadius: 50
             });
 
-    
             map.addLayer({
-                id: 'pianos-layer',
+                id: 'pianos-invisible-layer',
                 type: 'circle',
                 source: 'pianos',
                 paint: {
-                    'circle-radius': 0,
-                    'circle-opacity': 0
+                    'circle-opacity': 0,
+                    'circle-radius': 12
                 }
             });
 
+            loadGlobalPianos();
             requestLocation(true);
             
             if (navigator.geolocation) {
@@ -343,16 +375,12 @@
             });
 
             map.on('move', updateMarkers);
-            map.on('moveend', () => {
-                updateMarkers();
-                fetchPianos();
-            });
+            map.on('moveend', updateMarkers);
         });
 
         document.getElementById('locateBtn').addEventListener('click', () => {
             if (userCoords) {
                 map.flyTo({ center: userCoords, zoom: 14, essential: true });
-                setTimeout(fetchPianos, 600);
             } else {
                 requestLocation(true);
             }
