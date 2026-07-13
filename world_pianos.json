@@ -1,0 +1,3922 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-07-02T16:51:45Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 2881639657,
+  "lat": 47.3896843,
+  "lon": 0.6934688,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 3044686951,
+  "lat": 48.3876355,
+  "lon": -4.4802513,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "description": "Piano mis à disposition des usagers de la SNCF",
+    "level": "0",
+    "operator": "SNCF",
+    "self_service": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 3050587090,
+  "lat": 43.5539392,
+  "lon": 7.0197283,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fee": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 3421851895,
+  "lat": 48.8762481,
+  "lon": 2.3257663,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 3904921816,
+  "lat": 47.8219516,
+  "lon": 1.0208880,
+  "tags": {
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4086357003,
+  "lat": 48.8801126,
+  "lon": 2.3561435,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF",
+    "survey:date": "2023-10-07"
+  }
+},
+{
+  "type": "node",
+  "id": 4088294095,
+  "lat": 48.8801656,
+  "lon": 2.3575904,
+  "tags": {
+    "amenity": "piano",
+    "level": "-1"
+  }
+},
+{
+  "type": "node",
+  "id": 4099567488,
+  "lat": 48.8768233,
+  "lon": 2.3592173,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fee": "no",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4212224494,
+  "lat": 51.8195785,
+  "lon": 8.4443816,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "Musikzimmer",
+    "note": "Europas größte spielbare Freiluft-Orgel",
+    "tourism": "attraction",
+    "wheelchair": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 4228498456,
+  "lat": 43.4553085,
+  "lon": 5.3169207,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "fee": "no",
+    "image": "https://www.instagram.com/p/BD-r9z5LPsc/",
+    "level": "1",
+    "model": "Yamaha",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231716476,
+  "lat": -41.2745166,
+  "lon": 173.2837591,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-09-06",
+    "musical_instrument": "piano",
+    "name": "Nelson's Street Piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719202,
+  "lat": 43.2916167,
+  "lon": -0.3696580,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719203,
+  "lat": 43.3026943,
+  "lon": 5.3804972,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719206,
+  "lat": 43.5228803,
+  "lon": 5.4452960,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719208,
+  "lat": 43.6119365,
+  "lon": 1.4536763,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-09-04",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719210,
+  "lat": 43.8322883,
+  "lon": 4.3664556,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719211,
+  "lat": 43.9215870,
+  "lon": 4.7857731,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719212,
+  "lat": 44.2081769,
+  "lon": 0.6209174,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719214,
+  "lat": 44.9920422,
+  "lon": 4.9783631,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719215,
+  "lat": 45.1912475,
+  "lon": 5.7137986,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719216,
+  "lat": 45.5712609,
+  "lon": 5.9195884,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719217,
+  "lat": 45.6191334,
+  "lon": 6.7714725,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719219,
+  "lat": 45.7208585,
+  "lon": 5.0762293,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-07-11",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719220,
+  "lat": 45.7484612,
+  "lon": 4.8255730,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "layer": "3",
+    "level": "1",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719224,
+  "lat": 46.2000846,
+  "lon": 5.2149189,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719226,
+  "lat": 47.2885381,
+  "lon": -2.3892552,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719227,
+  "lat": 47.3072778,
+  "lon": 5.9534394,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719228,
+  "lat": 47.3234928,
+  "lon": 5.0271854,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719229,
+  "lat": 47.4645617,
+  "lon": -0.5563579,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2024-05-23",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719230,
+  "lat": 47.5856340,
+  "lon": 6.8975996,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2025-10-25",
+    "operator": "SNCF",
+    "payment:cards": "no",
+    "payment:cash": "yes",
+    "payment:credit_cards": "no",
+    "payment:debit_cards": "no",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719231,
+  "lat": 47.6651723,
+  "lon": -2.7521373,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF Gares & Connexions",
+    "operator:wikidata": "Q3098278"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719234,
+  "lat": 48.1032393,
+  "lon": -1.6730762,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "2",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719235,
+  "lat": 48.5854801,
+  "lon": 7.7350289,
+  "tags": {
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719237,
+  "lat": 48.6898697,
+  "lon": 6.1743866,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719238,
+  "lat": 48.7258575,
+  "lon": 2.2615501,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1",
+    "note": "piano adossé à pilier",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719240,
+  "lat": 48.8392849,
+  "lon": 2.3828140,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-11-19",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719242,
+  "lat": 48.8707367,
+  "lon": 2.7829929,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719245,
+  "lat": 49.0463944,
+  "lon": 3.9595722,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719247,
+  "lat": 49.1763491,
+  "lon": -0.3476975,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719248,
+  "lat": 49.2146446,
+  "lon": 3.9946154,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719249,
+  "lat": 49.2589503,
+  "lon": 4.0222866,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719251,
+  "lat": 49.3598788,
+  "lon": 0.0840802,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "level": "0",
+    "operator": "SNCF Gares & Connexions",
+    "operator:wikidata": "Q3098278"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719252,
+  "lat": 49.4220551,
+  "lon": 2.8235779,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719254,
+  "lat": 49.4927092,
+  "lon": 0.1251819,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719256,
+  "lat": 49.8592818,
+  "lon": 2.8318359,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719258,
+  "lat": 49.8906041,
+  "lon": 2.3083778,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719259,
+  "lat": 50.3718683,
+  "lon": 3.0900723,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719260,
+  "lat": 50.3719393,
+  "lon": 3.0901125,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719263,
+  "lat": 50.6362463,
+  "lon": 3.0706786,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "digital_piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719265,
+  "lat": 50.9014949,
+  "lon": 1.8111679,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position estimated",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4232334760,
+  "lat": 51.8431453,
+  "lon": 5.8528927,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4235531381,
+  "lat": 52.9559549,
+  "lon": -1.1469671,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "layer": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4248030093,
+  "lat": 39.7433087,
+  "lon": -104.9897584,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4248040693,
+  "lat": 39.7440800,
+  "lon": -104.9907508,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4248094691,
+  "lat": 39.7456412,
+  "lon": -104.9927907,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4248112391,
+  "lat": 39.7463424,
+  "lon": -104.9936973,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4248117490,
+  "lat": 39.7428384,
+  "lon": -104.9890208,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4250103709,
+  "lat": 50.8289238,
+  "lon": -0.1414070,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4258113385,
+  "lat": 53.2108474,
+  "lon": 6.5643583,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "musical_instrument:piano": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4258861544,
+  "lat": 53.1963893,
+  "lon": 5.7930809,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "musical_instrument:piano": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4260946277,
+  "lat": 50.0708354,
+  "lon": 14.4546329,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "operator": "Piána na ulici"
+  }
+},
+{
+  "type": "node",
+  "id": 4275203889,
+  "lat": 45.1874398,
+  "lon": 0.7078095,
+  "tags": {
+    "amenity": "piano",
+    "survey:date": "2018-06-14"
+  }
+},
+{
+  "type": "node",
+  "id": 4290254075,
+  "lat": 46.1262167,
+  "lon": 3.4306628,
+  "tags": {
+    "amenity": "piano",
+    "level": "0",
+    "panoramax": "dd7d6b75-67ba-461e-8f87-db73161dd99b"
+  }
+},
+{
+  "type": "node",
+  "id": 4294907132,
+  "lat": 47.1915129,
+  "lon": -1.4946475,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "source": "knowledge"
+  }
+},
+{
+  "type": "node",
+  "id": 4396866291,
+  "lat": 54.3160363,
+  "lon": 48.4012227,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4594151690,
+  "lat": 50.3633731,
+  "lon": 3.5171753,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4610422384,
+  "lat": 53.2382882,
+  "lon": -1.4199032,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4653001791,
+  "lat": 43.6312692,
+  "lon": 1.3724667,
+  "tags": {
+    "amenity": "piano",
+    "level": "1",
+    "mapillary": "748378955858415"
+  }
+},
+{
+  "type": "node",
+  "id": 4683632081,
+  "lat": 48.8483846,
+  "lon": 2.2824764,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position",
+    "source": "http://parlonspiano.com/lieu-avec-piano/91/centre-beaugrenelle"
+  }
+},
+{
+  "type": "node",
+  "id": 4686191500,
+  "lat": 48.8523003,
+  "lon": -123.4995915,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 4802490562,
+  "lat": 52.0901461,
+  "lon": 5.1111027,
+  "tags": {
+    "amenity": "piano",
+    "layer": "2",
+    "musical_instrument": "piano",
+    "name": "Stationspiano",
+    "tourism": "attraction",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 4825708721,
+  "lat": 43.7046847,
+  "lon": 7.2619852,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2023-09-14",
+    "fee": "no",
+    "fixme": "Position à préciser",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 4835896723,
+  "lat": 14.5805113,
+  "lon": 121.0554314,
+  "tags": {
+    "access": "permissive",
+    "addr:floor": "-1",
+    "amenity": "piano",
+    "description": "instrument is seen in the basement, near the food court",
+    "musical_instrument:piano": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 5009179139,
+  "lat": 47.7549134,
+  "lon": -3.3664149,
+  "tags": {
+    "amenity": "piano",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 5080791075,
+  "lat": 37.4159798,
+  "lon": -79.1404461,
+  "tags": {
+    "amenity": "piano",
+    "name": "Hill City Keys",
+    "piano:type": "upright"
+  }
+},
+{
+  "type": "node",
+  "id": 5175455028,
+  "lat": 48.8926698,
+  "lon": 2.2394391,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position",
+    "image": "https://www.openstreetcam.org/details/959557/2",
+    "level": "-1",
+    "mapillary": "2001871779968180",
+    "musical_instrument": "piano",
+    "source": "http://defense-92.fr/cnit/au-cnit-venez-jouer-du-piano-librement-41645"
+  }
+},
+{
+  "type": "node",
+  "id": 5223873717,
+  "lat": 50.6051856,
+  "lon": 3.1362760,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 5352731718,
+  "lat": 49.6771165,
+  "lon": 18.3533813,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "operator": "KulturaFM",
+    "source": "https://fm.denik.cz/zpravy_region/cekani-na-vlak-zajemci-si-zahraji-na-piano-20170831.html"
+  }
+},
+{
+  "type": "node",
+  "id": 5352731719,
+  "lat": 49.6738462,
+  "lon": 18.3416873,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position",
+    "musical_instrument": "piano",
+    "operator": "KulturaFM",
+    "source": "https://fm.denik.cz/zpravy_region/cekani-na-vlak-zajemci-si-zahraji-na-piano-20170831.html"
+  }
+},
+{
+  "type": "node",
+  "id": 5370125921,
+  "lat": 45.7785979,
+  "lon": 3.1001884,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 5377974292,
+  "lat": 48.8392712,
+  "lon": 2.3233917,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "image": "https://www.openstreetcam.org/details/1122867/1",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 5520336322,
+  "lat": 48.9457231,
+  "lon": 2.1441496,
+  "tags": {
+    "amenity": "piano",
+    "level": "1",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 5612596551,
+  "lat": 50.3005981,
+  "lon": 2.7385491,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "source": "knowledge"
+  }
+},
+{
+  "type": "node",
+  "id": 5663252805,
+  "lat": -27.4807158,
+  "lon": 153.0111949,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "note": "https://github.com/brunetton/OpenPianosMa"
+  }
+},
+{
+  "type": "node",
+  "id": 5718153919,
+  "lat": 53.6485116,
+  "lon": -1.7844511,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 5725014723,
+  "lat": 45.7605577,
+  "lon": 4.8608385,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 5754912568,
+  "lat": 48.6092946,
+  "lon": -2.1500033,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 5887963385,
+  "lat": 49.0188724,
+  "lon": 1.1514428,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 5985603339,
+  "lat": 45.7799726,
+  "lon": 4.8490220,
+  "tags": {
+    "amenity": "piano",
+    "contact:facebook": "autourdupianodor",
+    "contact:instagram": "autourdupianodor",
+    "email": "autourdupianodor@gmail.com",
+    "opening_hours": "Apr-Nov",
+    "seasonal": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 6027156938,
+  "lat": 44.8246707,
+  "lon": -0.5548773,
+  "tags": {
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 6134679170,
+  "lat": 48.8408213,
+  "lon": 2.3207559,
+  "tags": {
+    "amenity": "piano",
+    "fee": "no",
+    "level": "2",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 6153062550,
+  "lat": 52.3466895,
+  "lon": 4.9185769,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "Stationspiano"
+  }
+},
+{
+  "type": "node",
+  "id": 6153062551,
+  "lat": 52.3784141,
+  "lon": 4.8998693,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "Stationspiano"
+  }
+},
+{
+  "type": "node",
+  "id": 6167100302,
+  "lat": 52.9467917,
+  "lon": -1.1466405,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 6264696605,
+  "lat": 45.5057194,
+  "lon": 6.6781952,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "0",
+    "musical_instrument": "piano",
+    "operator": "UCPA"
+  }
+},
+{
+  "type": "node",
+  "id": 6293967888,
+  "lat": 51.5161053,
+  "lon": -0.1300292,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-1"
+  }
+},
+{
+  "type": "node",
+  "id": 6298090863,
+  "lat": 51.5303870,
+  "lon": -0.1257947,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-1",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 6351118589,
+  "lat": 51.0360184,
+  "lon": 3.7110400,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "indoor": "yes",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 6351144378,
+  "lat": 51.0260989,
+  "lon": 3.7132386,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 6384507750,
+  "lat": 51.5313683,
+  "lon": -0.1264204,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-1",
+    "musical_instrument": "piano",
+    "note": "There is a second piano 50 meters southward"
+  }
+},
+{
+  "type": "node",
+  "id": 6482920386,
+  "lat": 48.1211537,
+  "lon": -1.2156479,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 6482926086,
+  "lat": 48.1211959,
+  "lon": -1.2157702,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 6536320390,
+  "lat": 34.7065038,
+  "lon": 135.1960272,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "colour": "black",
+    "fee": "no",
+    "indoor": "yes",
+    "level": "0",
+    "musical_instrument": "piano",
+    "name": "ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 6582537689,
+  "lat": 52.6269830,
+  "lon": 1.3067505,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 7059911607,
+  "lat": 52.5049171,
+  "lon": 6.0913944,
+  "tags": {
+    "amenity": "piano",
+    "layer": "-1",
+    "level": "-1",
+    "name": "Stationspiano",
+    "tourism": "attraction",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 7179147005,
+  "lat": 48.7111728,
+  "lon": 2.2124644,
+  "tags": {
+    "access": "private",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 7373736686,
+  "lat": 50.5825538,
+  "lon": 3.0815900,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 7635828207,
+  "lat": 41.9106112,
+  "lon": 12.5310767,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "layer": "1",
+    "operator": "Trenitalia",
+    "piano:type": "upright"
+  }
+},
+{
+  "type": "node",
+  "id": 7635939679,
+  "lat": 41.8981438,
+  "lon": 12.5142408,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "operator": "Tomo",
+    "piano:type": "upright"
+  }
+},
+{
+  "type": "node",
+  "id": 7635939680,
+  "lat": 41.8990212,
+  "lon": 12.5170450,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "operator": "Bonario",
+    "piano:type": "upright"
+  }
+},
+{
+  "type": "node",
+  "id": 7636001630,
+  "lat": 41.9011291,
+  "lon": 12.5020900,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fee": "no",
+    "level": "1",
+    "operator": "Trenitalia",
+    "piano:type": "grandpiano"
+  }
+},
+{
+  "type": "node",
+  "id": 7644920878,
+  "lat": 34.7193675,
+  "lon": 135.4173092,
+  "tags": {
+    "access": "no",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "あまぴ"
+  }
+},
+{
+  "type": "node",
+  "id": 7644942014,
+  "lat": 34.7472738,
+  "lon": 135.3582096,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1",
+    "musical_instrument": "piano",
+    "name": "アクタ西宮ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 7644944754,
+  "lat": 34.6824741,
+  "lon": 135.1849204,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 7644950494,
+  "lat": 34.6366812,
+  "lon": 135.2292210,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 7644951157,
+  "lat": 34.6883719,
+  "lon": 135.1921078,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 7644953189,
+  "lat": 34.6794665,
+  "lon": 135.1789379,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "location": "underground",
+    "musical_instrument": "piano",
+    "name": "ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 7644957024,
+  "lat": 34.6548243,
+  "lon": 135.1656958,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "location": "underground",
+    "musical_instrument": "piano",
+    "name": "ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 7731937264,
+  "lat": 53.6796144,
+  "lon": 23.8302526,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 7814044102,
+  "lat": 50.6705965,
+  "lon": 4.6161328,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "fixme": "position",
+    "indoor": "yes",
+    "level": "2",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 8067513346,
+  "lat": -34.9156735,
+  "lon": 138.6330039,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 8108968577,
+  "lat": 31.9595790,
+  "lon": 34.8806925,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 8126958759,
+  "lat": 45.1948849,
+  "lon": 0.7130810,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 8544957459,
+  "lat": 45.0471860,
+  "lon": 6.0449588,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "lit": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 8945439492,
+  "lat": 56.4729273,
+  "lon": 84.9538820,
+  "tags": {
+    "amenity": "piano",
+    "name": "Уличное пианино в Городском саду",
+    "opening_hours": "24/7"
+  }
+},
+{
+  "type": "node",
+  "id": 8997263717,
+  "lat": 51.5450333,
+  "lon": -0.1363072,
+  "tags": {
+    "amenity": "piano",
+    "level": "1",
+    "musical_instrument": "digital_piano"
+  }
+},
+{
+  "type": "node",
+  "id": 8997263817,
+  "lat": 51.5450567,
+  "lon": -0.1363032,
+  "tags": {
+    "amenity": "piano",
+    "level": "1",
+    "musical_instrument": "upright_piano"
+  }
+},
+{
+  "type": "node",
+  "id": 8997303595,
+  "lat": 51.5249706,
+  "lon": -0.1338782,
+  "tags": {
+    "amenity": "piano",
+    "brand": "Steinway & Sons",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9053031834,
+  "lat": 50.2594454,
+  "lon": 17.3834414,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9064725217,
+  "lat": 49.4492914,
+  "lon": 1.0938464,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 9168255493,
+  "lat": 43.6637152,
+  "lon": -79.4204210,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9207797211,
+  "lat": 49.9491813,
+  "lon": 15.2678893,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9395723402,
+  "lat": 45.5274906,
+  "lon": -73.3425600,
+  "tags": {
+    "amenity": "piano",
+    "name": "Piano public"
+  }
+},
+{
+  "type": "node",
+  "id": 9503270547,
+  "lat": 52.4593081,
+  "lon": 14.4598597,
+  "tags": {
+    "addr:city": "Fichtenhöhe",
+    "addr:housenumber": "6",
+    "addr:postcode": "15306",
+    "addr:street": "Carziger Straße",
+    "addr:suburb": "Carzig",
+    "amenity": "piano",
+    "contact:email": "kontakt@pianoseibt.de",
+    "contact:website": "www.pianoseibt.de",
+    "email": "kontakt@pianoseibt.de",
+    "phone": "+49 33602 58224",
+    "phone:mobile": "+49 172 6300962",
+    "website": "https://www.pianoseibt.de/"
+  }
+},
+{
+  "type": "node",
+  "id": 9522080320,
+  "lat": 42.2730086,
+  "lon": -83.7353904,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9525676619,
+  "lat": 50.2598492,
+  "lon": 19.0182347,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9543721561,
+  "lat": 51.2550091,
+  "lon": 7.1499821,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9554147390,
+  "lat": 51.9839099,
+  "lon": 5.9013959,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "operator": "Nederlandse Spoorwegen"
+  }
+},
+{
+  "type": "node",
+  "id": 9573581117,
+  "lat": 45.0771685,
+  "lon": 7.6831378,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9588859801,
+  "lat": 48.8525193,
+  "lon": 2.3470654,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "level": "1",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9628601603,
+  "lat": 48.1445808,
+  "lon": 11.5536964,
+  "tags": {
+    "amenity": "piano",
+    "level": "6"
+  }
+},
+{
+  "type": "node",
+  "id": 9634461872,
+  "lat": 52.9161960,
+  "lon": -1.4629335,
+  "tags": {
+    "amenity": "piano",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 9645902375,
+  "lat": 52.3560082,
+  "lon": 4.9589418,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9693070992,
+  "lat": -30.0235522,
+  "lon": -51.2012130,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "fixme": "position",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9722827660,
+  "lat": 48.2624383,
+  "lon": 11.6687423,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2024-06-09",
+    "contact:housenumber": "3",
+    "contact:street": "Boltzmannstraße",
+    "description": "Schlüssel kann kostenlos (gegen einn Ausweis als Pfand) im Raum 00.06.036 ausgeliehen werden, egal ob man hier studiert oder nicht.",
+    "email": "mpic@fs.tum.de",
+    "internet_access": "wlan",
+    "internet_access:fee": "no",
+    "level": "-1",
+    "musical_instrument": "piano",
+    "opening_hours": "Mo-Fr 19:00+; Sa, Su 00:00-24:00",
+    "operator": "Fachschaft MPI",
+    "payment:cards": "no",
+    "payment:cash": "yes",
+    "payment:credit_cards": "no",
+    "payment:debit_cards": "no",
+    "website": "https://mpic.fs.tum.de",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9768683850,
+  "lat": 37.3647803,
+  "lon": -121.9239645,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "audible": "intermittent",
+    "colour": "black",
+    "direction": "-135",
+    "indoor": "yes",
+    "keys": "88",
+    "level": "0",
+    "level:ref": "B",
+    "lit": "indirect",
+    "manufacturer": "Chickering & Sons",
+    "manufacturer:wikidata": "Q1072194",
+    "material": "wood",
+    "musical_instrument:wikidata": "Q98294965",
+    "operator": "Play Me Again Pianos",
+    "operator:wikidata": "Q112124417",
+    "piano:type": "baby_grand"
+  }
+},
+{
+  "type": "node",
+  "id": 9792541417,
+  "lat": 47.2885575,
+  "lon": 39.1543711,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "пианино"
+  }
+},
+{
+  "type": "node",
+  "id": 9810537417,
+  "lat": 47.2170692,
+  "lon": -1.5426975,
+  "tags": {
+    "amenity": "piano",
+    "level": "2",
+    "location": "indoor"
+  }
+},
+{
+  "type": "node",
+  "id": 9826339046,
+  "lat": 47.2249807,
+  "lon": 5.9627270,
+  "tags": {
+    "amenity": "piano",
+    "level": "0",
+    "location": "indoor",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 9828309985,
+  "lat": 37.4143764,
+  "lon": -79.1420320,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9874619517,
+  "lat": 48.8481014,
+  "lon": 2.2840002,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9934132785,
+  "lat": 45.9633950,
+  "lon": -66.6434128,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9943423243,
+  "lat": 47.0558985,
+  "lon": 21.9350231,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "covered": "yes",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9951655316,
+  "lat": 44.0451651,
+  "lon": -123.0717354,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9955173869,
+  "lat": 53.4279177,
+  "lon": -6.2428567,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 9961013195,
+  "lat": 53.4273828,
+  "lon": -6.2439951,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "source": "survey",
+    "survey:date": "2022-08-15"
+  }
+},
+{
+  "type": "node",
+  "id": 9962408130,
+  "lat": 49.0056803,
+  "lon": 2.5786898,
+  "tags": {
+    "amenity": "piano",
+    "survey:date": "2022-08-18"
+  }
+},
+{
+  "type": "node",
+  "id": 9964310517,
+  "lat": 52.8468121,
+  "lon": -7.3945260,
+  "tags": {
+    "amenity": "piano",
+    "description": "tuning is a third up, i.e. key c sounds like a",
+    "tuning_date": "2022-08-18"
+  }
+},
+{
+  "type": "node",
+  "id": 9973423572,
+  "lat": 51.3179243,
+  "lon": 9.4901306,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "bench": "no",
+    "fixme": "Seit einigen Monaten nicht mehr dort, vermutlich zu stark beschädigt und wahrscheinlich dauerhaft abgebaut. Das Musikhaus Eichler ist in Kassel umgezogen",
+    "indoor": "yes",
+    "inscription": "PLAY ME; I'm yours; MUSIK Eichler; Do you have time for me?; gut beha",
+    "level": "0",
+    "musical_instrument": "piano",
+    "name": "Klavier in Bahnhof",
+    "piano:type": "upright",
+    "start_date": "2018",
+    "surveillance": "yes",
+    "sustain_control": "broken",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 10005281213,
+  "lat": 44.5236613,
+  "lon": -89.5825812,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10050451455,
+  "lat": 51.4910372,
+  "lon": 0.1211824,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2023-01-22",
+    "description": "Wooden piano on station concourse just inside the barriers."
+  }
+},
+{
+  "type": "node",
+  "id": 10080598902,
+  "lat": 37.4119236,
+  "lon": -79.1398325,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10095656611,
+  "lat": 34.7446472,
+  "lon": 135.4049764,
+  "tags": {
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "0",
+    "musical_instrument": "digital_piano",
+    "source": "local knowledge",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 10095670030,
+  "lat": 35.0022676,
+  "lon": 135.9729540,
+  "tags": {
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "0",
+    "musical_instrument": "digital_piano",
+    "source": "local knowledge",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 10120466726,
+  "lat": 1.2947710,
+  "lon": 103.8579918,
+  "tags": {
+    "access": "yes",
+    "addr:floor": "1",
+    "amenity": "piano",
+    "check_date": "2023-07-17",
+    "level": "0",
+    "location": "indoor",
+    "musical_instrument": "piano",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 10121385119,
+  "lat": 48.7311675,
+  "lon": 2.3617447,
+  "tags": {
+    "amenity": "piano",
+    "survey:date": "2022-10-22"
+  }
+},
+{
+  "type": "node",
+  "id": 10174808532,
+  "lat": 47.6557584,
+  "lon": -122.3052019,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10239827309,
+  "lat": 48.1192409,
+  "lon": -1.7036426,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10243579742,
+  "lat": 50.8447540,
+  "lon": 4.3562416,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "-1",
+    "location": "underground",
+    "musical_instrument": "piano",
+    "operator": "NMBS/SNCB"
+  }
+},
+{
+  "type": "node",
+  "id": 10572662788,
+  "lat": 47.6243946,
+  "lon": -122.5187420,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10588020557,
+  "lat": 34.0073136,
+  "lon": 130.9491408,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "colour": "black",
+    "contact:website": "https://www.city.shimonoseki.lg.jp/soshiki/63/4673.html",
+    "fee": "no",
+    "indoor": "yes",
+    "level": "0",
+    "operator": "下関市"
+  }
+},
+{
+  "type": "node",
+  "id": 10611970910,
+  "lat": 55.8620205,
+  "lon": -4.2518699,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10660746805,
+  "lat": 48.8436065,
+  "lon": 2.1579463,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10735445571,
+  "lat": 51.6131076,
+  "lon": -0.0741852,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10839748954,
+  "lat": 47.5089189,
+  "lon": 19.0248025,
+  "tags": {
+    "amenity": "piano",
+    "colour": "brown",
+    "covered": "yes",
+    "level": "3",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10839829023,
+  "lat": 47.5007167,
+  "lon": 19.0838661,
+  "tags": {
+    "amenity": "piano",
+    "colour": "#CD853F",
+    "description": "public piano",
+    "indoor": "yes",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 10873773805,
+  "lat": 53.3463621,
+  "lon": -6.2930651,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2023-05-04",
+    "fixme": "position",
+    "musical_instrument": "piano",
+    "operator": "Iarnród Éireann"
+  }
+},
+{
+  "type": "node",
+  "id": 10902531089,
+  "lat": 48.5075459,
+  "lon": -2.7650199,
+  "tags": {
+    "amenity": "piano",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 10933733367,
+  "lat": 34.3390069,
+  "lon": 134.0524742,
+  "tags": {
+    "access:conditional": "yes@ (10:30-19:30)",
+    "amenity": "piano",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 11022293389,
+  "lat": 48.8321936,
+  "lon": 2.3725871,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2026-01-12",
+    "fixme": "position",
+    "image": "https://www.facebook.com/mattias.plot/posts/pfbid08Tm3HM7naiKCMsLyTABVjr9XkJ82vbZpZyxBoFWktEHkAdYNQqdwDzKN2mLvWzxEl",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11046440500,
+  "lat": 52.2250985,
+  "lon": 21.0113992,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "musical_instrument:type": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11086342255,
+  "lat": 52.4397987,
+  "lon": 9.7394765,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "shelter": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 11094146946,
+  "lat": 43.7761784,
+  "lon": 11.2481506,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-1"
+  }
+},
+{
+  "type": "node",
+  "id": 11114867973,
+  "lat": 46.0666471,
+  "lon": 18.2251637,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "colour": "#000000",
+    "level": "0",
+    "musical_instrument": "piano",
+    "name": "Zongora",
+    "name:en": "Public piano",
+    "tourism": "attraction"
+  }
+},
+{
+  "type": "node",
+  "id": 11121501888,
+  "lat": 55.3918934,
+  "lon": 36.7367223,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11146353069,
+  "lat": 50.2589952,
+  "lon": 19.0215286,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11240672095,
+  "lat": 45.1914181,
+  "lon": 5.7145011,
+  "tags": {
+    "amenity": "piano",
+    "survey:date": "2023-10-05"
+  }
+},
+{
+  "type": "node",
+  "id": 11247498995,
+  "lat": 41.3996031,
+  "lon": 2.1521350,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-1"
+  }
+},
+{
+  "type": "node",
+  "id": 11278345859,
+  "lat": 50.6399878,
+  "lon": 3.0749194,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "digital_piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 11336173798,
+  "lat": 51.5312919,
+  "lon": -0.1264222,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2023-11-09",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 11374596194,
+  "lat": 42.7219667,
+  "lon": -86.1760104,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11402993421,
+  "lat": 48.8817528,
+  "lon": 2.3570318,
+  "tags": {
+    "amenity": "piano",
+    "level": "-2",
+    "location": "indoor"
+  }
+},
+{
+  "type": "node",
+  "id": 11412073275,
+  "lat": 48.8762896,
+  "lon": 2.3259523,
+  "tags": {
+    "amenity": "piano",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 11417446300,
+  "lat": 48.8442887,
+  "lon": 2.3755048,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 11487022104,
+  "lat": 43.3133826,
+  "lon": -0.3670497,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11536647000,
+  "lat": 52.2663604,
+  "lon": -7.1181419,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11602220358,
+  "lat": 35.8489779,
+  "lon": 14.4957656,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "level": "1",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11688406880,
+  "lat": 47.7817361,
+  "lon": 19.1313342,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "colour": "#000000",
+    "musical_instrument": "piano",
+    "name": "public piano",
+    "tourism": "attraction"
+  }
+},
+{
+  "type": "node",
+  "id": 11691434501,
+  "lat": 33.9504619,
+  "lon": 130.9224355,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fee": "no",
+    "level": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11809995879,
+  "lat": 52.3899762,
+  "lon": 9.7509863,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11820115878,
+  "lat": 45.0621498,
+  "lon": 7.6783936,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2024-11-09",
+    "indoor": "yes",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 11826799611,
+  "lat": -38.1867367,
+  "lon": 175.2122630,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2024-05-30",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11826799612,
+  "lat": -38.1866730,
+  "lon": 175.2122179,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2024-05-30",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11835259837,
+  "lat": 6.0112114,
+  "lon": -73.6715685,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11849978761,
+  "lat": 33.8865855,
+  "lon": 130.8821105,
+  "tags": {
+    "amenity": "piano",
+    "fee": "no",
+    "level": "2",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11905069144,
+  "lat": 51.3759439,
+  "lon": -0.0994284,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fixme": "position",
+    "musical_instrument": "pipe_organ",
+    "name": "James",
+    "website": "https://www.pipe-up.org.uk/whitgift-centre-organ"
+  }
+},
+{
+  "type": "node",
+  "id": 11946924718,
+  "lat": -33.8718947,
+  "lon": 151.2066775,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 11967629779,
+  "lat": 39.4564870,
+  "lon": -0.3523512,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 11999227905,
+  "lat": 45.5019348,
+  "lon": -73.5128338,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12009603705,
+  "lat": -33.8705091,
+  "lon": 151.2093112,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "description": "Public piano on level 1 of Westfield, tucked away near the rest seating area and bridge.",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 12037042679,
+  "lat": 50.9008997,
+  "lon": 4.4822457,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "image": "https://imgur.com/note-S9ucT2g",
+    "indoor": "yes",
+    "level": "1",
+    "location": "indoor",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12040051257,
+  "lat": 34.7405481,
+  "lon": 135.4228827,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12040671913,
+  "lat": 40.1095520,
+  "lon": -88.2273505,
+  "tags": {
+    "amenity": "piano",
+    "level": "-1"
+  }
+},
+{
+  "type": "node",
+  "id": 12061565404,
+  "lat": 53.7408282,
+  "lon": -2.0115320,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12062034477,
+  "lat": 53.7909035,
+  "lon": -1.5479896,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "note": "May not be tuneful. Has things growing in it"
+  }
+},
+{
+  "type": "node",
+  "id": 12065106949,
+  "lat": 53.7259223,
+  "lon": -1.3558622,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12078636188,
+  "lat": 52.5561704,
+  "lon": 5.9192638,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "note": "play on our tompouce piano? Tag yourself and a friend at @hemakampen and use #hemakeukenkampen or #tompoucepiano in a fun video that you play the piano. Show this to our catering staff and you'll get a tasty soft-serve ice cream for free.",
+    "source": "survey"
+  }
+},
+{
+  "type": "node",
+  "id": 12097293494,
+  "lat": 52.3753289,
+  "lon": 5.2192141,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "Stationspiano"
+  }
+},
+{
+  "type": "node",
+  "id": 12097307079,
+  "lat": 52.3122926,
+  "lon": 4.9472155,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "name": "Stationspiano",
+    "note": "Weet niet de exacte locatie, ergens in de hal van het station."
+  }
+},
+{
+  "type": "node",
+  "id": 12097308249,
+  "lat": 51.5958591,
+  "lon": 4.7797321,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "layer": "-1",
+    "musical_instrument": "piano",
+    "name": "Stationspiano",
+    "note": "Weet niet de exacte locatie. Ergens in de hal tegenover de Starbucks"
+  }
+},
+{
+  "type": "node",
+  "id": 12097320986,
+  "lat": 52.3892141,
+  "lon": 4.8375617,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "layer": "1",
+    "musical_instrument": "piano",
+    "name": "Stationspiano",
+    "operator": "Nederlandse Spoorwegen",
+    "operator:wikidata": "Q23076"
+  }
+},
+{
+  "type": "node",
+  "id": 12097350601,
+  "lat": 52.0078585,
+  "lon": 4.3564291,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "name": "Stationspiano",
+    "note": "weet niet exacte locatie. Ergens in de hal naast The Doner Company"
+  }
+},
+{
+  "type": "node",
+  "id": 12099057910,
+  "lat": 50.9405652,
+  "lon": 7.0507701,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12117694947,
+  "lat": 34.7474099,
+  "lon": 135.3559722,
+  "tags": {
+    "amenity": "piano",
+    "fee": "no",
+    "level": "1",
+    "musical_instrument": "grand_piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12118002616,
+  "lat": 53.7907289,
+  "lon": -1.7536664,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12119440660,
+  "lat": -33.8372437,
+  "lon": 151.2080166,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "description": "Piano in the office lobby of WPP Campus Berry St"
+  }
+},
+{
+  "type": "node",
+  "id": 12173686394,
+  "lat": 45.7658994,
+  "lon": 4.8270546,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 12173913743,
+  "lat": 43.4705471,
+  "lon": -80.5394352,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12174578179,
+  "lat": 35.0183886,
+  "lon": 135.6804989,
+  "tags": {
+    "amenity": "piano",
+    "description": "Upright piano near the SL cafe entrance"
+  }
+},
+{
+  "type": "node",
+  "id": 12174588185,
+  "lat": 34.9861471,
+  "lon": 135.7600899,
+  "tags": {
+    "amenity": "piano",
+    "description": "Public grand piano located at the top of the escalators on the north east side",
+    "level": "7",
+    "name": "駅ピアノ",
+    "name:en": "Kyoto Station Building Eki Piano",
+    "website": "https://www.kyoto-station-building.co.jp/lp/piano/"
+  }
+},
+{
+  "type": "node",
+  "id": 12174609441,
+  "lat": 34.9883403,
+  "lon": 135.7591635,
+  "tags": {
+    "amenity": "piano",
+    "description": "In the audio section of Yodobashi. Various digital pianos for testing and an old Steinway grand that can be played by anyone."
+  }
+},
+{
+  "type": "node",
+  "id": 12189777402,
+  "lat": 35.6891571,
+  "lon": 139.6917760,
+  "tags": {
+    "amenity": "piano",
+    "description": "Public grand piano at the South Tower Observatory deck",
+    "fee": "no",
+    "level": "45",
+    "name": "都庁おもいでピアノ",
+    "name:en": "Tocho Omoide Piano",
+    "opening_hours": "Mo-Su 10:00-12:00; Mo-Su 14:00-16:00",
+    "website": "https://www.metro.tokyo.lg.jp/tosei/hodohappyo/press/2019/04/04/18.html",
+    "website:en": "https://www.metro.tokyo.lg.jp/english/topics/2019/0424.html"
+  }
+},
+{
+  "type": "node",
+  "id": 12208509380,
+  "lat": 1.3618802,
+  "lon": 103.7642405,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12249456716,
+  "lat": 34.5736848,
+  "lon": 135.4827715,
+  "tags": {
+    "amenity": "piano",
+    "fee": "no",
+    "level": "20",
+    "stroller": "yes",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 12300016293,
+  "lat": 48.8402664,
+  "lon": 2.3005739,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12311430842,
+  "lat": 50.0839747,
+  "lon": 14.4341920,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12311593122,
+  "lat": 50.1054906,
+  "lon": 14.2647329,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1",
+    "location": "indoor"
+  }
+},
+{
+  "type": "node",
+  "id": 12327202497,
+  "lat": 51.1121010,
+  "lon": 17.0597025,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "check_date": "2024-11-09",
+    "indoor": "yes",
+    "level": "1",
+    "musical_instrument": "piano",
+    "operator": "Tortownia na Bema"
+  }
+},
+{
+  "type": "node",
+  "id": 12350632925,
+  "lat": 47.3073580,
+  "lon": 5.9533106,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12376685061,
+  "lat": 34.0505707,
+  "lon": 131.8021106,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2024-11-27",
+    "fixme:type": "ストリートピアノ",
+    "name": "ペンギンピアノ",
+    "opening_hours": "09:00-21:00",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 12386779092,
+  "lat": 45.7453113,
+  "lon": 4.8537999,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2024-11-30",
+    "name": "Le piano de Blandan"
+  }
+},
+{
+  "type": "node",
+  "id": 12393509170,
+  "lat": 55.9630064,
+  "lon": -3.2351290,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12441599208,
+  "lat": 35.3817202,
+  "lon": 139.9259939,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "name": "駅ピアノ",
+    "name:en": "Street Piano",
+    "opening_hours": "07:00-21:30"
+  }
+},
+{
+  "type": "node",
+  "id": 12470619074,
+  "lat": 1.3221564,
+  "lon": 103.8443796,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12502935924,
+  "lat": 47.5117255,
+  "lon": 19.0262524,
+  "tags": {
+    "amenity": "piano",
+    "colour": "brown",
+    "covered": "yes",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12551625483,
+  "lat": 52.5085700,
+  "lon": 13.3757405,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-2",
+    "opening_hours": "24/7"
+  }
+},
+{
+  "type": "node",
+  "id": 12573495658,
+  "lat": 33.5191415,
+  "lon": 130.5312672,
+  "tags": {
+    "amenity": "piano",
+    "name": "太宰府駅ストリートピアノ"
+  }
+},
+{
+  "type": "node",
+  "id": 12576951659,
+  "lat": 51.7533208,
+  "lon": -1.2699687,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2025-02-10"
+  }
+},
+{
+  "type": "node",
+  "id": 12592463660,
+  "lat": 42.7873446,
+  "lon": 141.6773906,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2025-02-16",
+    "name": "AIRPORT PIANO"
+  }
+},
+{
+  "type": "node",
+  "id": 12645533706,
+  "lat": 33.7726354,
+  "lon": -84.3655312,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12659434715,
+  "lat": 44.8267211,
+  "lon": -0.5559959,
+  "tags": {
+    "amenity": "piano",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 12672521355,
+  "lat": 35.6580148,
+  "lon": 139.6977940,
+  "tags": {
+    "amenity": "piano",
+    "description": "Public upright piano on 4F of the Shibuya Mark City building",
+    "level": "3"
+  }
+},
+{
+  "type": "node",
+  "id": 12677194065,
+  "lat": 45.4433541,
+  "lon": 4.3994907,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 12691468225,
+  "lat": 37.4696994,
+  "lon": 15.0664612,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-03-22",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12762956382,
+  "lat": 51.4760343,
+  "lon": -3.1787952,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12778065241,
+  "lat": 45.7209232,
+  "lon": 5.0760837,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 12832923575,
+  "lat": 14.5267744,
+  "lon": 120.9860302,
+  "tags": {
+    "amenity": "piano",
+    "level": "1"
+  }
+},
+{
+  "type": "node",
+  "id": 12839708746,
+  "lat": 50.2518727,
+  "lon": 19.0315080,
+  "tags": {
+    "amenity": "piano",
+    "indoor": "no"
+  }
+},
+{
+  "type": "node",
+  "id": 12850350906,
+  "lat": 1.3221200,
+  "lon": 103.8149357,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "-1"
+  }
+},
+{
+  "type": "node",
+  "id": 12851338015,
+  "lat": 51.3314455,
+  "lon": 12.3521518,
+  "tags": {
+    "amenity": "piano",
+    "description": "bis 22:00 im Sommerhalbjahr nutzbar , nach Benutzung Plane wieder befestigen um das Musikinstrument vor der Witterung zu schützen",
+    "name": "Klavier",
+    "opening_hours": "until 22:00",
+    "operator": "Leipziger Fahrradchor",
+    "source": "https://www.lvz.de/lokales/leipzig/in-leipzig-steht-ein-klavier-mitten-im-clara-zetkin-park-was-soll-das-YF2WW3IL6RCEJFC2MWMEYVAD2I.html"
+  }
+},
+{
+  "type": "node",
+  "id": 12857169507,
+  "lat": 45.7590543,
+  "lon": 4.8608267,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12864474783,
+  "lat": 43.5470975,
+  "lon": 10.3108130,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12865994879,
+  "lat": 47.4342735,
+  "lon": 19.2646386,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "opening_hours": "24/7"
+  }
+},
+{
+  "type": "node",
+  "id": 12873514265,
+  "lat": 43.5542640,
+  "lon": 10.3145969,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12887180629,
+  "lat": 50.8452752,
+  "lon": 4.3567642,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "0",
+    "operator": "NMBS/SNCB",
+    "operator:wikidata": "Q524255"
+  }
+},
+{
+  "type": "node",
+  "id": 12893056443,
+  "lat": 43.5457009,
+  "lon": 10.3135672,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12945304417,
+  "lat": 42.3507604,
+  "lon": -71.1084679,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "indoor": "yes",
+    "location": "indoor"
+  }
+},
+{
+  "type": "node",
+  "id": 12956279584,
+  "lat": -33.7093129,
+  "lon": 150.3752992,
+  "tags": {
+    "amenity": "piano",
+    "indoor": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 12986666334,
+  "lat": 51.5147752,
+  "lon": -0.3018573,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12989293273,
+  "lat": -33.8772662,
+  "lon": 151.2018155,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-07",
+    "covered": "yes",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 12989981446,
+  "lat": 42.1082043,
+  "lon": -86.4830497,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12989981447,
+  "lat": 42.1097447,
+  "lon": -86.4817020,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12989981448,
+  "lat": 42.1092250,
+  "lon": -86.4818921,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 12989981449,
+  "lat": 42.1099211,
+  "lon": -86.4823731,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13048329294,
+  "lat": 51.4584788,
+  "lon": -2.5963344,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13070225675,
+  "lat": 47.0569495,
+  "lon": 8.3109876,
+  "tags": {
+    "amenity": "piano",
+    "level": "1",
+    "opening_hours": "12:00-14:00,17:00-18:30",
+    "operator": "Stadtbibliothek Luzern"
+  }
+},
+{
+  "type": "node",
+  "id": 13094380386,
+  "lat": 49.3616857,
+  "lon": 0.8632887,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13104273644,
+  "lat": 60.1762011,
+  "lon": 24.9353190,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "digital_piano",
+    "operator": "Helsingin kaupunki"
+  }
+},
+{
+  "type": "node",
+  "id": 13111184287,
+  "lat": 61.5985111,
+  "lon": -149.1131939,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13114464185,
+  "lat": 45.8362345,
+  "lon": 1.2675127,
+  "tags": {
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 13123628294,
+  "lat": 44.3480408,
+  "lon": 7.7722459,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13132139350,
+  "lat": 14.6613299,
+  "lon": 121.0728744,
+  "tags": {
+    "amenity": "piano",
+    "operator": "The Patio"
+  }
+},
+{
+  "type": "node",
+  "id": 13136671426,
+  "lat": 32.6475221,
+  "lon": -16.9138730,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "fee": "no",
+    "indoor": "yes",
+    "level": "2"
+  }
+},
+{
+  "type": "node",
+  "id": 13142028357,
+  "lat": 33.9429663,
+  "lon": -118.3997205,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2025-09-13"
+  }
+},
+{
+  "type": "node",
+  "id": 13142038242,
+  "lat": 34.4245367,
+  "lon": -119.8362181,
+  "tags": {
+    "addr:floor": "1",
+    "amenity": "piano",
+    "check_date": "2025-09-13",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 13142345296,
+  "lat": 44.3879409,
+  "lon": -68.2050199,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13169086188,
+  "lat": 53.3780330,
+  "lon": -1.4629251,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13173979054,
+  "lat": 48.5181733,
+  "lon": -122.6123896,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "covered": "yes",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13181900517,
+  "lat": 50.4539226,
+  "lon": 3.9419393,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "description": "Piano public en libre utilisation"
+  }
+},
+{
+  "type": "node",
+  "id": 13189885439,
+  "lat": 43.0859929,
+  "lon": -79.0627322,
+  "tags": {
+    "addr:city": "Niagara Falls",
+    "addr:postcode": "14303",
+    "addr:state": "NY",
+    "addr:street": "Old Falls Street",
+    "amenity": "piano",
+    "leisure": "piano",
+    "musical_instrument": "piano",
+    "name": "Old Falls Street Piano",
+    "tourism": "attraction"
+  }
+},
+{
+  "type": "node",
+  "id": 13276764707,
+  "lat": 44.9467628,
+  "lon": 26.0328598,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "1",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13290433163,
+  "lat": 37.4697658,
+  "lon": 15.0663850,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13309419082,
+  "lat": 56.4574735,
+  "lon": -2.9690496,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "operator": "ScotRail"
+  }
+},
+{
+  "type": "node",
+  "id": 13326040667,
+  "lat": 56.4575498,
+  "lon": -2.9691700,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13326540862,
+  "lat": 43.7910668,
+  "lon": 11.2280513,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 13353155756,
+  "lat": 47.3935286,
+  "lon": 18.4686318,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "name": "Zongora",
+    "name:en": "Public piano",
+    "tourism": "attraction"
+  }
+},
+{
+  "type": "node",
+  "id": 13354419719,
+  "lat": 55.9526441,
+  "lon": -3.1876937,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "brand": "Essex",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 13355653321,
+  "lat": 55.9451398,
+  "lon": -3.1913922,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "brand": "H. Lange",
+    "brand:trivia": "https://www.facebook.com/pianofurnitureshop/posts/our-most-recently-sourced-piano-is-a-h-lange-co-however-what-is-unusual-about-th/103710301615986/",
+    "indoor": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 13359892576,
+  "lat": 52.3781884,
+  "lon": 9.7136812,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13360078539,
+  "lat": 32.9120560,
+  "lon": 35.2926084,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13370782756,
+  "lat": 55.9452027,
+  "lon": -3.2188846,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "brand": "Steinmayer",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 13383494453,
+  "lat": 47.4926885,
+  "lon": 19.0421890,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "name": "Zongora",
+    "name:en": "Public piano",
+    "tourism": "attraction"
+  }
+},
+{
+  "type": "node",
+  "id": 13411734976,
+  "lat": 34.6670253,
+  "lon": 133.9302459,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2025-12-28",
+    "musical_instrument": "piano",
+    "opening_hours": "Mo-Fr 12:00-13:00; Sa-Su,PH off",
+    "website": "https://www.rsk.co.jp/event/street-piano/"
+  }
+},
+{
+  "type": "node",
+  "id": 13418448017,
+  "lat": 52.3535574,
+  "lon": 4.9119369,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "operator": "Volkshotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13457136755,
+  "lat": 34.4139571,
+  "lon": -119.8466441,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2026-03-08",
+    "covered": "yes",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 13458613236,
+  "lat": 34.4127418,
+  "lon": -119.8473346,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2026-01-15"
+  }
+},
+{
+  "type": "node",
+  "id": 13467844547,
+  "lat": 38.1859703,
+  "lon": 13.1052456,
+  "tags": {
+    "amenity": "piano",
+    "level": "2"
+  }
+},
+{
+  "type": "node",
+  "id": 13472326025,
+  "lat": 32.0775105,
+  "lon": 34.7937167,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13509789207,
+  "lat": 50.8025792,
+  "lon": 8.7687096,
+  "tags": {
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13589316550,
+  "lat": -33.8436446,
+  "lon": 151.1939839,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "covered": "yes",
+    "lit": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 13593004181,
+  "lat": 53.3435117,
+  "lon": -6.2488757,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "colour": "aqua",
+    "level": "1",
+    "musical_instrument": "upright_piano",
+    "note": "Rather not a colour but an artwork"
+  }
+},
+{
+  "type": "node",
+  "id": 13603654966,
+  "lat": 53.3428422,
+  "lon": -6.2498512,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "colour": "light_brown",
+    "level": "-1",
+    "musical_instrument": "grand_piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13603998014,
+  "lat": 32.4260335,
+  "lon": -95.2127953,
+  "tags": {
+    "addr:floor": "1",
+    "amenity": "piano",
+    "check_date": "2026-02-26",
+    "level": "0",
+    "musical_instrument": "piano",
+    "operator": "UT Health"
+  }
+},
+{
+  "type": "node",
+  "id": 13628991100,
+  "lat": 43.6690263,
+  "lon": -79.3887193,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "name": "Public Piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13633108906,
+  "lat": 51.8796062,
+  "lon": -0.3752014,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13644146617,
+  "lat": 51.4182620,
+  "lon": -0.0727234,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13644951857,
+  "lat": -33.8630763,
+  "lon": 151.2147603,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13665484222,
+  "lat": 51.1631933,
+  "lon": 13.4817362,
+  "tags": {
+    "addr:floor": "0",
+    "amenity": "piano",
+    "check_date": "2026-03-20",
+    "indoor": "yes",
+    "level": "0",
+    "wheelchair": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 13688848336,
+  "lat": 52.8352410,
+  "lon": -6.9229045,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2026-03-29"
+  }
+},
+{
+  "type": "node",
+  "id": 13694797577,
+  "lat": 41.8901066,
+  "lon": 12.4801158,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "piano",
+    "source": "https://www.comune.roma.it/web/it/notizia/mun01-arriva-primo-pianoforte-pubblico.page"
+  }
+},
+{
+  "type": "node",
+  "id": 13714631285,
+  "lat": 41.7963106,
+  "lon": 12.2474546,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13714631288,
+  "lat": 41.7967952,
+  "lon": 12.2474025,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13722643205,
+  "lat": 55.7865932,
+  "lon": 12.5245570,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13731159588,
+  "lat": 55.9451863,
+  "lon": -3.2189509,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "indoor": "yes",
+    "location": "railway_station",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13781708550,
+  "lat": 45.0730084,
+  "lon": 7.6858002,
+  "tags": {
+    "access": "customers",
+    "amenity": "piano",
+    "condition": "good",
+    "description": "In the main room of the museo",
+    "location": "indoor",
+    "panoramax": "945452cd-d457-4d52-add5-1c0177dfc05a",
+    "survey:date": "2026-03-15"
+  }
+},
+{
+  "type": "node",
+  "id": 13814556491,
+  "lat": 34.8269367,
+  "lon": 134.6904388,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "colour": "black",
+    "level": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13822222349,
+  "lat": 45.0766325,
+  "lon": 7.6556014,
+  "tags": {
+    "amenity": "piano",
+    "location": "indoor",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13824670040,
+  "lat": 47.2302966,
+  "lon": 16.6115871,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13858672295,
+  "lat": 45.0624670,
+  "lon": 7.6617091,
+  "tags": {
+    "amenity": "piano",
+    "location": "indoor",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13937585997,
+  "lat": 35.1529672,
+  "lon": 140.3129866,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13939127603,
+  "lat": 41.9784180,
+  "lon": -87.9102291,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2026-06-14"
+  }
+},
+{
+  "type": "node",
+  "id": 13946360881,
+  "lat": -33.8436307,
+  "lon": 151.1939868,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "covered": "yes",
+    "lit": "yes"
+  }
+},
+{
+  "type": "node",
+  "id": 13956271670,
+  "lat": 30.2249786,
+  "lon": 120.0273119,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13956271671,
+  "lat": 30.2251111,
+  "lon": 120.0273085,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13978366540,
+  "lat": 42.6661809,
+  "lon": 2.9177714,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2026-06-30",
+    "location": "sous les escaliers centraux de droite"
+  }
+},
+{
+  "type": "way",
+  "id": 381197828,
+  "center": {
+    "lat": 49.8906036,
+    "lon": 2.3083248
+  },
+  "nodes": [
+    3732206040,
+    3844362867,
+    3844362866,
+    3844347902,
+    3732206040
+  ],
+  "tags": {
+    "amenity": "piano",
+    "colour": "white",
+    "level": "0",
+    "mapillary:SE": "9uknV6O-C4eCjeuffQKg2A",
+    "mapillary:SW": "t1wY-2u8NaU3F3uNZFBLEA",
+    "source": "Mapillary 2015"
+  }
+}
+
+  ]
+}
