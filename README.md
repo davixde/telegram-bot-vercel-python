@@ -1,4 +1,4 @@
- <img src=".github/assets/logo.svg">
+ <img src=".github/assets/logo.svg" width="500">
 
  ----
 
