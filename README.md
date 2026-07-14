@@ -1,8 +1,8 @@
-# <img src=".github/assets/logo.svg" width="60" height="60" style="vertical-align: middle; margin-bottom: 2px;" /> OpenStreetMap Pianos
+# <img src=".github/assets/logo.svg" width="80" height="80" style="vertical-align: middle;" /> OpenStreetMap Pianos
 
 Umbrella project based on mapping public pianos (`amenity=piano`) on **OpenStreetMap**.
 
-[<small>🌐 Projects</small>](#projects) • [<small>🗺️ How to Map</small>](#how-to-map)
+[<sub>🌐 Projects</sub>](#projects) • [<sub>🗺️ How to Map</sub>](#how-to-map)
 
 <br>
 
@@ -25,8 +25,6 @@ Umbrella project based on mapping public pianos (`amenity=piano`) on **OpenStree
 ## 🗺️ – How to Map <a id="how-to-map"></a>
 
 To add a public piano to the map, create a new **node** in your preferred OpenStreetMap editor (JOSM, iD, or via our Telegram Bot) and apply the following tagging structure:
-
-### Core Tagging Standard
 
 | Tag Key | Value | Description |
 | :--- | :--- | :--- |
