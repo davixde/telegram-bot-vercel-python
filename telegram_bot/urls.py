@@ -1,4 +1,4 @@
-# example/urls.py
+# telegram_bot/urls.py
 from django.urls import path
 
 from telegram_bot.views import index, webapp
