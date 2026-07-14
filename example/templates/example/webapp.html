@@ -190,9 +190,13 @@
 
         function getAccessColor(access) {
             switch(access) {
-                case 'public': return '#28a745';
+                case 'public': 
+                case 'yes': 
+                   return '#28a745';
                 case 'customers': return '#ffc107';
-                case 'private': return '#dc3545';
+                case 'private': 
+                case 'no': 
+                   return '#dc3545';
                 case 'permissive': return '#17a2b8';
                 default: return '#6c757d';
             }
@@ -200,9 +204,13 @@
 
         function getAccessLabel(access) {
             switch(access) {
-                case 'public': return 'Public';
+                case 'public': 
+                case 'yes': 
+                   return 'Public';
                 case 'customers': return 'Customers Only';
-                case 'private': return 'Private';
+                case 'private': 
+                case 'no':
+                   return 'Private';
                 case 'permissive': return 'Permissive';
                 default: return 'Not specified';
             }
