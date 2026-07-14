@@ -1,7 +1,7 @@
 # example/urls.py
 from django.urls import path
 
-from example.views import index, webapp
+from telegram_bot.views import index, webapp
 
 urlpatterns = [
     path('', index),
