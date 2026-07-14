@@ -33,9 +33,10 @@ To add a public piano to the map, create a new **node** in your preferred OpenSt
 | **`amenity`** | `piano` | ![Mandatory](https://img.shields.io/badge/-Mandatory-red?style=flat-square) Identifies the node as a public piano. |
 | **`access`** | `yes` | ![Mandatory](https://img.shields.io/badge/-Mandatory-red?style=flat-square) Explicitly public and freely open to anyone. |
 | | `permissive` | Nominally private, but casual use is tolerated and unrestricted by owners. |
-| | `customers` | Open to the public, but requires a purchase prior to use (e.g., inside a café). |
+| | `customers` | Open to the public, but informally requires a purchase prior to use (e.g., inside a café). |
 | **`musical_instrument`** | `piano` | ![Optional](https://img.shields.io/badge/-Optional-blue?style=flat-square) A "real" acoustic piano (with physical strings and hammers). |
 | | `digital_piano` | An electronic/digital piano or digital keyboard. |
+| | `grand_piano` | Subgroup of acoustic pianos, grand pianos have horizontal frames |
 
 <br>
 
