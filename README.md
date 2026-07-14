@@ -37,6 +37,7 @@ To add a public piano to the map, create a new **node** in your preferred OpenSt
 | **`musical_instrument`** | `piano` | ![Optional](https://img.shields.io/badge/-Optional-blue?style=flat-square) A "real" acoustic piano (with physical strings and hammers). |
 | | `digital_piano` | An electronic/digital piano or digital keyboard. |
 | | `grand_piano` | Subgroup of acoustic pianos, grand pianos have horizontal frames |
+| | `pipe_organ` | Pipe organ open to the public to play |
 
 <br>
 
