@@ -1,4 +1,4 @@
-# <img src=".github/assets/logo.svg" width="80" height="80" style="vertical-align: middle; margin-bottom: -2px;" /> OpenStreetMap Pianos
+# <img src=".github/assets/logo.svg" width="80" height="80" style="vertical-align: middle; margin-bottom: -10px;" /> OpenStreetMap Pianos
 
 Umbrella project based on mapping public pianos (`amenity=piano`) on **OpenStreetMap**.
 
