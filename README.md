@@ -1,7 +1,6 @@
-<h1 align="center">
-  <img src=".github/assets/logo.svg" width="80" height="80" style="vertical-align: -30px;" />
-  &nbsp;OpenStreetMap Pianos
-</h1>
+ <img src=".github/assets/logo.svg">
+
+ ----
 
 Umbrella project based on mapping public pianos (`amenity=piano`) on **OpenStreetMap**.
 
