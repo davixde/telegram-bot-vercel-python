@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src=".github/assets/logo.svg" width="80" height="80" style="vertical-align: -12px;" />
+  <img src=".github/assets/logo.svg" width="80" height="80" style="vertical-align: -3px;" />
   &nbsp;OpenStreetMap Pianos
 </h1>
 
