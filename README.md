@@ -1,10 +1,15 @@
- <img src=".github/assets/logo.svg" width="500">
+ <img src=".github/assets/logo.svg" width="600">
+
+<p align="center">
+  <a href="#projects">🌐 Projects</a>
+  ·
+  <a href="#how-to-map">🗺️ How to Map</a>
+</p>
 
  ----
 
 Umbrella project based on mapping public pianos (`amenity=piano`) on **OpenStreetMap**.
 
-[<sub>🌐 Projects</sub>](#projects) • [<sub>🗺️ How to Map</sub>](#how-to-map)
 
 <br>
 
