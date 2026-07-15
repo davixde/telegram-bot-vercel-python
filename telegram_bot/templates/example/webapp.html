@@ -339,7 +339,7 @@
                         marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
                     } else {
                         el.className = 'piano-marker';
-                        el.style.backgroundColor = getAccessColor(props.access);
+                        el.style.borderColor = getAccessColor(props.access);
                         if (props.musical_instrument === 'pipe_organ') {
                              el.innerHTML = organSvg;
                         } else {
