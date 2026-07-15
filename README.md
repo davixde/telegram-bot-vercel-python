@@ -1,4 +1,4 @@
- <img src=".github/assets/logo.svg" width="600">
+ <img src=".github/assets/logo.svg" width="600" align="center">
 
 <p align="center">
   <a href="#projects">🌐 Projects</a>
