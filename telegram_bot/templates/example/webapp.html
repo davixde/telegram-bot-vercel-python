@@ -214,6 +214,7 @@
         map.touchZoomRotate.disableRotation();
 
         const pianoSvg = `{% include "example/assets/piano-svgrepo-com-5.svg" %}`;
+        const organSvg = `{% include "example/assets/pipe_organ.svg" %}`;
 
         function getAccessColor(access) {
             switch(access) {
@@ -331,7 +332,11 @@
                     } else {
                         el.className = 'piano-marker';
                         el.style.backgroundColor = getAccessColor(props.access);
-                        el.innerHTML = pianoSvg;
+                        if (props.musical_instrument === 'organ') {
+                             el.innerHTML = organSvg;
+                        } else {
+                             el.innerHTML = pianoSvg;
+                        }                        
 
                         const popup = new maplibregl.Popup({ offset: 10 })
                             .setHTML(`<strong>${props.name}</strong><br>Access: ${getAccessLabel(props.access)}<br>${props.description}`);
