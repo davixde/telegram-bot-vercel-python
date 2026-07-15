@@ -6,7 +6,6 @@
     <title>Map</title>
     
     <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
-    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
@@ -167,7 +166,6 @@
     
     <div id="map-container">
         <div id="map"></div>
-            
         <button class="locate-btn" id="locateBtn" aria-label="Find my location">
             <svg viewBox="0 0 24 24">
                 <path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
@@ -178,8 +176,17 @@
     <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
-            window.Telegram.WebApp.ready();
-            window.Telegram.WebApp.expand();
+            const webapp = window.Telegram.WebApp;
+            webapp.ready();
+            
+            if (typeof webapp.requestFullscreen === 'function') {
+                webapp.requestFullscreen();
+            } else {
+                webapp.expand(); 
+            }
+            
+            webapp.setHeaderColor('#111111');
+            webapp.setBackgroundColor('#111111');
         }
 
         let userCoords = null;
