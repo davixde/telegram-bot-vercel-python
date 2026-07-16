@@ -43,7 +43,7 @@ async def setup_bot(application: Application) -> None:
     # 3. Configure the persistent bottom-left menu button to open the Mini App directly
     await application.bot.set_chat_menu_button(
         menu_button=MenuButtonWebApp(
-            text="Open Map",
+            text="Open",
             web_app=WebAppInfo(url=WEBAPP_URL)
         )
     )

@@ -1,5 +1,7 @@
 // webapp.js — Piano Map WebApp logic
 
+let isSearchFocused = false;
+
 if (window.Telegram && window.Telegram.WebApp) {
     const webapp = window.Telegram.WebApp;
     webapp.ready();
@@ -36,6 +38,7 @@ const map = new maplibregl.Map({
 });
 
 window.addEventListener('resize', () => {
+    if (isSearchFocused) return;
     map.resize();
     if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
         snapTo(sheetState);
@@ -44,6 +47,7 @@ window.addEventListener('resize', () => {
 
 if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.onEvent('viewportChanged', () => {
+        if (isSearchFocused) return;
         map.resize();
         if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
             snapTo(sheetState);
@@ -531,16 +535,20 @@ function selectPianoById(id) {
 }
 
 searchInput.addEventListener('focus', () => {
+    isSearchFocused = true;
     tabBar.style.transform = 'translateY(100px)';
     tabBar.style.opacity = '0';
     performSearch(searchInput.value);
 });
 
 searchInput.addEventListener('blur', () => {
+    isSearchFocused = false;
     setTimeout(() => {
         if (document.activeElement !== searchInput) {
             tabBar.style.transform = 'translateY(0)';
             tabBar.style.opacity = '1';
+            // Ripristina resize mappa dopo che la tastiera è sparita
+            map.resize();
         }
     }, 150);
 });
