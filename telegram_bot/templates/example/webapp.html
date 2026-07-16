@@ -11,6 +11,7 @@
     <style>
         :root {
             --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-top: env(safe-area-inset-top, 0px);
         }
 
         * {
@@ -45,10 +46,10 @@
 
         .search-container {
             position: absolute;
-            top: 20px;
+            top: calc(55px + var(--safe-top));
             left: 50%;
             transform: translateX(-50%);
-            width: calc(100% - 40px);
+            width: calc(100% - 32px);
             max-width: 480px;
             z-index: 25;
         }
@@ -140,7 +141,7 @@
 
         #loading-indicator {
             position: absolute;
-            top: 85px;
+            top: calc(120px + var(--safe-top));
             left: 50%;
             transform: translateX(-50%);
             background: rgba(31, 31, 31, 0.95);
@@ -261,6 +262,7 @@
             align-items: center;
             z-index: 90;
             padding-bottom: var(--safe-bottom);
+            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
         .tab-item {
@@ -288,7 +290,7 @@
             margin-bottom: 4px;
         }
 
-        /* Bottom Sheet ("Tendina") */
+        /* Bottom Sheet */
         #bottom-sheet {
             position: fixed;
             bottom: 0;
@@ -303,13 +305,14 @@
             box-shadow: 0 -8px 32px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
-            max-height: 85vh;
+            height: 85vh;
             padding-bottom: var(--safe-bottom);
+            touch-action: none;
         }
 
         .sheet-drag-zone {
             width: 100%;
-            padding: 10px 0;
+            padding: 12px 0;
             display: flex;
             justify-content: center;
             cursor: grab;
@@ -330,6 +333,7 @@
             justify-content: space-between;
             align-items: center;
             touch-action: none;
+            user-select: none;
         }
 
         .sheet-title-container {
@@ -372,6 +376,7 @@
             display: flex;
             gap: 10px;
             border-bottom: 1px solid #2c2c2e;
+            touch-action: none;
         }
 
         .sheet-btn {
@@ -410,6 +415,7 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.25s ease;
+            touch-action: pan-y;
         }
 
         .info-item {
@@ -462,7 +468,7 @@
             <svg class="search-icon" viewBox="0 0 24 24">
                 <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
             </svg>
-            <input type="text" id="search-input" placeholder="Search pianos..." />
+            <input type="text" id="search-input" placeholder="Search pianos..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
             <button id="search-clear-btn" style="display: none;">&times;</button>
         </div>
         <div class="search-results-list" id="searchResultsList" style="display: none;"></div>
@@ -492,7 +498,7 @@
             <div class="sheet-icon-container" id="sheet-icon"></div>
         </div>
         
-        <div class="sheet-actions">
+        <div class="sheet-actions" id="sheetActions">
             <button class="sheet-btn" id="btn-still-here">
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>Still here</span>
@@ -551,21 +557,17 @@
     </div>
 
     <div class="tab-bar">
-        <div class="tab-item active">
+        <div class="tab-item active" id="tab-map">
             <svg viewBox="0 0 24 24"><path d="M12,2L2,22H22L12,2M12,6L18.8,18H5.2L12,6M11,10V13H13V10H11M11,15V17H13V15H11Z"/></svg>
             <span>Map</span>
         </div>
-        <div class="tab-item">
-            <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-            <span>Search</span>
+        <div class="tab-item" id="tab-add">
+            <svg viewBox="0 0 24 24"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"/></svg>
+            <span>Add</span>
         </div>
-        <div class="tab-item">
-            <svg viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
-            <span>Saved</span>
-        </div>
-        <div class="tab-item">
-            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,17A1,1 0 1,1 13,16A1,1 0 0,1 12,17M12,13A1,1 0 0,1 11,12V9A1,1 0 0,1 13,9V12A1,1 0 0,1 12,13Z"/></svg>
-            <span>About</span>
+        <div class="tab-item" id="tab-settings">
+            <svg viewBox="0 0 24 24"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.34 14.86,5.08L14.48,2.42C14.44,2.18 14.24,2 14,2H10C9.76,2 9.56,2.18 9.52,2.42L9.14,5.08C8.53,5.34 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.53,18.66 9.14,18.92L9.52,21.58C9.56,21.82 9.76,22 10,22H14C14.24,22 14.44,21.82 14.48,21.58L14.86,18.92C15.47,18.66 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+            <span>Settings</span>
         </div>
     </div>
 
@@ -574,6 +576,9 @@
         if (window.Telegram && window.Telegram.WebApp) {
             const webapp = window.Telegram.WebApp;
             webapp.ready();
+            if (webapp.disableVerticalSwipes) {
+                webapp.disableVerticalSwipes();
+            }
             if (typeof webapp.requestFullscreen === 'function') {
                 webapp.requestFullscreen();
             } else {
@@ -741,7 +746,7 @@
                         
                         el.addEventListener('click', () => {
                             map.easeTo({ center: coords, zoom: map.getZoom() + 2 });
-                            snapToState('closed');
+                            snapTo('closed');
                         });
                         
                         marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
@@ -822,7 +827,7 @@
                             map.flyTo({ center: userCoords, zoom: 14, essential: true });
                         }
                     },
-                    (error) => { console.error('Fallback Geolocation error: ', error); },
+                    (error) => { console.error(error); },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
             }
@@ -887,8 +892,8 @@
             map.on('moveend', updateMarkers);
             
             map.on('click', () => {
-                snapToState('closed');
-                document.getElementById('searchResultsList').style.display = 'none';
+                snapTo('closed');
+                searchResultsList.style.display = 'none';
             });
         });
 
@@ -900,43 +905,45 @@
             }
         });
 
-        /* Bottom Sheet Interaction */
+        /* Bottom Sheet Gesture & State Engine */
         const sheet = document.getElementById('bottom-sheet');
-        const dragZone = document.getElementById('sheetDragZone');
-        const headerZone = document.getElementById('sheetHeader');
         const sheetContent = document.getElementById('sheet-content');
+        const sheetDragZone = document.getElementById('sheetDragZone');
+        const sheetHeader = document.getElementById('sheetHeader');
+        const tabBar = document.querySelector('.tab-bar');
 
-        let currentY = window.innerHeight;
-        let startY = 0;
-        let dragY = 0;
+        let currentTranslateY = window.innerHeight; 
+        let dragStartY = 0;
+        let dragStartTranslateY = 0;
         let isDragging = false;
         let sheetState = 'closed';
 
-        const PEEK_HEIGHT = 165;
-
-        function getSnapPositions() {
+        function getSnaps() {
+            const h = window.innerHeight * 0.85; 
             const vh = window.innerHeight;
             return {
-                closed: vh,
-                peek: vh - PEEK_HEIGHT,
-                half: vh - (vh * 0.5),
-                full: vh - (vh * 0.85)
+                closed: h,
+                peek: Math.max(0, h - 190), 
+                half: h - (vh * 0.50), 
+                full: 0 
             };
         }
 
-        function updateSheetPosition(y, animate = false) {
+        function setTranslateY(val, animate = false) {
+            const snaps = getSnaps();
+            const h = window.innerHeight * 0.85;
+            val = Math.max(0, Math.min(h, val));
+            currentTranslateY = val;
+
             if (animate) {
                 sheet.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
             } else {
                 sheet.style.transition = 'none';
             }
-            sheet.style.transform = `translateY(${y}px)`;
-            currentY = y;
+            sheet.style.transform = `translateY(${val}px)`;
 
-            const snaps = getSnapPositions();
-            const threshold = snaps.peek - (snaps.peek - snaps.half) * 0.4;
-            
-            if (y < threshold) {
+            const halfThreshold = snaps.peek - 20;
+            if (val < halfThreshold) {
                 sheetContent.style.opacity = '1';
                 sheetContent.style.pointerEvents = 'auto';
             } else {
@@ -945,62 +952,71 @@
             }
         }
 
-        function snapToState(state) {
+        function snapTo(state) {
             sheetState = state;
-            const snaps = getSnapPositions();
-            updateSheetPosition(snaps[state], true);
+            const snaps = getSnaps();
+            setTranslateY(snaps[state], true);
         }
 
-        function onDragStart(e) {
-            isDragging = true;
-            startY = e.clientY;
-            dragY = currentY;
-            sheet.style.transition = 'none';
-            e.currentTarget.setPointerCapture(e.pointerId);
-        }
-
-        function onDragMove(e) {
-            if (!isDragging) return;
-            const deltaY = e.clientY - startY;
-            let targetY = dragY + deltaY;
-
-            const snaps = getSnapPositions();
-            if (targetY < snaps.full) {
-                targetY = snaps.full + (targetY - snaps.full) * 0.35;
+        function handlePointerDown(e) {
+            if (e.target.closest('button') || e.target.closest('input')) {
+                return;
             }
 
-            updateSheetPosition(targetY);
+            const isInsideContent = e.target.closest('#sheet-content');
+            if (isInsideContent) {
+                if (sheetState === 'full' && sheetContent.scrollTop > 0) {
+                    return; 
+                }
+            }
+
+            isDragging = true;
+            dragStartY = e.clientY;
+            dragStartTranslateY = currentTranslateY;
+            sheet.style.transition = 'none';
+            sheet.setPointerCapture(e.pointerId);
         }
 
-        function onDragEnd(e) {
+        function handlePointerMove(e) {
+            if (!isDragging) return;
+            const deltaY = e.clientY - dragStartY;
+            let targetY = dragStartTranslateY + deltaY;
+
+            if (targetY < 0) {
+                targetY = targetY * 0.35; 
+            }
+
+            setTranslateY(targetY);
+        }
+
+        function handlePointerUp(e) {
             if (!isDragging) return;
             isDragging = false;
-            e.currentTarget.releasePointerCapture(e.pointerId);
+            sheet.releasePointerCapture(e.pointerId);
 
-            const snaps = getSnapPositions();
-            const diffPeek = Math.abs(currentY - snaps.peek);
-            const diffHalf = Math.abs(currentY - snaps.half);
-            const diffFull = Math.abs(currentY - snaps.full);
-            const diffClosed = Math.abs(currentY - snaps.closed);
+            const snaps = getSnaps();
+            const diffClosed = Math.abs(currentTranslateY - snaps.closed);
+            const diffPeek = Math.abs(currentTranslateY - snaps.peek);
+            const diffHalf = Math.abs(currentTranslateY - snaps.half);
+            const diffFull = Math.abs(currentTranslateY - snaps.full);
 
-            const minDiff = Math.min(diffPeek, diffHalf, diffFull, diffClosed);
+            const minDiff = Math.min(diffClosed, diffPeek, diffHalf, diffFull);
 
             if (minDiff === diffClosed) {
-                snapToState('closed');
+                snapTo('closed');
             } else if (minDiff === diffPeek) {
-                snapToState('peek');
+                snapTo('peek');
             } else if (minDiff === diffHalf) {
-                snapToState('half');
+                snapTo('half');
             } else {
-                snapToState('full');
+                snapTo('full');
             }
         }
 
-        [dragZone, headerZone].forEach(zone => {
-            zone.addEventListener('pointerdown', onDragStart);
-            zone.addEventListener('pointermove', onDragMove);
-            zone.addEventListener('pointerup', onDragEnd);
-        });
+        sheet.addEventListener('pointerdown', handlePointerDown);
+        sheet.addEventListener('pointermove', handlePointerMove);
+        sheet.addEventListener('pointerup', handlePointerUp);
+        sheet.addEventListener('pointercancel', handlePointerUp);
 
         function showBottomSheet(props) {
             document.getElementById('sheet-title').innerText = props.name || 'Piano';
@@ -1019,16 +1035,16 @@
             document.getElementById('info-desc').innerText = props.description || 'No description provided.';
             document.getElementById('info-type').innerText = label;
 
-            snapToState('peek');
+            snapTo('peek');
         }
 
-        /* Search Operations */
+        /* Search Input & Persistent Suggestions Engine */
         const searchInput = document.getElementById('search-input');
         const searchResultsList = document.getElementById('searchResultsList');
         const searchClearBtn = document.getElementById('search-clear-btn');
 
-        searchInput.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase().trim();
+        function performSearch(queryValue) {
+            const val = queryValue.toLowerCase().trim();
             if (!val) {
                 searchResultsList.style.display = 'none';
                 searchClearBtn.style.display = 'none';
@@ -1056,27 +1072,78 @@
                 }).join('');
 
                 searchResultsList.querySelectorAll('.search-result-item').forEach(item => {
-                    item.addEventListener('click', () => {
-                        const id = item.dataset.id;
-                        const feature = allFeatures.find(f => f.properties.id == id);
-                        if (feature) {
-                            const coords = feature.geometry.coordinates;
-                            map.flyTo({ center: coords, zoom: 16, essential: true });
-                            showBottomSheet(feature.properties);
-                            searchResultsList.style.display = 'none';
-                            searchInput.value = feature.properties.name || 'Piano';
-                        }
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        selectPianoById(item.dataset.id);
                     });
                 });
             }
 
             searchResultsList.style.display = 'block';
+        }
+
+        function selectPianoById(id) {
+            const feature = allFeatures.find(f => f.properties.id == id);
+            if (feature) {
+                const coords = feature.geometry.coordinates;
+                map.flyTo({ center: coords, zoom: 16, essential: true });
+                showBottomSheet(feature.properties);
+                searchResultsList.style.display = 'none';
+                searchInput.value = feature.properties.name || 'Piano';
+                searchInput.blur();
+            }
+        }
+
+        searchInput.addEventListener('focus', () => {
+            tabBar.style.transform = 'translateY(100px)';
+            tabBar.style.opacity = '0';
+            performSearch(searchInput.value);
+        });
+
+        searchInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (document.activeElement !== searchInput) {
+                    tabBar.style.transform = 'translateY(0)';
+                    tabBar.style.opacity = '1';
+                }
+            }, 150);
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            performSearch(e.target.value);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = searchInput.value.toLowerCase().trim();
+                if (val) {
+                    const matched = allFeatures.find(f => {
+                        const name = (f.properties.name || '').toLowerCase();
+                        const desc = (f.properties.description || '').toLowerCase();
+                        return name.includes(val) || desc.includes(val);
+                    });
+                    if (matched) {
+                        selectPianoById(matched.properties.id);
+                    }
+                }
+            }
         });
 
         searchClearBtn.addEventListener('click', () => {
             searchInput.value = '';
             searchResultsList.style.display = 'none';
             searchClearBtn.style.display = 'none';
+            searchInput.focus();
+        });
+
+        /* Tab Switch Management */
+        const tabs = document.querySelectorAll('.tab-item');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                snapTo('closed');
+            });
         });
 
         /* Action Buttons Handlers */
@@ -1089,13 +1156,8 @@
             }
         });
 
-        document.getElementById('btn-modify').addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        document.getElementById('btn-share').addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
+        document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
+        document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPropagation(); });
     </script>
 </body>
 </html>
