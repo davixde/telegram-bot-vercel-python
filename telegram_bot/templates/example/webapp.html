@@ -610,11 +610,17 @@
 
         window.addEventListener('resize', () => {
             map.resize();
+            if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+                snapTo(sheetState);
+            }
         });
 
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.onEvent('viewportChanged', () => {
                 map.resize();
+                if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+                    snapTo(sheetState);
+                }
             });
         }
 
@@ -1035,7 +1041,7 @@
             document.getElementById('info-desc').innerText = props.description || 'No description provided.';
             document.getElementById('info-type').innerText = label;
 
-            snapTo('peek');
+            snapTo('peek'); 
         }
 
         /* Search Input & Persistent Suggestions Engine */
@@ -1086,11 +1092,14 @@
             const feature = allFeatures.find(f => f.properties.id == id);
             if (feature) {
                 const coords = feature.geometry.coordinates;
-                map.flyTo({ center: coords, zoom: 16, essential: true });
-                showBottomSheet(feature.properties);
+                // Blur the input first to start dismissing the mobile keyboard
+                searchInput.blur();
                 searchResultsList.style.display = 'none';
                 searchInput.value = feature.properties.name || 'Piano';
-                searchInput.blur();
+                
+                // Keep the zoom and bottom sheet actions consistent with marker clicks
+                map.flyTo({ center: coords, zoom: 15, essential: true });
+                showBottomSheet(feature.properties);
             }
         }
 
