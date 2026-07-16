@@ -9,6 +9,10 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <style>
+        :root {
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -39,9 +43,104 @@
             filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
         }
 
-        #loading-indicator {
+        .search-container {
             position: absolute;
             top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 40px);
+            max-width: 480px;
+            z-index: 25;
+        }
+
+        .search-bar-wrapper {
+            display: flex;
+            align-items: center;
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 10px 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .search-icon {
+            width: 18px;
+            height: 18px;
+            fill: #8e8e93;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        #search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            width: 100%;
+        }
+
+        #search-input::placeholder {
+            color: #8e8e93;
+        }
+
+        #search-clear-btn {
+            background: none;
+            border: none;
+            color: #8e8e93;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .search-results-list {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: rgba(28, 28, 30, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            z-index: 30;
+        }
+
+        .search-result-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item:active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .search-result-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .search-result-details {
+            font-size: 12px;
+            color: #8e8e93;
+            margin-top: 2px;
+        }
+
+        #loading-indicator {
+            position: absolute;
+            top: 85px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(31, 31, 31, 0.95);
@@ -61,7 +160,7 @@
 
         .locate-btn {
             position: absolute;
-            bottom: 30px;
+            bottom: 94px;
             left: 20px;
             z-index: 10;
             width: 48px;
@@ -134,20 +233,6 @@
             cursor: pointer;
         }
 
-        .maplibregl-popup-content {
-            background: #242424 !important;
-            color: #ffffff !important;
-            border-radius: 12px !important;
-            padding: 12px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-            font-size: 14px !important;
-        }
-
-        .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: #242424 !important; }
-        .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #242424 !important; }
-        .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #242424 !important; }
-        .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #242424 !important; }
-
         .maplibregl-ctrl-attrib {
             background: rgba(24, 24, 24, 0.7) !important;
             color: #ccc !important;
@@ -159,11 +244,231 @@
             color: #389ce3 !important;
             text-decoration: none !important;
         }
+
+        /* Tabs Navigation */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(64px + var(--safe-bottom));
+            background: rgba(20, 20, 20, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 90;
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 10px;
+            font-weight: 500;
+            flex: 1;
+            height: 100%;
+        }
+
+        .tab-item.active {
+            color: #0a84ff;
+        }
+
+        .tab-item svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+            margin-bottom: 4px;
+        }
+
+        /* Bottom Sheet ("Tendina") */
+        #bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background: #1c1c1e;
+            color: #ffffff;
+            border-radius: 16px 16px 0 0;
+            z-index: 100;
+            transform: translateY(100%);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+            padding-bottom: var(--safe-bottom);
+        }
+
+        .sheet-drag-zone {
+            width: 100%;
+            padding: 10px 0;
+            display: flex;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .sheet-handle {
+            width: 40px;
+            height: 5px;
+            background: #48484a;
+            border-radius: 2.5px;
+        }
+
+        .sheet-header {
+            padding: 0 20px 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            touch-action: none;
+        }
+
+        .sheet-title-container {
+            flex: 1;
+            margin-right: 12px;
+        }
+
+        .sheet-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 4px 0;
+        }
+
+        .sheet-subtitle {
+            font-size: 14px;
+            color: #8e8e93;
+            margin: 0;
+        }
+
+        .sheet-icon-container {
+            width: 42px;
+            height: 42px;
+            background: #2c2c2e;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sheet-icon-container svg {
+            width: 22px;
+            height: 22px;
+            fill: #fff;
+        }
+
+        .sheet-actions {
+            padding: 0 20px 16px 20px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid #2c2c2e;
+        }
+
+        .sheet-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #2c2c2e;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 0;
+            color: #0a84ff;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .sheet-btn:active {
+            background: #3a3a3c;
+            transform: scale(0.96);
+        }
+
+        .sheet-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: #0a84ff;
+            margin-bottom: 5px;
+        }
+
+        .sheet-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .info-item-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8e8e93;
+            flex-shrink: 0;
+        }
+
+        .info-item-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .info-item-text {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 10px;
+            color: #8e8e93;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 3px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            color: #ffffff;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
 
-    <div id="loading-indicator">Loading world pianos...</div>
+    <div class="search-container">
+        <div class="search-bar-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24">
+                <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search pianos..." />
+            <button id="search-clear-btn" style="display: none;">&times;</button>
+        </div>
+        <div class="search-results-list" id="searchResultsList" style="display: none;"></div>
+    </div>
+
+    <div id="loading-indicator">Loading pianos...</div>
     
     <div id="map-container">
         <div id="map"></div>
@@ -174,21 +479,106 @@
         </button>
     </div>
 
+    <div id="bottom-sheet">
+        <div class="sheet-drag-zone" id="sheetDragZone">
+            <div class="sheet-handle"></div>
+        </div>
+        
+        <div class="sheet-header" id="sheetHeader">
+            <div class="sheet-title-container">
+                <h3 class="sheet-title" id="sheet-title">Piano</h3>
+                <p class="sheet-subtitle" id="sheet-subtitle">Piano</p>
+            </div>
+            <div class="sheet-icon-container" id="sheet-icon"></div>
+        </div>
+        
+        <div class="sheet-actions">
+            <button class="sheet-btn" id="btn-still-here">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                <span>Still here</span>
+            </button>
+            <button class="sheet-btn" id="btn-modify">
+                <svg viewBox="0 0 24 24"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>
+                <span>Modify</span>
+            </button>
+            <button class="sheet-btn" id="btn-share">
+                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                <span>Share</span>
+            </button>
+        </div>
+        
+        <div class="sheet-content" id="sheet-content">
+            <div class="info-item">
+                <div class="info-item-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg>
+                </div>
+                <div class="info-item-text">
+                    <div class="info-label">Last seen</div>
+                    <div class="info-value">—</div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-item-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12,17A2,2 0 0,0 14,15C14,14.21 13.54,13.5 12.9,13.18V10.5A1.5,1.5 0 0,1 14.4,9H15.5V7.5H14.4C12.8,7.5 11.4,8.8 11.4,10.4V13.18C10.76,13.5 10.3,14.21 10.3,15A2,2 0 0,0 12,17M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2Z"/></svg>
+                </div>
+                <div class="info-item-text">
+                    <div class="info-label">Access</div>
+                    <div class="info-value" id="info-access"></div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-item-icon">
+                    <svg viewBox="0 0 24 24"><path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/></svg>
+                </div>
+                <div class="info-item-text">
+                    <div class="info-label">Description</div>
+                    <div class="info-value" id="info-desc"></div>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-item-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                </div>
+                <div class="info-item-text">
+                    <div class="info-label">Instrument Type</div>
+                    <div class="info-value" id="info-type"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-bar">
+        <div class="tab-item active">
+            <svg viewBox="0 0 24 24"><path d="M12,2L2,22H22L12,2M12,6L18.8,18H5.2L12,6M11,10V13H13V10H11M11,15V17H13V15H11Z"/></svg>
+            <span>Map</span>
+        </div>
+        <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+            <span>Search</span>
+        </div>
+        <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"/></svg>
+            <span>Saved</span>
+        </div>
+        <div class="tab-item">
+            <svg viewBox="0 0 24 24"><path d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,17A1,1 0 1,1 13,16A1,1 0 0,1 12,17M12,13A1,1 0 0,1 11,12V9A1,1 0 0,1 13,9V12A1,1 0 0,1 12,13Z"/></svg>
+            <span>About</span>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"></script>
     <script>
         if (window.Telegram && window.Telegram.WebApp) {
             const webapp = window.Telegram.WebApp;
             webapp.ready();
-            
             if (typeof webapp.requestFullscreen === 'function') {
                 webapp.requestFullscreen();
             } else {
                 webapp.expand(); 
             }
-            if (webapp.disableVerticalSwipes) {
-                webapp.disableVerticalSwipes();
-            }
-            
             webapp.setHeaderColor('#111111');
             webapp.setBackgroundColor('#111111');
         }
@@ -197,13 +587,14 @@
         let userMarker = null;
         const markers = {};
         let markersOnScreen = {};
+        let allFeatures = [];
         const loadingIndicator = document.getElementById('loading-indicator');
         
         const DATA_URL = "https://raw.githubusercontent.com/davixde/telegram-bot-vercel-python/refs/heads/master/world_pianos.json";
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://tiles.openfreemap.org/styles/liberty',
+            style: 'https://tiles.openfreemap.org/styles/bright',
             center: [12.4964, 41.9028],
             zoom: 12,
             pitchWithRotate: true,
@@ -255,6 +646,16 @@
             }
         }
 
+        function getInstrumentLabel(inst) {
+            switch(inst) {
+                case 'digital_piano': return 'Digital Piano';
+                case 'piano': return 'Piano';
+                case 'grand_piano': return 'Grand Piano';
+                case 'pipe_organ': return 'Pipe Organ';
+                default: return 'Piano';
+            }
+        }
+
         function updateUserMarker(lat, lng) {
             if (lat === null || lng === null || isNaN(lat) || isNaN(lng)) return;
             if (!userMarker) {
@@ -294,6 +695,8 @@
                             }
                         };
                     });
+
+                allFeatures = features;
 
                 map.getSource('pianos').setData({
                     type: 'FeatureCollection',
@@ -338,6 +741,7 @@
                         
                         el.addEventListener('click', () => {
                             map.easeTo({ center: coords, zoom: map.getZoom() + 2 });
+                            snapToState('closed');
                         });
                         
                         marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
@@ -350,10 +754,13 @@
                              el.innerHTML = pianoSvg;
                         }                        
 
-                        const popup = new maplibregl.Popup({ offset: 10 })
-                            .setHTML(`<strong>${props.name}</strong><br>Access: ${getAccessLabel(props.access)}<br>${props.description}`);
+                        el.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            map.flyTo({ center: coords, zoom: 15, essential: true });
+                            showBottomSheet(props);
+                        });
 
-                        marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords).setPopup(popup);
+                        marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
                     }
                 } else if (isCluster) {
                     marker.getElement().innerText = props.point_count;
@@ -371,7 +778,39 @@
             markersOnScreen = newMarkers;
         }
 
-        function requestLocation(shouldCenter = false) {
+        function initLocation() {
+            let tgLocationRequested = false;
+            
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.LocationManager) {
+                const lm = window.Telegram.WebApp.LocationManager;
+                lm.init(function() {
+                    if (lm.isInited && lm.isLocationAvailable) {
+                        tgLocationRequested = true;
+                        lm.getLocation(function(data) {
+                            if (data && data.latitude && data.longitude) {
+                                userCoords = [data.longitude, data.latitude];
+                                updateUserMarker(data.latitude, data.longitude);
+                                map.flyTo({ center: userCoords, zoom: 14, essential: true });
+                            } else {
+                                fallbackGeolocation(true);
+                            }
+                        });
+                    } else {
+                        fallbackGeolocation(true);
+                    }
+                });
+
+                setTimeout(() => {
+                    if (!tgLocationRequested && !userCoords) {
+                        fallbackGeolocation(true);
+                    }
+                }, 3000);
+            } else {
+                fallbackGeolocation(true);
+            }
+        }
+
+        function fallbackGeolocation(shouldCenter = false) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
@@ -379,14 +818,38 @@
                         const lng = position.coords.longitude;
                         userCoords = [lng, lat];
                         updateUserMarker(lat, lng);
-
                         if (shouldCenter) {
                             map.flyTo({ center: userCoords, zoom: 14, essential: true });
                         }
                     },
-                    (error) => { console.error(error); },
+                    (error) => { console.error('Fallback Geolocation error: ', error); },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
+            }
+        }
+
+        function startWatchingLocation() {
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.LocationManager) {
+                window.Telegram.WebApp.onEvent('locationManagerUpdated', () => {
+                    const lm = window.Telegram.WebApp.LocationManager;
+                    if (lm.isInited && lm.isLocationAvailable) {
+                        lm.getLocation((data) => {
+                            if (data && data.latitude && data.longitude) {
+                                userCoords = [data.longitude, data.latitude];
+                                updateUserMarker(data.latitude, data.longitude);
+                            }
+                        });
+                    }
+                });
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    userCoords = [lng, lat];
+                    updateUserMarker(lat, lng);
+                }, null, { enableHighAccuracy: true });
             }
         }
 
@@ -412,16 +875,8 @@
             });
 
             loadGlobalPianos();
-            requestLocation(true);
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition((position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    userCoords = [lng, lat];
-                    updateUserMarker(lat, lng);
-                }, null, { enableHighAccuracy: true });
-            }
+            initLocation();
+            startWatchingLocation();
 
             map.on('data', (e) => {
                 if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
@@ -430,14 +885,216 @@
 
             map.on('move', updateMarkers);
             map.on('moveend', updateMarkers);
+            
+            map.on('click', () => {
+                snapToState('closed');
+                document.getElementById('searchResultsList').style.display = 'none';
+            });
         });
 
         document.getElementById('locateBtn').addEventListener('click', () => {
             if (userCoords) {
                 map.flyTo({ center: userCoords, zoom: 14, essential: true });
             } else {
-                requestLocation(true);
+                initLocation();
             }
+        });
+
+        /* Bottom Sheet Interaction */
+        const sheet = document.getElementById('bottom-sheet');
+        const dragZone = document.getElementById('sheetDragZone');
+        const headerZone = document.getElementById('sheetHeader');
+        const sheetContent = document.getElementById('sheet-content');
+
+        let currentY = window.innerHeight;
+        let startY = 0;
+        let dragY = 0;
+        let isDragging = false;
+        let sheetState = 'closed';
+
+        const PEEK_HEIGHT = 165;
+
+        function getSnapPositions() {
+            const vh = window.innerHeight;
+            return {
+                closed: vh,
+                peek: vh - PEEK_HEIGHT,
+                half: vh - (vh * 0.5),
+                full: vh - (vh * 0.85)
+            };
+        }
+
+        function updateSheetPosition(y, animate = false) {
+            if (animate) {
+                sheet.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+            } else {
+                sheet.style.transition = 'none';
+            }
+            sheet.style.transform = `translateY(${y}px)`;
+            currentY = y;
+
+            const snaps = getSnapPositions();
+            const threshold = snaps.peek - (snaps.peek - snaps.half) * 0.4;
+            
+            if (y < threshold) {
+                sheetContent.style.opacity = '1';
+                sheetContent.style.pointerEvents = 'auto';
+            } else {
+                sheetContent.style.opacity = '0';
+                sheetContent.style.pointerEvents = 'none';
+            }
+        }
+
+        function snapToState(state) {
+            sheetState = state;
+            const snaps = getSnapPositions();
+            updateSheetPosition(snaps[state], true);
+        }
+
+        function onDragStart(e) {
+            isDragging = true;
+            startY = e.clientY;
+            dragY = currentY;
+            sheet.style.transition = 'none';
+            e.currentTarget.setPointerCapture(e.pointerId);
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+            const deltaY = e.clientY - startY;
+            let targetY = dragY + deltaY;
+
+            const snaps = getSnapPositions();
+            if (targetY < snaps.full) {
+                targetY = snaps.full + (targetY - snaps.full) * 0.35;
+            }
+
+            updateSheetPosition(targetY);
+        }
+
+        function onDragEnd(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            e.currentTarget.releasePointerCapture(e.pointerId);
+
+            const snaps = getSnapPositions();
+            const diffPeek = Math.abs(currentY - snaps.peek);
+            const diffHalf = Math.abs(currentY - snaps.half);
+            const diffFull = Math.abs(currentY - snaps.full);
+            const diffClosed = Math.abs(currentY - snaps.closed);
+
+            const minDiff = Math.min(diffPeek, diffHalf, diffFull, diffClosed);
+
+            if (minDiff === diffClosed) {
+                snapToState('closed');
+            } else if (minDiff === diffPeek) {
+                snapToState('peek');
+            } else if (minDiff === diffHalf) {
+                snapToState('half');
+            } else {
+                snapToState('full');
+            }
+        }
+
+        [dragZone, headerZone].forEach(zone => {
+            zone.addEventListener('pointerdown', onDragStart);
+            zone.addEventListener('pointermove', onDragMove);
+            zone.addEventListener('pointerup', onDragEnd);
+        });
+
+        function showBottomSheet(props) {
+            document.getElementById('sheet-title').innerText = props.name || 'Piano';
+            
+            const label = getInstrumentLabel(props.musical_instrument);
+            document.getElementById('sheet-subtitle').innerText = label;
+
+            const iconContainer = document.getElementById('sheet-icon');
+            if (props.musical_instrument === 'pipe_organ') {
+                iconContainer.innerHTML = organSvg;
+            } else {
+                iconContainer.innerHTML = pianoSvg;
+            }
+
+            document.getElementById('info-access').innerText = getAccessLabel(props.access);
+            document.getElementById('info-desc').innerText = props.description || 'No description provided.';
+            document.getElementById('info-type').innerText = label;
+
+            snapToState('peek');
+        }
+
+        /* Search Operations */
+        const searchInput = document.getElementById('search-input');
+        const searchResultsList = document.getElementById('searchResultsList');
+        const searchClearBtn = document.getElementById('search-clear-btn');
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (!val) {
+                searchResultsList.style.display = 'none';
+                searchClearBtn.style.display = 'none';
+                return;
+            }
+
+            searchClearBtn.style.display = 'block';
+
+            const filtered = allFeatures.filter(f => {
+                const name = (f.properties.name || '').toLowerCase();
+                const desc = (f.properties.description || '').toLowerCase();
+                return name.includes(val) || desc.includes(val);
+            }).slice(0, 10);
+
+            if (filtered.length === 0) {
+                searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No pianos found</div>`;
+            } else {
+                searchResultsList.innerHTML = filtered.map(f => {
+                    return `
+                        <div class="search-result-item" data-id="${f.properties.id}">
+                            <span class="search-result-name">${f.properties.name || 'Piano'}</span>
+                            <span class="search-result-details">${getInstrumentLabel(f.properties.musical_instrument)} • ${getAccessLabel(f.properties.access)}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                searchResultsList.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const id = item.dataset.id;
+                        const feature = allFeatures.find(f => f.properties.id == id);
+                        if (feature) {
+                            const coords = feature.geometry.coordinates;
+                            map.flyTo({ center: coords, zoom: 16, essential: true });
+                            showBottomSheet(feature.properties);
+                            searchResultsList.style.display = 'none';
+                            searchInput.value = feature.properties.name || 'Piano';
+                        }
+                    });
+                });
+            }
+
+            searchResultsList.style.display = 'block';
+        });
+
+        searchClearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchResultsList.style.display = 'none';
+            searchClearBtn.style.display = 'none';
+        });
+
+        /* Action Buttons Handlers */
+        document.getElementById('btn-still-here').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.showPopup) {
+                window.Telegram.WebApp.showPopup({ message: "Thank you for confirming!" });
+            } else {
+                alert("Confirmed piano is still here!");
+            }
+        });
+
+        document.getElementById('btn-modify').addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.getElementById('btn-share').addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     </script>
 </body>
