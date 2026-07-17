@@ -1,6 +1,13 @@
-// webapp.js — Piano Map WebApp logic
-
 let isSearchFocused = false;
+let userCoords = null;
+let userMarker = null;
+let activePianoCoords = null;
+const markers = {};
+let markersOnScreen = {};
+let allFeatures = [];
+const loadingIndicator = document.getElementById('loading-indicator');
+
+const DATA_URL = "https://raw.githubusercontent.com/davixde/telegram-bot-vercel-python/refs/heads/master/world_pianos.json";
 
 if (window.Telegram && window.Telegram.WebApp) {
     const webapp = window.Telegram.WebApp;
@@ -17,15 +24,6 @@ if (window.Telegram && window.Telegram.WebApp) {
     webapp.setBackgroundColor('#111111');
 }
 
-let userCoords = null;
-let userMarker = null;
-const markers = {};
-let markersOnScreen = {};
-let allFeatures = [];
-const loadingIndicator = document.getElementById('loading-indicator');
-
-const DATA_URL = "https://raw.githubusercontent.com/davixde/telegram-bot-vercel-python/refs/heads/master/world_pianos.json";
-
 const map = new maplibregl.Map({
     container: 'map',
     style: 'https://tiles.openfreemap.org/styles/bright',
@@ -37,17 +35,12 @@ const map = new maplibregl.Map({
     attributionControl: true
 });
 
-// Blocca l'altezza di #app-root al valore iniziale del viewport.
-// Questo impedisce alla pagina di "saltare" quando appare la tastiera mobile,
-// che riduce window.innerHeight e causerebbe un resize del layout.
 const appRoot = document.getElementById('app-root');
 function lockAppHeight() {
     appRoot.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
 }
 lockAppHeight();
 
-// Usa visualViewport per il resize della mappa — non si trigghera con la tastiera.
-// window.resize invece si trigghera ogni volta che appare/scompare la tastiera.
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
         if (isSearchFocused) return;
@@ -58,7 +51,6 @@ if (window.visualViewport) {
         }
     });
 } else {
-    // Fallback per browser che non supportano visualViewport
     window.addEventListener('resize', () => {
         if (isSearchFocused) return;
         lockAppHeight();
@@ -80,9 +72,6 @@ if (window.Telegram && window.Telegram.WebApp) {
 }
 
 map.touchZoomRotate.disableRotation();
-
-// SVG icons are injected by the Django template into these global variables
-// (defined inline in webapp.html via {% include %})
 
 function getAccessColor(access) {
     switch(access) {
@@ -157,7 +146,8 @@ async function loadGlobalPianos() {
                         name: (el.tags && el.tags.name) || 'Piano',
                         access: (el.tags && el.tags.access) || 'unknown',
                         description: (el.tags && el.tags.description) || '',
-                        musical_instrument: (el.tags && el.tags.musical_instrument) || ''
+                        musical_instrument: (el.tags && el.tags.musical_instrument) || '',
+                        last_seen: (el.tags && el.tags.last_seen) || 'Unknown'
                     }
                 };
             });
@@ -223,7 +213,7 @@ function updateMarkers() {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
                     map.flyTo({ center: coords, zoom: 15, essential: true });
-                    showBottomSheet(props);
+                    showBottomSheet(props, coords);
                 });
 
                 marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
@@ -366,7 +356,7 @@ document.getElementById('locateBtn').addEventListener('click', () => {
     }
 });
 
-/* Bottom Sheet Gesture & State Engine */
+/* Bottom Sheet Control */
 const sheet = document.getElementById('bottom-sheet');
 const sheetContent = document.getElementById('sheet-content');
 const sheetDragZone = document.getElementById('sheetDragZone');
@@ -479,7 +469,9 @@ sheet.addEventListener('pointermove', handlePointerMove);
 sheet.addEventListener('pointerup', handlePointerUp);
 sheet.addEventListener('pointercancel', handlePointerUp);
 
-function showBottomSheet(props) {
+function showBottomSheet(props, coords) {
+    activePianoCoords = coords; 
+
     document.getElementById('sheet-title').innerText = props.name || 'Piano';
     
     const label = getInstrumentLabel(props.musical_instrument);
@@ -495,11 +487,16 @@ function showBottomSheet(props) {
     document.getElementById('info-access').innerText = getAccessLabel(props.access);
     document.getElementById('info-desc').innerText = props.description || 'No description provided.';
     document.getElementById('info-type').innerText = label;
+    
+    const lastSeenEl = document.getElementById('info-last-seen');
+    if (lastSeenEl) {
+        lastSeenEl.innerText = props.last_seen || 'Unknown';
+    }
 
     snapTo('peek'); 
 }
 
-/* Search Input & Persistent Suggestions Engine */
+/* Search Engine */
 const searchInput = document.getElementById('search-input');
 const searchResultsList = document.getElementById('searchResultsList');
 const searchClearBtn = document.getElementById('search-clear-btn');
@@ -547,14 +544,12 @@ function selectPianoById(id) {
     const feature = allFeatures.find(f => f.properties.id == id);
     if (feature) {
         const coords = feature.geometry.coordinates;
-        // Blur the input first to start dismissing the mobile keyboard
         searchInput.blur();
         searchResultsList.style.display = 'none';
         searchInput.value = feature.properties.name || 'Piano';
         
-        // Keep the zoom and bottom sheet actions consistent with marker clicks
         map.flyTo({ center: coords, zoom: 15, essential: true });
-        showBottomSheet(feature.properties);
+        showBottomSheet(feature.properties, coords);
     }
 }
 
@@ -571,7 +566,6 @@ searchInput.addEventListener('blur', () => {
         if (document.activeElement !== searchInput) {
             tabBar.style.transform = 'translateY(0)';
             tabBar.style.opacity = '1';
-            // Ripristina resize mappa dopo che la tastiera è sparita
             map.resize();
         }
     }, 150);
@@ -604,7 +598,7 @@ searchClearBtn.addEventListener('click', () => {
     searchInput.focus();
 });
 
-/* Tab Switch Management */
+/* Tabs */
 const tabs = document.querySelectorAll('.tab-item');
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -614,14 +608,71 @@ tabs.forEach(tab => {
     });
 });
 
-/* Action Buttons Handlers */
+/* Haversine distance calculator (meters) */
+function calculateDistance(coords1, coords2) {
+    const [lon1, lat1] = coords1;
+    const [lon2, lat2] = coords2;
+    const R = 6371e3; 
+    const phi1 = lat1 * Math.PI / 180;
+    const phi2 = lat2 * Math.PI / 180;
+    const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+    const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+}
+
+function showNotification(msg) {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.showPopup) {
+        window.Telegram.WebApp.showPopup({ message: msg });
+    } else {
+        alert(msg);
+    }
+}
+
+/* Action Handlers */
 document.getElementById('btn-still-here').addEventListener('click', (e) => {
     e.stopPropagation();
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.showPopup) {
-        window.Telegram.WebApp.showPopup({ message: "Thank you for confirming!" });
-    } else {
-        alert("Confirmed piano is still here!");
+
+    if (!activePianoCoords) return;
+
+    if (!navigator.geolocation) {
+        showNotification("Geolocation is not supported by your browser.");
+        return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            userCoords = [lng, lat];
+            updateUserMarker(lat, lng);
+
+            const distance = calculateDistance(userCoords, activePianoCoords);
+            const MAX_DISTANCE = 150; 
+
+            if (distance <= MAX_DISTANCE) {
+                const lastSeenEl = document.getElementById('info-last-seen');
+                if (lastSeenEl) {
+                    lastSeenEl.innerText = "Just now (Confirmed)";
+                }
+                
+                showNotification("Thank you for confirming!");
+                
+                // TODO: Send backend API update request here
+            } else {
+                showNotification("You are too far away from this piano to confirm its presence.");
+            }
+        },
+        (error) => {
+            showNotification("Unable to retrieve your current location. Please check your GPS settings.");
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+    );
 });
 
 document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
