@@ -37,13 +37,37 @@ const map = new maplibregl.Map({
     attributionControl: true
 });
 
-window.addEventListener('resize', () => {
-    if (isSearchFocused) return;
-    map.resize();
-    if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
-        snapTo(sheetState);
-    }
-});
+// Blocca l'altezza di #app-root al valore iniziale del viewport.
+// Questo impedisce alla pagina di "saltare" quando appare la tastiera mobile,
+// che riduce window.innerHeight e causerebbe un resize del layout.
+const appRoot = document.getElementById('app-root');
+function lockAppHeight() {
+    appRoot.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
+}
+lockAppHeight();
+
+// Usa visualViewport per il resize della mappa — non si trigghera con la tastiera.
+// window.resize invece si trigghera ogni volta che appare/scompare la tastiera.
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        if (isSearchFocused) return;
+        lockAppHeight();
+        map.resize();
+        if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+            snapTo(sheetState);
+        }
+    });
+} else {
+    // Fallback per browser che non supportano visualViewport
+    window.addEventListener('resize', () => {
+        if (isSearchFocused) return;
+        lockAppHeight();
+        map.resize();
+        if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+            snapTo(sheetState);
+        }
+    });
+}
 
 if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.onEvent('viewportChanged', () => {
