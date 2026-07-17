@@ -114,10 +114,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Vercel docs: con WHITENOISE_USE_FINDERS=True, STATIC_ROOT non è richiesto.
-# Vercel raccoglie i file statici direttamente dalle cartelle <app>/static/.
-# In produzione sono serviti dalla Vercel CDN.
+# Vercel esegue collectstatic automaticamente in STATIC_ROOT durante il build.
+# Con WHITENOISE_USE_FINDERS=True trova i file dalle cartelle <app>/static/.
+# CompressedManifestStaticFilesStorage richiede STATIC_ROOT per leggere il manifest.
+# In produzione i file sono serviti dalla Vercel CDN.
 # In locale (vercel dev) WhiteNoise li serve direttamente.
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_USE_FINDERS = True
