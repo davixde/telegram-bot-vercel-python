@@ -114,12 +114,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = []
 
-# WhiteNoise: serve static files direttamente da Django (necessario su Vercel serverless)
-# WHITENOISE_USE_FINDERS=True permette di trovare i file senza dover eseguire collectstatic
+# Vercel docs: con WHITENOISE_USE_FINDERS=True, STATIC_ROOT non è richiesto.
+# Vercel raccoglie i file statici direttamente dalle cartelle <app>/static/.
+# In produzione sono serviti dalla Vercel CDN.
+# In locale (vercel dev) WhiteNoise li serve direttamente.
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
