@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-07-02T16:51:45Z",
+    "timestamp_osm_base": "2026-06-12T12:14:17Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -305,6 +305,17 @@
   "id": 4231719224,
   "lat": 46.2000846,
   "lon": 5.2149189,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "operator": "SNCF"
+  }
+},
+{
+  "type": "node",
+  "id": 4231719225,
+  "lat": 47.2470649,
+  "lon": 6.0220432,
   "tags": {
     "access": "yes",
     "amenity": "piano",
@@ -3828,70 +3839,6 @@
     "amenity": "piano",
     "location": "indoor",
     "musical_instrument": "piano"
-  }
-},
-{
-  "type": "node",
-  "id": 13937585997,
-  "lat": 35.1529672,
-  "lon": 140.3129866,
-  "tags": {
-    "amenity": "piano"
-  }
-},
-{
-  "type": "node",
-  "id": 13939127603,
-  "lat": 41.9784180,
-  "lon": -87.9102291,
-  "tags": {
-    "amenity": "piano",
-    "check_date": "2026-06-14"
-  }
-},
-{
-  "type": "node",
-  "id": 13946360881,
-  "lat": -33.8436307,
-  "lon": 151.1939868,
-  "tags": {
-    "access": "yes",
-    "amenity": "piano",
-    "covered": "yes",
-    "lit": "yes"
-  }
-},
-{
-  "type": "node",
-  "id": 13956271670,
-  "lat": 30.2249786,
-  "lon": 120.0273119,
-  "tags": {
-    "access": "permissive",
-    "amenity": "piano",
-    "musical_instrument": "piano"
-  }
-},
-{
-  "type": "node",
-  "id": 13956271671,
-  "lat": 30.2251111,
-  "lon": 120.0273085,
-  "tags": {
-    "access": "permissive",
-    "amenity": "piano",
-    "musical_instrument": "piano"
-  }
-},
-{
-  "type": "node",
-  "id": 13978366540,
-  "lat": 42.6661809,
-  "lon": 2.9177714,
-  "tags": {
-    "amenity": "piano",
-    "check_date": "2026-06-30",
-    "location": "sous les escaliers centraux de droite"
   }
 },
 {
