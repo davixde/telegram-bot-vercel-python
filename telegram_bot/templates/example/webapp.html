@@ -127,6 +127,7 @@
 
     {# SVG icons injected as JS globals — needed before webapp.js loads #}
     <script>
+        window.styleJsonUrl = "{% static 'example/style.json' %}";
         window.pianoSvg = `{% include "example/assets/piano-svgrepo-com-5.svg" %}`;
         window.organSvg = `{% include "example/assets/pipe_organ.svg" %}`;
         window.markerSvg = `{% include "example/assets/marker.svg" %}`;
