@@ -36,7 +36,7 @@ jobs:
             curl -X POST -H "User-Agent: osm-piano-telegram" \
               --max-time 300 \
               -d '[out:json][timeout:300];(node["amenity"="piano"];way["amenity"="piano"];relation["amenity"="piano"];);out center;' \
-              https://overpass.private.coffee/api/interpreter > temp_world_pianos.json
+              https://overpass-api.de/api/interpreter > temp_world_pianos.json
             
             if ! jq -e '.elements' temp_world_pianos.json >/dev/null 2>&1; then
               echo "Attempt $i failed: Invalid JSON structure. Retrying..."
@@ -71,4 +71,3 @@ jobs:
           git add world_pianos.json
           git commit -m "data: update world_pianos.json (${{ steps.date.outputs.today }})" || exit 0
           git push
-
