@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-07-02T16:51:45Z",
+    "timestamp_osm_base": "2026-07-20T21:14:06Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -108,9 +108,9 @@
   "lat": 51.8195785,
   "lon": 8.4443816,
   "tags": {
-    "access": "yes",
+    "access": "customers",
     "amenity": "piano",
-    "musical_instrument": "piano",
+    "musical_instrument": "pipe_organ",
     "name": "Musikzimmer",
     "note": "Europas größte spielbare Freiluft-Orgel",
     "tourism": "attraction",
@@ -403,13 +403,14 @@
 {
   "type": "node",
   "id": 4231719235,
-  "lat": 48.5854801,
-  "lon": 7.7350289,
+  "lat": 48.5855120,
+  "lon": 7.7350546,
   "tags": {
+    "access": "yes",
     "amenity": "piano",
     "level": "0",
     "musical_instrument": "piano",
-    "operator": "SNCF"
+    "operator": "SNCF Gares & Connexions"
   }
 },
 {
@@ -2984,12 +2985,11 @@
 {
   "type": "node",
   "id": 12691468225,
-  "lat": 37.4696994,
-  "lon": 15.0664612,
+  "lat": 37.4697216,
+  "lon": 15.0664255,
   "tags": {
     "access": "yes",
     "amenity": "piano",
-    "check_date": "2025-03-22",
     "musical_instrument": "piano"
   }
 },
@@ -3391,15 +3391,6 @@
     "amenity": "piano",
     "level": "1",
     "musical_instrument": "piano"
-  }
-},
-{
-  "type": "node",
-  "id": 13290433163,
-  "lat": 37.4697658,
-  "lon": 15.0663850,
-  "tags": {
-    "amenity": "piano"
   }
 },
 {
@@ -3892,6 +3883,134 @@
     "amenity": "piano",
     "check_date": "2026-06-30",
     "location": "sous les escaliers centraux de droite"
+  }
+},
+{
+  "type": "node",
+  "id": 13989082637,
+  "lat": 40.7419736,
+  "lon": -74.0103173,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2026-07-03",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 13991690971,
+  "lat": 35.9568702,
+  "lon": 139.3937730,
+  "tags": {
+    "amenity": "piano",
+    "image": "https://www.city.sakado.lg.jp/uploaded/image/11553.JPG",
+    "location": "坂戸駅南北自由通路",
+    "musical": "instrument=piano",
+    "opening_hours": "10:00-20:00",
+    "website": "https://www.city.sakado.lg.jp/soshiki/15/33648.html"
+  }
+},
+{
+  "type": "node",
+  "id": 13997453601,
+  "lat": 24.9547432,
+  "lon": 121.3549943,
+  "tags": {
+    "amenity": "piano",
+    "building:levels": "1",
+    "name": "鶯歌車站藝文鋼琴區"
+  }
+},
+{
+  "type": "node",
+  "id": 14001938435,
+  "lat": 35.9060796,
+  "lon": 139.6222005,
+  "tags": {
+    "access": "permissive",
+    "amenity": "piano",
+    "check_date": "2026-07-10",
+    "location": "アルシェ大宮　ソフマップ入口横",
+    "musical_instrument": "piano",
+    "opening_hours": "10:00-18:00",
+    "website": "https://www.arche.ne.jp/news/1374"
+  }
+},
+{
+  "type": "node",
+  "id": 14003993352,
+  "lat": 56.5048621,
+  "lon": 20.9933031,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14004378890,
+  "lat": 45.9397162,
+  "lon": 11.2692329,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 14011243080,
+  "lat": 45.8290617,
+  "lon": 6.9500039,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "indoor": "yes",
+    "musical_instrument": "piano",
+    "operator": "Skyway Monte Bianco"
+  }
+},
+{
+  "type": "node",
+  "id": 14011336351,
+  "lat": 45.4076783,
+  "lon": 11.8771542,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "description:it": "Pianoforte a coda Yamaha a libero uso nella sala d’accoglienza",
+    "indoor": "yes",
+    "level": "0",
+    "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14014917814,
+  "lat": 43.1089553,
+  "lon": -71.4775657,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14014917815,
+  "lat": 43.1108127,
+  "lon": -71.4755276,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14015032645,
+  "lat": 45.4175770,
+  "lon": 11.8800132,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "musical_instrument": "grand_piano"
   }
 },
 {
