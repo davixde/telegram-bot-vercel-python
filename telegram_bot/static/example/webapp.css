@@ -17,8 +17,7 @@ html, body {
     background: #111;
 }
 
-/* Blocca il layout alla dimensione iniziale — impedisce il resize quando
-   appare la tastiera mobile (che riduce 100vh e fa saltare la pagina) */
+/* Blocks to initial layout size */
 #app-root {
     position: fixed;
     top: 0;
@@ -199,12 +198,8 @@ html, body {
 }
 
 .piano-marker {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    background-color: #28292ab5;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    width: 24px;
+    height: 34px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -212,9 +207,8 @@ html, body {
 }
 
 .piano-marker svg {
-    width: 16px;
-    height: 16px;
-    fill: #ffffff;
+    width: 24px;
+    height: 34px;
 }
 
 .custom-cluster-marker {

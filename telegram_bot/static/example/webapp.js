@@ -203,12 +203,11 @@ function updateMarkers() {
                 marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
             } else {
                 el.className = 'piano-marker';
-                el.style.borderColor = getAccessColor(props.access);
-                if (props.musical_instrument === 'pipe_organ') {
-                     el.innerHTML = window.organSvg;
-                } else {
-                     el.innerHTML = window.pianoSvg;
-                }                        
+                el.innerHTML = window.markerSvg;
+                const pathEl = el.querySelector('.Colored');
+                if (pathEl) {
+                    pathEl.setAttribute('fill', getAccessColor(props.access));
+                }
 
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -216,7 +215,7 @@ function updateMarkers() {
                     showBottomSheet(props, coords);
                 });
 
-                marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
+                marker = markers[id] = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords);
             }
         } else if (isCluster) {
             marker.getElement().innerText = props.point_count;
