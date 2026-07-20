@@ -26,7 +26,7 @@ jobs:
           SUCCESS=false
           
           if [ -f world_pianos.json ]; then
-            OLD_DATE=$(jq -r '.osm_base // ""' world_pianos.json)
+            OLD_DATE=$(jq -r '.osm3s.timestamp_osm_base // ""' world_pianos.json)
           else
             OLD_DATE=""
           fi
@@ -44,7 +44,7 @@ jobs:
               continue
             fi
             
-            NEW_DATE=$(jq -r '.osm_base // ""' temp_world_pianos.json)
+            NEW_DATE=$(jq -r '.osm3s.timestamp_osm_base // ""' temp_world_pianos.json)
             if [ ! -z "$OLD_DATE" ] && [ ! -z "$NEW_DATE" ]; then
               if [[ "$NEW_DATE" < "$OLD_DATE" ]]; then
                 echo "Attempt $i failed: Server returned outdated data ($NEW_DATE is older than $OLD_DATE). Retrying..."
@@ -71,3 +71,4 @@ jobs:
           git add world_pianos.json
           git commit -m "data: update world_pianos.json (${{ steps.date.outputs.today }})" || exit 0
           git push
+
