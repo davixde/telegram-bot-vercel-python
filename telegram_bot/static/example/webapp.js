@@ -26,7 +26,7 @@ if (window.Telegram && window.Telegram.WebApp) {
 
 const map = new maplibregl.Map({
     container: 'map',
-    style: 'https://tiles.openfreemap.org/styles/bright',
+    style: './style.json',
     center: [12.4964, 41.9028],
     zoom: 12,
     pitchWithRotate: true,
