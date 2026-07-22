@@ -153,24 +153,34 @@ async function loadGlobalPianos() {
                 };
             });
 
-
         allFeatures = features;
 
-        map.getSource('pianos').setData({
-            type: 'FeatureCollection',
-            features: features
-        });
+        if (map.getSource && map.getSource('pianos')) {
+            map.getSource('pianos').setData({
+                type: 'FeatureCollection',
+                features: features
+            });
+            updateMarkers();
+        }
 
-        loadingIndicator.style.display = 'none';
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
 
     } catch (e) {
-        loadingIndicator.innerText = "Error loading data.";
-        loadingIndicator.style.background = "#dc3545";
+        console.error("loadGlobalPianos error:", e);
+        if (loadingIndicator) {
+            loadingIndicator.innerText = "Error loading data.";
+            loadingIndicator.style.background = "#dc3545";
+        }
     }
 }
 
+// Fetch pianos immediately on load
+loadGlobalPianos();
+
 function updateMarkers() {
-    if (!map.getSource('pianos') || !map.isSourceLoaded('pianos')) return;
+    if (!map.getSource || !map.getSource('pianos') || !map.isSourceLoaded || !map.isSourceLoaded('pianos')) return;
 
     const newMarkers = {};
     const features = map.querySourceFeatures('pianos');
@@ -217,7 +227,6 @@ function updateMarkers() {
                     const fullFeature = allFeatures.find(f => f.properties.id === props.id);
                     showBottomSheet(fullFeature ? fullFeature.properties : props, coords);
                 });
-
 
                 marker = markers[id] = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords);
             }
@@ -317,7 +326,7 @@ map.on('load', () => {
 
     map.addSource('pianos', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
+        data: { type: 'FeatureCollection', features: allFeatures },
         cluster: true,
         clusterMaxZoom: 13,
         clusterRadius: 50
@@ -333,7 +342,14 @@ map.on('load', () => {
         }
     });
 
-    loadGlobalPianos();
+    if (allFeatures.length > 0 && map.getSource('pianos')) {
+        map.getSource('pianos').setData({
+            type: 'FeatureCollection',
+            features: allFeatures
+        });
+        updateMarkers();
+    }
+
     initLocation();
     startWatchingLocation();
 
@@ -347,9 +363,12 @@ map.on('load', () => {
     
     map.on('click', () => {
         snapTo('closed');
-        searchResultsList.style.display = 'none';
+        if (typeof searchResultsList !== 'undefined' && searchResultsList) {
+            searchResultsList.style.display = 'none';
+        }
     });
 });
+
 
 document.getElementById('locateBtn').addEventListener('click', () => {
     if (userCoords) {
