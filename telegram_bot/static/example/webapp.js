@@ -155,32 +155,21 @@ async function loadGlobalPianos() {
 
         allFeatures = features;
 
-        if (map.getSource && map.getSource('pianos')) {
-            map.getSource('pianos').setData({
-                type: 'FeatureCollection',
-                features: features
-            });
-            updateMarkers();
-        }
+        map.getSource('pianos').setData({
+            type: 'FeatureCollection',
+            features: features
+        });
 
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'none';
-        }
+        loadingIndicator.style.display = 'none';
 
     } catch (e) {
-        console.error("loadGlobalPianos error:", e);
-        if (loadingIndicator) {
-            loadingIndicator.innerText = "Error loading data.";
-            loadingIndicator.style.background = "#dc3545";
-        }
+        loadingIndicator.innerText = "Error loading data.";
+        loadingIndicator.style.background = "#dc3545";
     }
 }
 
-// Fetch pianos immediately on load
-loadGlobalPianos();
-
 function updateMarkers() {
-    if (!map.getSource || !map.getSource('pianos') || !map.isSourceLoaded || !map.isSourceLoaded('pianos')) return;
+    if (!map.getSource('pianos') || !map.isSourceLoaded('pianos')) return;
 
     const newMarkers = {};
     const features = map.querySourceFeatures('pianos');
@@ -245,6 +234,7 @@ function updateMarkers() {
     }
     markersOnScreen = newMarkers;
 }
+
 
 function initLocation() {
     let tgLocationRequested = false;
@@ -326,7 +316,7 @@ map.on('load', () => {
 
     map.addSource('pianos', {
         type: 'geojson',
-        data: { type: 'FeatureCollection', features: allFeatures },
+        data: { type: 'FeatureCollection', features: [] },
         cluster: true,
         clusterMaxZoom: 13,
         clusterRadius: 50
@@ -342,14 +332,7 @@ map.on('load', () => {
         }
     });
 
-    if (allFeatures.length > 0 && map.getSource('pianos')) {
-        map.getSource('pianos').setData({
-            type: 'FeatureCollection',
-            features: allFeatures
-        });
-        updateMarkers();
-    }
-
+    loadGlobalPianos();
     initLocation();
     startWatchingLocation();
 
@@ -363,12 +346,9 @@ map.on('load', () => {
     
     map.on('click', () => {
         snapTo('closed');
-        if (typeof searchResultsList !== 'undefined' && searchResultsList) {
-            searchResultsList.style.display = 'none';
-        }
+        searchResultsList.style.display = 'none';
     });
 });
-
 
 document.getElementById('locateBtn').addEventListener('click', () => {
     if (userCoords) {
@@ -521,7 +501,6 @@ function resolveDescription(tags, targetLang, translationEnabled) {
         sourceText = defaultDesc;
         sourceLang = 'auto';
     } else {
-        // Look for any description variant (e.g., description:fr)
         for (const key in tags) {
             if (key.startsWith('description:') || key.startsWith('description-') || key.startsWith('description_')) {
                 const parts = key.split(/[:\-_]/);
@@ -538,7 +517,6 @@ function resolveDescription(tags, targetLang, translationEnabled) {
         return { text: 'No description provided.', originalText: null, needsTranslation: false };
     }
 
-    // If translation is disabled or target language matches source language
     if (!translationEnabled || (sourceLang === targetLang)) {
         return { text: sourceText, originalText: null, needsTranslation: false };
     }
@@ -563,16 +541,17 @@ function setupDescriptionToggle(translatedText, originalText) {
 
     if (originalText && translatedText && originalText.trim().toLowerCase() !== translatedText.trim().toLowerCase()) {
         toggleBtn.style.display = 'inline-flex';
-        toggleBtn.querySelector('span').innerText = 'Translated - See original';
+        const spanEl = toggleBtn.querySelector('span');
+        if (spanEl) spanEl.innerText = 'Translated - See original';
         toggleBtn.onclick = (e) => {
             e.stopPropagation();
             if (isShowingOriginal) {
                 textEl.innerText = currentTranslationText;
-                toggleBtn.querySelector('span').innerText = 'Translated - See original';
+                if (spanEl) spanEl.innerText = 'Translated - See original';
                 isShowingOriginal = false;
             } else {
                 textEl.innerText = currentOriginalText;
-                toggleBtn.querySelector('span').innerText = 'See translation';
+                if (spanEl) spanEl.innerText = 'See translation';
                 isShowingOriginal = true;
             }
         };
@@ -706,97 +685,90 @@ function selectPianoById(id) {
     const feature = allFeatures.find(f => f.properties.id == id);
     if (feature) {
         const coords = feature.geometry.coordinates;
-        if (searchInput) searchInput.blur();
-        if (searchResultsList) searchResultsList.style.display = 'none';
-        if (searchInput) searchInput.value = feature.properties.name || 'Piano';
+        searchInput.blur();
+        searchResultsList.style.display = 'none';
+        searchInput.value = feature.properties.name || 'Piano';
         
         map.flyTo({ center: coords, zoom: 15, essential: true });
         showBottomSheet(feature.properties, coords);
     }
 }
 
-if (searchInput) {
-    searchInput.addEventListener('focus', () => {
-        isSearchFocused = true;
-        if (tabBar) {
-            tabBar.style.transform = 'translateY(100px)';
-            tabBar.style.opacity = '0';
+searchInput.addEventListener('focus', () => {
+    isSearchFocused = true;
+    tabBar.style.transform = 'translateY(100px)';
+    tabBar.style.opacity = '0';
+    performSearch(searchInput.value);
+});
+
+searchInput.addEventListener('blur', () => {
+    isSearchFocused = false;
+    setTimeout(() => {
+        if (document.activeElement !== searchInput) {
+            tabBar.style.transform = 'translateY(0)';
+            tabBar.style.opacity = '1';
+            map.resize();
         }
-        performSearch(searchInput.value);
-    });
+    }, 150);
+});
 
-    searchInput.addEventListener('blur', () => {
-        isSearchFocused = false;
-        setTimeout(() => {
-            if (document.activeElement !== searchInput) {
-                if (tabBar) {
-                    tabBar.style.transform = 'translateY(0)';
-                    tabBar.style.opacity = '1';
-                }
-                map.resize();
-            }
-        }, 150);
-    });
+searchInput.addEventListener('input', (e) => {
+    performSearch(e.target.value);
+});
 
-    searchInput.addEventListener('input', (e) => {
-        performSearch(e.target.value);
-    });
-
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const val = searchInput.value.toLowerCase().trim();
-            if (val) {
-                const matched = allFeatures.find(f => {
-                    const name = (f.properties.name || '').toLowerCase();
-                    const desc = (f.properties.description || '').toLowerCase();
-                    return name.includes(val) || desc.includes(val);
-                });
-                if (matched) {
-                    selectPianoById(matched.properties.id);
-                }
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const val = searchInput.value.toLowerCase().trim();
+        if (val) {
+            const matched = allFeatures.find(f => {
+                const name = (f.properties.name || '').toLowerCase();
+                const desc = (f.properties.description || '').toLowerCase();
+                return name.includes(val) || desc.includes(val);
+            });
+            if (matched) {
+                selectPianoById(matched.properties.id);
             }
         }
-    });
-}
+    }
+});
 
-if (searchClearBtn) {
-    searchClearBtn.addEventListener('click', () => {
-        if (searchInput) searchInput.value = '';
-        if (searchResultsList) searchResultsList.style.display = 'none';
-        searchClearBtn.style.display = 'none';
-        if (searchInput) searchInput.focus();
-    });
-}
+searchClearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchResultsList.style.display = 'none';
+    searchClearBtn.style.display = 'none';
+    searchInput.focus();
+});
 
-/* Settings Management */
-const langSelect = document.getElementById('settings-lang-select');
-const translateToggle = document.getElementById('settings-translate-toggle');
-const mapContainer = document.getElementById('map-container');
-const searchContainer = document.querySelector('.search-container');
-const settingsContainer = document.getElementById('settings-container');
+/* Tabs & Settings Management */
+document.addEventListener('DOMContentLoaded', () => {
+    const langSelect = document.getElementById('settings-lang-select');
+    const translateToggle = document.getElementById('settings-translate-toggle');
 
-if (langSelect) {
-    langSelect.value = localStorage.getItem('appLang') || 'en';
-    langSelect.addEventListener('change', (e) => {
-        localStorage.setItem('appLang', e.target.value);
-    });
-}
+    if (langSelect) {
+        langSelect.value = localStorage.getItem('appLang') || 'en';
+        langSelect.addEventListener('change', (e) => {
+            localStorage.setItem('appLang', e.target.value);
+        });
+    }
 
-if (translateToggle) {
-    const isEnabled = localStorage.getItem('translateEnabled') !== 'false';
-    translateToggle.checked = isEnabled;
-    translateToggle.addEventListener('change', (e) => {
-        localStorage.setItem('translateEnabled', e.target.checked ? 'true' : 'false');
-    });
-}
+    if (translateToggle) {
+        translateToggle.checked = localStorage.getItem('translateEnabled') !== 'false';
+        translateToggle.addEventListener('change', (e) => {
+            localStorage.setItem('translateEnabled', e.target.checked ? 'true' : 'false');
+        });
+    }
+});
 
-/* Tabs */
 const tabs = document.querySelectorAll('.tab-item');
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         snapTo('closed');
+
+        const mapContainer = document.getElementById('map-container');
+        const searchContainer = document.querySelector('.search-container');
+        const settingsContainer = document.getElementById('settings-container');
 
         if (tab.id === 'tab-settings') {
             if (mapContainer) mapContainer.style.display = 'none';
@@ -810,6 +782,7 @@ tabs.forEach(tab => {
         }
     });
 });
+
 
 /* Haversine distance calculator (meters) */
 function calculateDistance(coords1, coords2) {
@@ -838,49 +811,45 @@ function showNotification(msg) {
 }
 
 /* Action Handlers */
-const btnStillHere = document.getElementById('btn-still-here');
-if (btnStillHere) {
-    btnStillHere.addEventListener('click', (e) => {
-        e.stopPropagation();
+document.getElementById('btn-still-here').addEventListener('click', (e) => {
+    e.stopPropagation();
 
-        if (!activePianoCoords) return;
+    if (!activePianoCoords) return;
 
-        if (!navigator.geolocation) {
-            showNotification("Geolocation is not supported by your browser.");
-            return;
-        }
+    if (!navigator.geolocation) {
+        showNotification("Geolocation is not supported by your browser.");
+        return;
+    }
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                userCoords = [lng, lat];
-                updateUserMarker(lat, lng);
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            userCoords = [lng, lat];
+            updateUserMarker(lat, lng);
 
-                const distance = calculateDistance(userCoords, activePianoCoords);
-                const MAX_DISTANCE = 150; 
+            const distance = calculateDistance(userCoords, activePianoCoords);
+            const MAX_DISTANCE = 150; 
 
-                if (distance <= MAX_DISTANCE) {
-                    const lastSeenEl = document.getElementById('info-last-seen');
-                    if (lastSeenEl) {
-                        lastSeenEl.innerText = "Just now (Confirmed)";
-                    }
-                    
-                    showNotification("Thank you for confirming!");
-                } else {
-                    showNotification("You are too far away from this piano to confirm its presence.");
+            if (distance <= MAX_DISTANCE) {
+                const lastSeenEl = document.getElementById('info-last-seen');
+                if (lastSeenEl) {
+                    lastSeenEl.innerText = "Just now (Confirmed)";
                 }
-            },
-            (error) => {
-                showNotification("Unable to retrieve your current location. Please check your GPS settings.");
-            },
-            { enableHighAccuracy: true, timeout: 5000 }
-        );
-    });
-}
+                
+                showNotification("Thank you for confirming!");
+                
+                // TODO: Send backend API update request here
+            } else {
+                showNotification("You are too far away from this piano to confirm its presence.");
+            }
+        },
+        (error) => {
+            showNotification("Unable to retrieve your current location. Please check your GPS settings.");
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+    );
+});
 
-const btnModify = document.getElementById('btn-modify');
-if (btnModify) btnModify.addEventListener('click', (e) => { e.stopPropagation(); });
-
-const btnShare = document.getElementById('btn-share');
-if (btnShare) btnShare.addEventListener('click', (e) => { e.stopPropagation(); });
+document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
+document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPropagation(); });
