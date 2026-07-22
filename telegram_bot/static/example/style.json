@@ -29,10 +29,7 @@
       "source": "openmaptiles",
       "source-layer": "landcover",
       "filter": ["==", ["get", "subclass"], "glacier"],
-      "paint": {
-        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.9, 10, 0.3],
-        "fill-color": "#6F8DAF"
-      }
+      "paint": {"fill-opacity": 1, "fill-color": "#6F8DAF"}
     },
     {
       "id": "landuse-residential",
@@ -57,7 +54,7 @@
           "#42526B"
         ],
         "fill-antialias": false,
-        "fill-opacity": 0.5
+        "fill-opacity": 0.8
       }
     },
     {
@@ -167,7 +164,7 @@
       ],
       "layout": {"visibility": "visible"},
       "paint": {
-        "fill-color": "rgba(95, 247, 187, 1)",
+        "fill-color": "rgba(36, 197, 98, 0.22)",
         "fill-opacity": [
           "interpolate",
           ["exponential", 1.8],
@@ -177,10 +174,11 @@
           5,
           0.15,
           9,
-          0.5,
+          0.2,
           12,
-          0.2
-        ]
+          0.03
+        ],
+        "fill-antialias": false
       }
     },
     {
@@ -191,7 +189,7 @@
       "filter": ["==", ["get", "class"], "wood"],
       "paint": {
         "fill-antialias": ["step", ["zoom"], false, 9, true],
-        "fill-color": "#355C57",
+        "fill-color": "#255858",
         "fill-outline-color": "hsla(0,0%,0%,0.03)",
         "fill-opacity": 0.7
       }
@@ -202,7 +200,28 @@
       "source": "openmaptiles",
       "source-layer": "landcover",
       "filter": ["==", ["get", "class"], "grass"],
-      "paint": {"fill-color": "rgba(31, 83, 84, 1)", "fill-opacity": 1}
+      "paint": {
+        "fill-color": [
+          "interpolate",
+          ["exponential", 1.5],
+          ["zoom"],
+          10,
+          "#3D6B60",
+          16,
+          "#396355"
+        ],
+        "fill-opacity": [
+          "interpolate",
+          ["exponential", 1.5],
+          ["zoom"],
+          7,
+          0.6,
+          14,
+          1,
+          16,
+          0.7
+        ]
+      }
     },
     {
       "id": "landcover-grass-park",
@@ -288,6 +307,35 @@
           20,
           2
         ]
+      }
+    },
+    {
+      "id": "waterway-stream-canal-copy",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "waterway",
+      "filter": [
+        "all",
+        ["match", ["get", "class"], ["canal", "stream"], true, false],
+        ["!=", ["get", "brunnel"], "tunnel"],
+        ["==", ["get", "intermittent"], 0]
+      ],
+      "layout": {"line-cap": "round"},
+      "paint": {
+        "line-color": "rgba(28, 38, 94, 1)",
+        "line-width": [
+          "interpolate",
+          ["exponential", 1.3],
+          ["zoom"],
+          13,
+          0.5,
+          16,
+          5,
+          20,
+          10
+        ],
+        "line-opacity": 0.3,
+        "line-gap-width": 5
       }
     },
     {
@@ -406,7 +454,17 @@
         ["!=", ["get", "intermittent"], 1],
         ["!=", ["get", "brunnel"], "tunnel"]
       ],
-      "paint": {"fill-color": "rgba(28, 38, 94, 1)"}
+      "paint": {
+        "fill-color": [
+          "interpolate",
+          ["exponential", 1.5],
+          ["zoom"],
+          10,
+          "#27397F",
+          15,
+          "#253576"
+        ]
+      }
     },
     {
       "id": "water-intermittent",
@@ -433,7 +491,7 @@
       "source": "openmaptiles",
       "source-layer": "landcover",
       "filter": ["==", ["get", "class"], "sand"],
-      "paint": {"fill-color": "rgba(245, 238, 188, 1)", "fill-opacity": 1}
+      "paint": {"fill-color": "#6E7260", "fill-opacity": 1}
     },
     {
       "id": "building",
@@ -487,7 +545,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "#cfcdca",
+        "line-color": "rgba(77, 86, 103, 1)",
         "line-dasharray": [0.5, 0.25],
         "line-width": [
           "interpolate",
@@ -544,7 +602,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "rgba(89, 76, 49, 1)",
+        "line-color": "rgba(77, 86, 103, 1)",
         "line-dasharray": [0.5, 0.25],
         "line-opacity": ["interpolate", ["linear"], ["zoom"], 12, 0, 12.5, 1],
         "line-width": [
@@ -581,7 +639,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "#e9ac77",
+        "line-color": "rgba(41, 47, 53, 1)",
         "line-dasharray": [0.5, 0.25],
         "line-opacity": 1,
         "line-width": [
@@ -639,7 +697,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "#394357",
+        "line-color": "rgba(66, 77, 90, 1)",
         "line-width": [
           "interpolate",
           ["exponential", 1.2],
@@ -668,7 +726,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "rgba(121, 98, 41, 1)",
+        "line-color": "rgba(41, 47, 53, 1)",
         "line-dasharray": [0.5, 0.25],
         "line-width": [
           "interpolate",
@@ -683,6 +741,37 @@
           20,
           22
         ]
+      }
+    },
+    {
+      "id": "tunnel-path-copy",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "filter": [
+        "all",
+        [
+          "match",
+          ["geometry-type"],
+          ["LineString", "MultiLineString"],
+          true,
+          false
+        ],
+        ["==", ["get", "brunnel"], "tunnel"],
+        ["==", ["get", "class"], "path"]
+      ],
+      "paint": {
+        "line-color": "rgba(46, 48, 53, 0.7)",
+        "line-width": [
+          "interpolate",
+          ["exponential", 1.2],
+          ["zoom"],
+          15,
+          1.2,
+          20,
+          4
+        ],
+        "line-gap-width": 1
       }
     },
     {
@@ -757,7 +846,15 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "#fff",
+        "line-color": [
+          "interpolate",
+          ["exponential", 1.5],
+          ["zoom"],
+          14,
+          "#556073",
+          16,
+          "#2F343F"
+        ],
         "line-width": [
           "interpolate",
           ["exponential", 1.2],
@@ -768,7 +865,8 @@
           2,
           20,
           7.5
-        ]
+        ],
+        "line-opacity": 0.5
       }
     },
     {
@@ -790,7 +888,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "#fff4c6",
+        "line-color": "#394357",
         "line-width": [
           "interpolate",
           ["exponential", 1.2],
@@ -803,7 +901,8 @@
           2.5,
           20,
           11.5
-        ]
+        ],
+        "line-opacity": 0.8
       }
     },
     {
@@ -908,15 +1007,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": [
-          "interpolate",
-          ["exponential", 1.5],
-          ["zoom"],
-          14,
-          "#8695B4",
-          17,
-          "#2F343F"
-        ],
+        "line-color": "#394357",
         "line-width": [
           "interpolate",
           ["exponential", 1.2],
@@ -927,7 +1018,8 @@
           0.5,
           20,
           18
-        ]
+        ],
+        "line-opacity": 0.8
       }
     },
     {
@@ -1222,9 +1314,9 @@
           13,
           3,
           14,
-          4,
+          2.3,
           20,
-          28
+          26.5
         ]
       }
     },
@@ -1319,6 +1411,8 @@
           0.6,
           9,
           1.5,
+          18,
+          12.3,
           20,
           22
         ]
@@ -1779,7 +1873,7 @@
         ["has", "service"]
       ],
       "paint": {
-        "line-color": "hsla(0,0%,73%,0.77)",
+        "line-color": "rgba(105, 104, 115, 1)",
         "line-width": [
           "interpolate",
           ["exponential", 1.4],
@@ -1809,7 +1903,7 @@
         ["has", "service"]
       ],
       "paint": {
-        "line-color": "hsla(0,0%,73%,0.68)",
+        "line-color": "rgba(105, 104, 115, 1)",
         "line-dasharray": [0.2, 8],
         "line-width": [
           "interpolate",
@@ -1842,8 +1936,9 @@
         ["match", ["get", "brunnel"], ["bridge", "tunnel"], false, true],
         ["==", ["get", "class"], "rail"]
       ],
+      "layout": {"visibility": "visible"},
       "paint": {
-        "line-color": "#bbb",
+        "line-color": "rgba(133, 132, 144, 1)",
         "line-width": [
           "interpolate",
           ["exponential", 1.4],
@@ -1876,7 +1971,7 @@
         ["==", ["get", "class"], "rail"]
       ],
       "paint": {
-        "line-color": "#bbb",
+        "line-color": "rgba(133, 132, 144, 1)",
         "line-dasharray": [0.2, 8],
         "line-width": [
           "interpolate",
@@ -2000,7 +2095,7 @@
         ["match", ["get", "class"], ["primary", "trunk"], true, false],
         ["!=", ["get", "ramp"], 1]
       ],
-      "layout": {"line-join": "round"},
+      "layout": {"line-join": "round", "line-cap": "butt"},
       "paint": {
         "line-color": "rgba(66, 86, 111, 1)",
         "line-width": [
@@ -2316,7 +2411,7 @@
         ["match", ["get", "class"], ["primary", "trunk"], true, false],
         ["!=", ["get", "ramp"], 1]
       ],
-      "layout": {"line-join": "round"},
+      "layout": {"line-join": "round", "line-cap": "butt"},
       "paint": {
         "line-color": [
           "interpolate",
@@ -2376,6 +2471,33 @@
       }
     },
     {
+      "id": "bridge-railway-copy",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "transportation",
+      "filter": [
+        "all",
+        ["==", ["get", "brunnel"], "bridge"],
+        ["==", ["get", "class"], "rail"]
+      ],
+      "layout": {"visibility": "visible"},
+      "paint": {
+        "line-color": "rgba(53, 50, 70, 0.48)",
+        "line-width": [
+          "interpolate",
+          ["exponential", 1.4],
+          ["zoom"],
+          14,
+          0.4,
+          15,
+          0.75,
+          20,
+          4
+        ],
+        "line-gap-width": 1
+      }
+    },
+    {
       "id": "bridge-railway",
       "type": "line",
       "source": "openmaptiles",
@@ -2386,7 +2508,7 @@
         ["==", ["get", "class"], "rail"]
       ],
       "paint": {
-        "line-color": "#bbb",
+        "line-color": "rgba(133, 132, 144, 1)",
         "line-width": [
           "interpolate",
           ["exponential", 1.4],
@@ -2411,7 +2533,7 @@
         ["==", ["get", "class"], "rail"]
       ],
       "paint": {
-        "line-color": "#bbb",
+        "line-color": "rgba(133, 132, 144, 1)",
         "line-dasharray": [0.2, 8],
         "line-width": [
           "interpolate",
@@ -2504,19 +2626,71 @@
       }
     },
     {
-      "id": "boundary_disputed",
+      "id": "boundary_disputed-copy",
       "type": "line",
       "source": "openmaptiles",
       "source-layer": "boundary",
+      "minzoom": 10,
       "filter": [
         "all",
         ["!=", ["get", "maritime"], 1],
         ["==", ["get", "disputed"], 1]
       ],
       "paint": {
-        "line-color": "hsl(248,7%,66%)",
-        "line-dasharray": [1, 2],
-        "line-width": ["interpolate", ["linear"], ["zoom"], 3, 1, 5, 1.2, 12, 3]
+        "line-color": "rgba(123, 78, 78, 1)",
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          1,
+          5,
+          1.2,
+          10.8,
+          0,
+          12,
+          8
+        ],
+        "line-opacity": 0.2
+      }
+    },
+    {
+      "id": "boundary_disputed",
+      "type": "line",
+      "source": "openmaptiles",
+      "source-layer": "boundary",
+      "minzoom": 10,
+      "maxzoom": 24,
+      "filter": [
+        "all",
+        ["!=", ["get", "maritime"], 1],
+        ["==", ["get", "disputed"], 1]
+      ],
+      "layout": {"line-cap": "round"},
+      "paint": {
+        "line-color": "rgba(105, 37, 31, 1)",
+        "line-dasharray": [
+          "step",
+          ["zoom"],
+          ["literal", [1, 0]],
+          12.8,
+          ["literal", [4, 2, 4, 2, 1, 2]]
+        ],
+        "line-width": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          3,
+          0,
+          8,
+          0,
+          10.8,
+          0,
+          11.5,
+          0.1,
+          12,
+          3
+        ]
       }
     },
     {
@@ -2658,20 +2832,20 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Italic"],
-        "text-letter-spacing": 0,
-        "text-max-width": 5,
+        "text-font": ["Noto Sans Bold"],
+        "text-letter-spacing": 0.08,
         "text-size": ["interpolate", ["linear"], ["zoom"], 0, 10, 8, 14],
         "icon-text-fit": "none",
         "text-padding": 2,
         "text-justify": "center",
         "text-anchor": "center",
-        "text-transform": "none"
+        "text-transform": "none",
+        "text-max-width": 5
       },
       "paint": {
-        "text-color": "#4775B9",
-        "text-halo-color": "rgba(14, 28, 72, 1)",
-        "text-halo-width": 0.7
+        "text-color": "#4F70AA",
+        "text-halo-color": "rgba(85, 108, 201, 1)",
+        "text-halo-width": 0.2
       }
     },
     {
@@ -2865,7 +3039,7 @@
         "text-halo-color": "rgba(49, 69, 86, 1)",
         "text-halo-blur": 0,
         "text-halo-width": 0.7,
-        "text-opacity": 1
+        "text-opacity": 0
       }
     },
     {
@@ -3175,7 +3349,7 @@
       "paint": {
         "text-color": "rgba(216, 211, 211, 1)",
         "text-halo-blur": 1,
-        "text-halo-color": "rgba(74, 74, 74, 1)",
+        "text-halo-color": "rgba(57, 56, 56, 1)",
         "text-halo-width": 1
       }
     },
@@ -3193,10 +3367,27 @@
         "icon-size": 0.2,
         "text-anchor": "bottom",
         "text-field": [
-          "case",
-          ["has", "name:nonlatin"],
-          ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
-          ["coalesce", ["get", "name_en"], ["get", "name"]]
+          "step",
+          ["zoom"],
+          [
+            "case",
+            ["has", "name:nonlatin"],
+            [
+              "concat",
+              ["get", "name:latin"],
+              "\n",
+              ["get", "name:nonlatin"],
+              "\n○"
+            ],
+            ["concat", ["coalesce", ["get", "name_en"], ["get", "name"]], "\n○"]
+          ],
+          10,
+          [
+            "case",
+            ["has", "name:nonlatin"],
+            ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
+            ["coalesce", ["get", "name_en"], ["get", "name"]]
+          ]
         ],
         "text-font": ["Noto Sans Bold"],
         "text-size": [
@@ -3211,10 +3402,11 @@
         "text-transform": "none",
         "text-letter-spacing": 0,
         "text-keep-upright": false,
-        "text-max-width": 8
+        "text-max-width": 8,
+        "text-line-height": 1
       },
       "paint": {
-        "text-color": "rgba(255, 255, 255, 1)",
+        "text-color": "rgba(226, 218, 218, 1)",
         "text-halo-color": "rgba(53, 53, 53, 1)",
         "text-halo-blur": 0,
         "text-halo-width": 0.9
@@ -3265,16 +3457,27 @@
         "icon-size": 0.4,
         "text-anchor": "bottom",
         "text-field": [
-          "case",
-          ["has", "name:nonlatin"],
+          "step",
+          ["zoom"],
           [
-            "concat",
-            ["get", "name:latin"],
-            "\n",
-            ["get", "name:nonlatin"],
-            "\n●"
+            "case",
+            ["has", "name:nonlatin"],
+            [
+              "concat",
+              ["get", "name:latin"],
+              "\n",
+              ["get", "name:nonlatin"],
+              "\n⊙"
+            ],
+            ["concat", ["coalesce", ["get", "name_en"], ["get", "name"]], "\n⊙"]
           ],
-          ["concat", ["coalesce", ["get", "name_en"], ["get", "name"]], "\n●"]
+          10,
+          [
+            "case",
+            ["has", "name:nonlatin"],
+            ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
+            ["coalesce", ["get", "name_en"], ["get", "name"]]
+          ]
         ],
         "text-font": ["Noto Sans Bold"],
         "text-max-width": 8,
@@ -3288,8 +3491,9 @@
           7,
           13,
           11,
-          18
-        ]
+          24
+        ],
+        "text-line-height": 1
       },
       "paint": {
         "text-color": "rgba(255, 255, 255, 1)",
@@ -3316,16 +3520,27 @@
         "icon-size": 0.5,
         "text-anchor": "bottom",
         "text-field": [
-          "case",
-          ["has", "name:nonlatin"],
+          "step",
+          ["zoom"],
           [
-            "concat",
-            ["get", "name:latin"],
-            "\n",
-            ["get", "name:nonlatin"],
-            "\n⊙"
+            "case",
+            ["has", "name:nonlatin"],
+            [
+              "concat",
+              ["get", "name:latin"],
+              "\n",
+              ["get", "name:nonlatin"],
+              "\n⦿"
+            ],
+            ["concat", ["coalesce", ["get", "name_en"], ["get", "name"]], "\n⦿"]
           ],
-          ["concat", ["coalesce", ["get", "name_en"], ["get", "name"]], "\n⊙"]
+          10,
+          [
+            "case",
+            ["has", "name:nonlatin"],
+            ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
+            ["coalesce", ["get", "name_en"], ["get", "name"]]
+          ]
         ],
         "text-font": ["Noto Sans Bold"],
         "text-max-width": 8,
@@ -3340,7 +3555,8 @@
           14,
           11,
           20
-        ]
+        ],
+        "text-line-height": 1
       },
       "paint": {
         "text-color": "rgba(255, 255, 255, 1)",
@@ -3377,7 +3593,7 @@
       },
       "paint": {
         "text-color": "#C1B0B9",
-        "text-halo-color": "rgba(78, 78, 78, 1)",
+        "text-halo-color": "rgba(41, 38, 41, 1)",
         "text-halo-blur": 0,
         "text-halo-width": 1
       }
@@ -3407,7 +3623,7 @@
       },
       "paint": {
         "text-color": "#C1B0B9",
-        "text-halo-color": "rgba(78, 78, 78, 1)",
+        "text-halo-color": "rgba(88, 78, 88, 1)",
         "text-halo-blur": 0,
         "text-halo-width": 1
       }
@@ -3437,7 +3653,7 @@
       },
       "paint": {
         "text-color": "#C1B0B9",
-        "text-halo-color": "rgba(78, 78, 78, 1)",
+        "text-halo-color": "rgba(41, 38, 41, 1)",
         "text-halo-blur": 0,
         "text-halo-width": 1
       }
