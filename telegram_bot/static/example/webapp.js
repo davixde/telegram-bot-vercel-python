@@ -687,59 +687,67 @@ function selectPianoById(id) {
     const feature = allFeatures.find(f => f.properties.id == id);
     if (feature) {
         const coords = feature.geometry.coordinates;
-        searchInput.blur();
-        searchResultsList.style.display = 'none';
-        searchInput.value = feature.properties.name || 'Piano';
+        if (searchInput) searchInput.blur();
+        if (searchResultsList) searchResultsList.style.display = 'none';
+        if (searchInput) searchInput.value = feature.properties.name || 'Piano';
         
         map.flyTo({ center: coords, zoom: 15, essential: true });
         showBottomSheet(feature.properties, coords);
     }
 }
 
-searchInput.addEventListener('focus', () => {
-    isSearchFocused = true;
-    tabBar.style.transform = 'translateY(100px)';
-    tabBar.style.opacity = '0';
-    performSearch(searchInput.value);
-});
-
-searchInput.addEventListener('blur', () => {
-    isSearchFocused = false;
-    setTimeout(() => {
-        if (document.activeElement !== searchInput) {
-            tabBar.style.transform = 'translateY(0)';
-            tabBar.style.opacity = '1';
-            map.resize();
+if (searchInput) {
+    searchInput.addEventListener('focus', () => {
+        isSearchFocused = true;
+        if (tabBar) {
+            tabBar.style.transform = 'translateY(100px)';
+            tabBar.style.opacity = '0';
         }
-    }, 150);
-});
+        performSearch(searchInput.value);
+    });
 
-searchInput.addEventListener('input', (e) => {
-    performSearch(e.target.value);
-});
+    searchInput.addEventListener('blur', () => {
+        isSearchFocused = false;
+        setTimeout(() => {
+            if (document.activeElement !== searchInput) {
+                if (tabBar) {
+                    tabBar.style.transform = 'translateY(0)';
+                    tabBar.style.opacity = '1';
+                }
+                map.resize();
+            }
+        }, 150);
+    });
 
-searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        const val = searchInput.value.toLowerCase().trim();
-        if (val) {
-            const matched = allFeatures.find(f => {
-                const name = (f.properties.name || '').toLowerCase();
-                const desc = (f.properties.description || '').toLowerCase();
-                return name.includes(val) || desc.includes(val);
-            });
-            if (matched) {
-                selectPianoById(matched.properties.id);
+    searchInput.addEventListener('input', (e) => {
+        performSearch(e.target.value);
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const val = searchInput.value.toLowerCase().trim();
+            if (val) {
+                const matched = allFeatures.find(f => {
+                    const name = (f.properties.name || '').toLowerCase();
+                    const desc = (f.properties.description || '').toLowerCase();
+                    return name.includes(val) || desc.includes(val);
+                });
+                if (matched) {
+                    selectPianoById(matched.properties.id);
+                }
             }
         }
-    }
-});
+    });
+}
 
-searchClearBtn.addEventListener('click', () => {
-    searchInput.value = '';
-    searchResultsList.style.display = 'none';
-    searchClearBtn.style.display = 'none';
-    searchInput.focus();
-});
+if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        if (searchResultsList) searchResultsList.style.display = 'none';
+        searchClearBtn.style.display = 'none';
+        if (searchInput) searchInput.focus();
+    });
+}
 
 /* Settings Management */
 const langSelect = document.getElementById('settings-lang-select');
@@ -772,18 +780,17 @@ tabs.forEach(tab => {
         snapTo('closed');
 
         if (tab.id === 'tab-settings') {
-            mapContainer.style.display = 'none';
-            searchContainer.style.display = 'none';
+            if (mapContainer) mapContainer.style.display = 'none';
+            if (searchContainer) searchContainer.style.display = 'none';
             if (settingsContainer) settingsContainer.style.display = 'flex';
         } else {
-            mapContainer.style.display = 'block';
-            searchContainer.style.display = 'block';
+            if (mapContainer) mapContainer.style.display = 'block';
+            if (searchContainer) searchContainer.style.display = 'block';
             if (settingsContainer) settingsContainer.style.display = 'none';
             setTimeout(() => { map.resize(); }, 50);
         }
     });
 });
-
 
 /* Haversine distance calculator (meters) */
 function calculateDistance(coords1, coords2) {
@@ -812,45 +819,49 @@ function showNotification(msg) {
 }
 
 /* Action Handlers */
-document.getElementById('btn-still-here').addEventListener('click', (e) => {
-    e.stopPropagation();
+const btnStillHere = document.getElementById('btn-still-here');
+if (btnStillHere) {
+    btnStillHere.addEventListener('click', (e) => {
+        e.stopPropagation();
 
-    if (!activePianoCoords) return;
+        if (!activePianoCoords) return;
 
-    if (!navigator.geolocation) {
-        showNotification("Geolocation is not supported by your browser.");
-        return;
-    }
+        if (!navigator.geolocation) {
+            showNotification("Geolocation is not supported by your browser.");
+            return;
+        }
 
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            userCoords = [lng, lat];
-            updateUserMarker(lat, lng);
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                userCoords = [lng, lat];
+                updateUserMarker(lat, lng);
 
-            const distance = calculateDistance(userCoords, activePianoCoords);
-            const MAX_DISTANCE = 150; 
+                const distance = calculateDistance(userCoords, activePianoCoords);
+                const MAX_DISTANCE = 150; 
 
-            if (distance <= MAX_DISTANCE) {
-                const lastSeenEl = document.getElementById('info-last-seen');
-                if (lastSeenEl) {
-                    lastSeenEl.innerText = "Just now (Confirmed)";
+                if (distance <= MAX_DISTANCE) {
+                    const lastSeenEl = document.getElementById('info-last-seen');
+                    if (lastSeenEl) {
+                        lastSeenEl.innerText = "Just now (Confirmed)";
+                    }
+                    
+                    showNotification("Thank you for confirming!");
+                } else {
+                    showNotification("You are too far away from this piano to confirm its presence.");
                 }
-                
-                showNotification("Thank you for confirming!");
-                
-                // TODO: Send backend API update request here
-            } else {
-                showNotification("You are too far away from this piano to confirm its presence.");
-            }
-        },
-        (error) => {
-            showNotification("Unable to retrieve your current location. Please check your GPS settings.");
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-    );
-});
+            },
+            (error) => {
+                showNotification("Unable to retrieve your current location. Please check your GPS settings.");
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    });
+}
 
-document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
-document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPropagation(); });
+const btnModify = document.getElementById('btn-modify');
+if (btnModify) btnModify.addEventListener('click', (e) => { e.stopPropagation(); });
+
+const btnShare = document.getElementById('btn-share');
+if (btnShare) btnShare.addEventListener('click', (e) => { e.stopPropagation(); });
