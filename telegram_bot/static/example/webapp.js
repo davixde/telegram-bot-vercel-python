@@ -27,55 +27,69 @@ if (window.Telegram && window.Telegram.WebApp) {
     console.log("Telegram WebApp ready");
 }
 
-const map = new maplibregl.Map({
-    container: 'map',
-    style: window.styleJsonUrl || "/static/example/style.json",
-    center: [12.4964, 41.9028],
-    zoom: 12,
-    pitchWithRotate: true,
-    dragRotate: true,
-    touchZoomRotate: true,
-    attributionControl: true
-});
+let map;
 
-map.on('load', () => {
-    map.resize();
+function initMap() {
+    if (typeof maplibregl === 'undefined') {
+        console.log("⏳ Waiting for maplibregl script...");
+        setTimeout(initMap, 50);
+        return;
+    }
 
-    map.addSource('pianos', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-        cluster: true,
-        clusterMaxZoom: 13,
-        clusterRadius: 50
+    map = new maplibregl.Map({
+        container: 'map',
+        style: window.styleJsonUrl || "/static/example/style.json",
+        center: [12.4964, 41.9028],
+        zoom: 12,
+        pitchWithRotate: true,
+        dragRotate: true,
+        touchZoomRotate: true,
+        attributionControl: true
     });
 
-    map.addLayer({
-        id: 'pianos-invisible-layer',
-        type: 'circle',
-        source: 'pianos',
-        paint: {
-            'circle-opacity': 0,
-            'circle-radius': 12
-        }
-    });
+    map.touchZoomRotate.disableRotation();
 
-    loadGlobalPianos();
-    initLocation();
-    startWatchingLocation();
+    map.on('load', () => {
+        map.resize();
 
-    map.on('data', (e) => {
-        if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
-        updateMarkers();
-    });
+        map.addSource('pianos', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+            cluster: true,
+            clusterMaxZoom: 13,
+            clusterRadius: 50
+        });
 
-    map.on('move', updateMarkers);
-    map.on('moveend', updateMarkers);
-    
-    map.on('click', () => {
-        snapTo('closed');
-        searchResultsList.style.display = 'none';
+        map.addLayer({
+            id: 'pianos-invisible-layer',
+            type: 'circle',
+            source: 'pianos',
+            paint: {
+                'circle-opacity': 0,
+                'circle-radius': 12
+            }
+        });
+
+        loadGlobalPianos();
+        initLocation();
+        startWatchingLocation();
+
+        map.on('data', (e) => {
+            if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
+            updateMarkers();
+        });
+
+        map.on('move', updateMarkers);
+        map.on('moveend', updateMarkers);
+        
+        map.on('click', () => {
+            snapTo('closed');
+            searchResultsList.style.display = 'none';
+        });
     });
-});
+}
+
+initMap();
 
 const appRoot = document.getElementById('app-root');
 function lockAppHeight() {
@@ -87,7 +101,7 @@ if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
         if (isSearchFocused) return;
         lockAppHeight();
-        map.resize();
+        if (map) map.resize();
         if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
             snapTo(sheetState);
         }
@@ -96,7 +110,7 @@ if (window.visualViewport) {
     window.addEventListener('resize', () => {
         if (isSearchFocused) return;
         lockAppHeight();
-        map.resize();
+        if (map) map.resize();
         if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
             snapTo(sheetState);
         }
@@ -106,14 +120,12 @@ if (window.visualViewport) {
 if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.onEvent('viewportChanged', () => {
         if (isSearchFocused) return;
-        map.resize();
+        if (map) map.resize();
         if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
             snapTo(sheetState);
         }
     });
 }
-
-map.touchZoomRotate.disableRotation();
 
 function getAccessColor(access) {
     switch(access) {
