@@ -57,33 +57,50 @@ def translate_text(request):
         if not text:
             return JsonResponse({'translatedText': ''})
 
-        libretranslate_url = getenv("LIBRETRANSLATE_URL", "http://localhost:5000/translate")
+        libretranslate_url = getenv("LIBRETRANSLATE_URL", "")
 
-        payload = json.dumps({
-            'q': text,
-            'source': 'auto',
-            'target': target_lang,
-            'format': 'text'
-        }).encode('utf-8')
+        urls_to_try = []
+        if libretranslate_url:
+            urls_to_try.append(libretranslate_url)
+        else:
+            urls_to_try = [
+                "http://localhost:5000/translate",
+                "https://translate.fedilab.app/translate"
+            ]
 
-        req = urllib.request.Request(
-            libretranslate_url,
-            data=payload,
-            headers={
-                'Content-Type': 'application/json',
-                'User-Agent': 'TelegramBot/1.0'
-            }
-        )
+        for url in urls_to_try:
+            try:
+                payload = json.dumps({
+                    'q': text,
+                    'source': 'auto',
+                    'target': target_lang,
+                    'format': 'text'
+                }).encode('utf-8')
 
-        with urllib.request.urlopen(req, timeout=5) as response:
-            res_data = json.loads(response.read().decode('utf-8'))
-            translated_text = res_data.get('translatedText', text)
-            return JsonResponse({'translatedText': translated_text})
+                req = urllib.request.Request(
+                    url,
+                    data=payload,
+                    headers={
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'TelegramBot/1.0'
+                    }
+                )
+
+                with urllib.request.urlopen(req, timeout=4) as response:
+                    res_data = json.loads(response.read().decode('utf-8'))
+                    translated_text = res_data.get('translatedText')
+                    if translated_text:
+                        return JsonResponse({'translatedText': translated_text})
+            except Exception as exc:
+                print(f"Translation failed for {url}: {exc}")
+
+        return JsonResponse({'translatedText': text})
 
     except Exception as exc:
-        print("Translation service error:", exc)
+        print("Translation handler error:", exc)
 
     return JsonResponse({'translatedText': text})
+
 
 
 
