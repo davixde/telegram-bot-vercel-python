@@ -146,6 +146,7 @@ async function loadGlobalPianos() {
                 const lat = el.lat || (el.center && el.center.lat);
                 return {
                     type: 'Feature',
+                    id: Number(el.id),
                     geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
                     properties: {
                         id: Number(el.id),
@@ -187,9 +188,10 @@ function updateMarkers() {
         if (!coords || coords[0] === null || coords[1] === null || isNaN(coords[0]) || isNaN(coords[1])) continue;
 
         const isCluster = !!props.cluster;
-        const currentId = isCluster ? props.cluster_id : props.id;
-        if (currentId === undefined || currentId === null) continue;
+        const rawId = isCluster ? props.cluster_id : (props.id !== undefined && props.id !== null ? props.id : features[i].id);
+        if (rawId === undefined || rawId === null) continue;
 
+        const currentId = String(rawId);
         const id = isCluster ? `c_${currentId}` : `p_${currentId}`;
 
         if (newMarkers[id]) continue;
@@ -219,7 +221,7 @@ function updateMarkers() {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
                     map.flyTo({ center: coords, zoom: 15, essential: true });
-                    const fullFeature = allFeatures.find(f => f.properties.id === props.id);
+                    const fullFeature = allFeatures.find(f => String(f.properties.id) === currentId);
                     showBottomSheet(fullFeature ? fullFeature.properties : props, coords);
                 });
 
@@ -232,6 +234,7 @@ function updateMarkers() {
         newMarkers[id] = marker;
         if (!markersOnScreen[id]) marker.addTo(map);
     }
+
 
     for (const id in markersOnScreen) {
         if (!newMarkers[id]) {
