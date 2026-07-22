@@ -1,3 +1,5 @@
+console.log("🚀 webapp.js loading...");
+
 let isSearchFocused = false;
 let userCoords = null;
 let userMarker = null;
@@ -22,8 +24,10 @@ if (window.Telegram && window.Telegram.WebApp) {
     }
     webapp.setHeaderColor('#111111');
     webapp.setBackgroundColor('#111111');
+    console.log("Telegram WebApp ready");
 }
 
+console.log("Initializing MapLibre map...");
 const map = new maplibregl.Map({
     container: 'map',
     style: window.styleJsonUrl || "/static/example/style.json",
@@ -34,6 +38,8 @@ const map = new maplibregl.Map({
     touchZoomRotate: true,
     attributionControl: true
 });
+console.log("MapLibre map object created");
+
 
 const appRoot = document.getElementById('app-root');
 function lockAppHeight() {
