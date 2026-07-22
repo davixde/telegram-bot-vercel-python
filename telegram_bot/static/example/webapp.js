@@ -27,75 +27,55 @@ if (window.Telegram && window.Telegram.WebApp) {
     console.log("Telegram WebApp ready");
 }
 
-let map;
+const map = new maplibregl.Map({
+    container: 'map',
+    style: window.styleJsonUrl || "/static/example/style.json",
+    center: [12.4964, 41.9028],
+    zoom: 12,
+    pitchWithRotate: true,
+    dragRotate: true,
+    touchZoomRotate: true,
+    attributionControl: true
+});
 
-function initMap() {
-    if (typeof maplibregl === 'undefined') {
-        console.log("⏳ Waiting for maplibregl script...");
-        setTimeout(initMap, 50);
-        return;
-    }
+map.on('load', () => {
+    map.resize();
 
-    console.log("Initializing MapLibre map...");
-    map = new maplibregl.Map({
-        container: 'map',
-        style: window.styleJsonUrl || "/static/example/style.json",
-        center: [12.4964, 41.9028],
-        zoom: 12,
-        pitchWithRotate: true,
-        dragRotate: true,
-        touchZoomRotate: true,
-        attributionControl: true
+    map.addSource('pianos', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+        cluster: true,
+        clusterMaxZoom: 13,
+        clusterRadius: 50
     });
-    console.log("MapLibre map object created");
 
-    map.touchZoomRotate.disableRotation();
-
-    map.on('load', () => {
-        map.resize();
-
-        map.addSource('pianos', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] },
-            cluster: true,
-            clusterMaxZoom: 13,
-            clusterRadius: 50
-        });
-
-        map.addLayer({
-            id: 'pianos-invisible-layer',
-            type: 'circle',
-            source: 'pianos',
-            paint: {
-                'circle-opacity': 0,
-                'circle-radius': 12
-            }
-        });
-
-        loadGlobalPianos();
-        initLocation();
-        startWatchingLocation();
-
-        map.on('data', (e) => {
-            if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
-            updateMarkers();
-        });
-
-        map.on('move', updateMarkers);
-        map.on('moveend', updateMarkers);
-        
-        map.on('click', () => {
-            snapTo('closed');
-            if (typeof searchResultsList !== 'undefined' && searchResultsList) {
-                searchResultsList.style.display = 'none';
-            }
-        });
+    map.addLayer({
+        id: 'pianos-invisible-layer',
+        type: 'circle',
+        source: 'pianos',
+        paint: {
+            'circle-opacity': 0,
+            'circle-radius': 12
+        }
     });
-}
 
-initMap();
+    loadGlobalPianos();
+    initLocation();
+    startWatchingLocation();
 
+    map.on('data', (e) => {
+        if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
+        updateMarkers();
+    });
 
+    map.on('move', updateMarkers);
+    map.on('moveend', updateMarkers);
+    
+    map.on('click', () => {
+        snapTo('closed');
+        searchResultsList.style.display = 'none';
+    });
+});
 
 const appRoot = document.getElementById('app-root');
 function lockAppHeight() {
