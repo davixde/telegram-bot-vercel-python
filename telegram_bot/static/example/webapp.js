@@ -611,6 +611,7 @@ function showBottomSheet(props, coords) {
         if (spinnerEl) spinnerEl.style.display = 'inline-block';
 
         const requestPianoId = props.id;
+        console.log("🌐 Translation requested for:", resolved.text, "-> Target:", targetLang);
 
         fetch('/api/translate/', {
             method: 'POST',
@@ -623,8 +624,12 @@ function showBottomSheet(props, coords) {
                 target: targetLang
             })
         })
-        .then(res => res.json())
+        .then(res => {
+            console.log("🌐 Translation HTTP status:", res.status);
+            return res.json();
+        })
         .then(data => {
+            console.log("🌐 Translation response data:", JSON.stringify(data));
             if (activePianoId === requestPianoId) {
                 if (spinnerEl) spinnerEl.style.display = 'none';
                 const translated = (data && data.translatedText) ? data.translatedText : resolved.text;
@@ -633,15 +638,17 @@ function showBottomSheet(props, coords) {
             }
         })
         .catch(err => {
-            console.error("Translation request failed:", err);
+            console.error("🌐 Translation fetch error:", err);
             if (activePianoId === requestPianoId) {
                 if (spinnerEl) spinnerEl.style.display = 'none';
                 textEl.innerText = resolved.text;
             }
         });
     } else {
+        console.log("ℹ️ No translation needed for:", resolved.text);
         textEl.innerText = resolved.text;
     }
+
 
     snapTo('peek'); 
 }
