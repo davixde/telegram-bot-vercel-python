@@ -85,3 +85,5 @@ def translate_text(request):
 
     return JsonResponse({'translatedText': text})
 
+
+
