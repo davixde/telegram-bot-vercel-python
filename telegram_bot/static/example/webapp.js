@@ -147,10 +147,12 @@ async function loadGlobalPianos() {
                         access: (el.tags && el.tags.access) || 'unknown',
                         description: (el.tags && el.tags.description) || '',
                         musical_instrument: (el.tags && el.tags.musical_instrument) || '',
-                        last_seen: (el.tags && el.tags.last_seen) || 'Unknown'
+                        last_seen: (el.tags && el.tags.last_seen) || 'Unknown',
+                        tags: el.tags || {}
                     }
                 };
             });
+
 
         allFeatures = features;
 
@@ -212,8 +214,10 @@ function updateMarkers() {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
                     map.flyTo({ center: coords, zoom: 15, essential: true });
-                    showBottomSheet(props, coords);
+                    const fullFeature = allFeatures.find(f => f.properties.id === props.id);
+                    showBottomSheet(fullFeature ? fullFeature.properties : props, coords);
                 });
+
 
                 marker = markers[id] = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(coords);
             }
@@ -468,8 +472,99 @@ sheet.addEventListener('pointermove', handlePointerMove);
 sheet.addEventListener('pointerup', handlePointerUp);
 sheet.addEventListener('pointercancel', handlePointerUp);
 
+/* Helper to fetch tag values for different key formats: description:en, description-en, description_en */
+function getTagValue(tags, keyBase, lang) {
+    if (!tags) return null;
+    return tags[`${keyBase}:${lang}`] || tags[`${keyBase}-${lang}`] || tags[`${keyBase}_${lang}`] || null;
+}
+
+/* Description language selection and translation strategy */
+function resolveDescription(tags, targetLang, translationEnabled) {
+    tags = tags || {};
+    
+    // 1. Check if target language description exists in tags
+    const nativeDesc = getTagValue(tags, 'description', targetLang);
+    if (nativeDesc) {
+        return { text: nativeDesc, originalText: null, needsTranslation: false };
+    }
+
+    // 2. Select source description for fallback / translation
+    let sourceText = null;
+    let sourceLang = null;
+
+    const englishDesc = getTagValue(tags, 'description', 'en');
+    const defaultDesc = tags['description'] || null;
+
+    if (englishDesc) {
+        sourceText = englishDesc;
+        sourceLang = 'en';
+    } else if (defaultDesc) {
+        sourceText = defaultDesc;
+        sourceLang = 'auto';
+    } else {
+        // Look for any description variant (e.g., description:fr)
+        for (const key in tags) {
+            if (key.startsWith('description:') || key.startsWith('description-') || key.startsWith('description_')) {
+                const parts = key.split(/[:\-_]/);
+                if (parts[1]) {
+                    sourceText = tags[key];
+                    sourceLang = parts[1];
+                    break;
+                }
+            }
+        }
+    }
+
+    if (!sourceText) {
+        return { text: 'No description provided.', originalText: null, needsTranslation: false };
+    }
+
+    // If translation is disabled or target language matches source language
+    if (!translationEnabled || (sourceLang === targetLang)) {
+        return { text: sourceText, originalText: null, needsTranslation: false };
+    }
+
+    return { text: sourceText, originalText: sourceText, needsTranslation: true };
+}
+
+let currentTranslationText = "";
+let currentOriginalText = "";
+let isShowingOriginal = false;
+let activePianoId = null;
+
+function setupDescriptionToggle(translatedText, originalText) {
+    currentTranslationText = translatedText;
+    currentOriginalText = originalText;
+    isShowingOriginal = false;
+
+    const textEl = document.getElementById('info-desc');
+    const toggleBtn = document.getElementById('info-desc-toggle');
+
+    if (!toggleBtn) return;
+
+    if (originalText && translatedText && originalText.trim().toLowerCase() !== translatedText.trim().toLowerCase()) {
+        toggleBtn.style.display = 'inline-flex';
+        toggleBtn.querySelector('span').innerText = 'Translated - See original';
+        toggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (isShowingOriginal) {
+                textEl.innerText = currentTranslationText;
+                toggleBtn.querySelector('span').innerText = 'Translated - See original';
+                isShowingOriginal = false;
+            } else {
+                textEl.innerText = currentOriginalText;
+                toggleBtn.querySelector('span').innerText = 'See translation';
+                isShowingOriginal = true;
+            }
+        };
+    } else {
+        toggleBtn.style.display = 'none';
+    }
+}
+
 function showBottomSheet(props, coords) {
     activePianoCoords = coords; 
+    activePianoId = props.id;
 
     document.getElementById('sheet-title').innerText = props.name || 'Piano';
     
@@ -484,12 +579,61 @@ function showBottomSheet(props, coords) {
     }
 
     document.getElementById('info-access').innerText = getAccessLabel(props.access);
-    document.getElementById('info-desc').innerText = props.description || 'No description provided.';
     document.getElementById('info-type').innerText = label;
     
     const lastSeenEl = document.getElementById('info-last-seen');
     if (lastSeenEl) {
         lastSeenEl.innerText = props.last_seen || 'Unknown';
+    }
+
+    // Description Handling & Translation
+    const textEl = document.getElementById('info-desc');
+    const spinnerEl = document.getElementById('info-desc-spinner');
+    const toggleBtn = document.getElementById('info-desc-toggle');
+
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    if (spinnerEl) spinnerEl.style.display = 'none';
+
+    const targetLang = localStorage.getItem('appLang') || 'en';
+    const translationEnabled = localStorage.getItem('translateEnabled') !== 'false';
+
+    const resolved = resolveDescription(props.tags, targetLang, translationEnabled);
+
+    if (resolved.needsTranslation) {
+        textEl.innerText = '';
+        if (spinnerEl) spinnerEl.style.display = 'inline-block';
+
+        const requestPianoId = props.id;
+
+        fetch('/api/translate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Translate-Token': window.translateToken || ''
+            },
+            body: JSON.stringify({
+                q: resolved.text,
+                target: targetLang
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (activePianoId === requestPianoId) {
+                if (spinnerEl) spinnerEl.style.display = 'none';
+                const translated = (data && data.translatedText) ? data.translatedText : resolved.text;
+                textEl.innerText = translated;
+                setupDescriptionToggle(translated, resolved.text);
+            }
+        })
+        .catch(err => {
+            console.error("Translation request failed:", err);
+            if (activePianoId === requestPianoId) {
+                if (spinnerEl) spinnerEl.style.display = 'none';
+                textEl.innerText = resolved.text;
+            }
+        });
+    } else {
+        textEl.innerText = resolved.text;
     }
 
     snapTo('peek'); 
@@ -597,6 +741,28 @@ searchClearBtn.addEventListener('click', () => {
     searchInput.focus();
 });
 
+/* Settings Management */
+const langSelect = document.getElementById('settings-lang-select');
+const translateToggle = document.getElementById('settings-translate-toggle');
+const mapContainer = document.getElementById('map-container');
+const searchContainer = document.querySelector('.search-container');
+const settingsContainer = document.getElementById('settings-container');
+
+if (langSelect) {
+    langSelect.value = localStorage.getItem('appLang') || 'en';
+    langSelect.addEventListener('change', (e) => {
+        localStorage.setItem('appLang', e.target.value);
+    });
+}
+
+if (translateToggle) {
+    const isEnabled = localStorage.getItem('translateEnabled') !== 'false';
+    translateToggle.checked = isEnabled;
+    translateToggle.addEventListener('change', (e) => {
+        localStorage.setItem('translateEnabled', e.target.checked ? 'true' : 'false');
+    });
+}
+
 /* Tabs */
 const tabs = document.querySelectorAll('.tab-item');
 tabs.forEach(tab => {
@@ -604,8 +770,20 @@ tabs.forEach(tab => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         snapTo('closed');
+
+        if (tab.id === 'tab-settings') {
+            mapContainer.style.display = 'none';
+            searchContainer.style.display = 'none';
+            if (settingsContainer) settingsContainer.style.display = 'flex';
+        } else {
+            mapContainer.style.display = 'block';
+            searchContainer.style.display = 'block';
+            if (settingsContainer) settingsContainer.style.display = 'none';
+            setTimeout(() => { map.resize(); }, 50);
+        }
     });
 });
+
 
 /* Haversine distance calculator (meters) */
 function calculateDistance(coords1, coords2) {
