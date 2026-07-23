@@ -102,7 +102,7 @@ function initMap() {
             map.resize();
 
             map.addSource('pianos', {
-                type: 'geojson',
+                type: 'json',
                 data: { type: 'FeatureCollection', features: [] },
                 cluster: true,
                 clusterMaxZoom: 13,
