@@ -1,10 +1,3 @@
-function appLog(msg) {
-    console.log(`[WebApp] ${msg}`);
-}
-
-
-appLog("🚀 webapp.js loading...");
-
 let isSearchFocused = false;
 let userCoords = null;
 let userMarker = null;
@@ -12,17 +5,15 @@ let activePianoCoords = null;
 const markers = {};
 let markersOnScreen = {};
 let allFeatures = [];
-let map;
 const loadingIndicator = document.getElementById('loading-indicator');
 
 const DATA_URL = "https://raw.githubusercontent.com/davixde/telegram-bot-vercel-python/refs/heads/master/world_pianos.json";
 
-// Safe localStorage wrappers to prevent SecurityError inside restricted WebViews
 function safeGetStorage(key, defaultValue = null) {
     try {
-        return localStorage.getItem(key) || defaultValue;
+        const value = localStorage.getItem(key);
+        return value === null ? defaultValue : value;
     } catch (e) {
-        appLog("localStorage not accessible: " + e);
         return defaultValue;
     }
 }
@@ -30,160 +21,96 @@ function safeGetStorage(key, defaultValue = null) {
 function safeSetStorage(key, value) {
     try {
         localStorage.setItem(key, value);
-    } catch (e) {
-        appLog("Unable to save to localStorage: " + e);
-    }
-}
-
-// 1. Telegram WebApp Initialization
-if (window.Telegram && window.Telegram.WebApp) {
-    const webapp = window.Telegram.WebApp;
-    webapp.ready();
-    
-    try {
-        if (webapp.disableVerticalSwipes) webapp.disableVerticalSwipes();
     } catch (e) {}
+}
 
-    try {
-        if (webapp.isVersionAtLeast && webapp.isVersionAtLeast('8.0') && typeof webapp.requestFullscreen === 'function') {
-            webapp.requestFullscreen();
-        } else if (typeof webapp.expand === 'function') {
-            webapp.expand(); 
-        }
-    } catch (e) {
-        if (typeof webapp.expand === 'function') webapp.expand();
+function getTelegramWebApp() {
+    const webapp = window.Telegram && window.Telegram.WebApp;
+    if (!webapp) return null;
+    // Outside Telegram, telegram-web-app.js still creates a stub with empty initData.
+    // Only treat it as a real Mini App when initData is present.
+    if (typeof webapp.initData === 'string' && webapp.initData.length > 0) {
+        return webapp;
     }
+    return null;
+}
 
+const tgWebApp = getTelegramWebApp();
+
+if (tgWebApp) {
+    tgWebApp.ready();
+    if (tgWebApp.disableVerticalSwipes) {
+        tgWebApp.disableVerticalSwipes();
+    }
+    if (typeof tgWebApp.requestFullscreen === 'function') {
+        tgWebApp.requestFullscreen();
+    } else if (typeof tgWebApp.expand === 'function') {
+        tgWebApp.expand();
+    }
     try {
-        webapp.setHeaderColor('#111111');
-        webapp.setBackgroundColor('#111111');
+        tgWebApp.setHeaderColor('#111111');
+        tgWebApp.setBackgroundColor('#111111');
     } catch (e) {}
-
-    appLog("✅ Telegram WebApp ready");
 }
 
-// 2. Viewport Height Management
-const appRoot = document.getElementById('app-root');
-function lockAppHeight() {
-    if (!appRoot) return;
-    const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    appRoot.style.height = height + 'px';
-    if (map) {
-        setTimeout(() => map.resize(), 100);
-    }
-}
-
-// 3. Map Initialization
-function initMap() {
-    if (!window.maplibregl) {
-        setTimeout(initMap, 100);
-        return;
-    }
-
-    lockAppHeight();
-
-    try {
-        map = new maplibregl.Map({
-            container: 'map',
-            style: window.styleJsonUrl || "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
-            center: [12.4964, 41.9028],
-            zoom: 12,
-            pitchWithRotate: true,
-            dragRotate: true,
-            touchZoomRotate: true,
-            attributionControl: true
-        });
-
-        if (map.touchZoomRotate) {
-            map.touchZoomRotate.disableRotation();
-        }
-
-        map.on('load', () => {
-            map.resize();
-
-            map.addSource('pianos', {
-                type: 'json',
-                data: { type: 'FeatureCollection', features: [] },
-                cluster: true,
-                clusterMaxZoom: 13,
-                clusterRadius: 50
-            });
-
-            map.addLayer({
-                id: 'pianos-invisible-layer',
-                type: 'circle',
-                source: 'pianos',
-                paint: {
-                    'circle-opacity': 0,
-                    'circle-radius': 12
-                }
-            });
-
-            loadGlobalPianos();
-            initLocation();
-            startWatchingLocation();
-        });
-
-        map.on('data', (e) => {
-            if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
-            updateMarkers();
-        });
-
-        map.on('move', updateMarkers);
-        map.on('moveend', () => {
-            updateMarkers();
-            map.resize();
-        });
-        
-        map.on('click', () => {
-            snapTo('closed');
-            if (searchResultsList) searchResultsList.style.display = 'none';
-        });
-
-    } catch (err) {
-        appLog("Map initialization error: " + err);
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    initMap();
+const map = new maplibregl.Map({
+    container: 'map',
+    style: window.styleJsonUrl || "/static/example/style.json",
+    center: [12.4964, 41.9028],
+    zoom: 12,
+    pitchWithRotate: true,
+    dragRotate: true,
+    touchZoomRotate: true,
+    attributionControl: true
 });
 
-// Resize Event Listeners
+const appRoot = document.getElementById('app-root');
+function lockAppHeight() {
+    appRoot.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
+}
+lockAppHeight();
+
 if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => {
-        if (!isSearchFocused) {
-            lockAppHeight();
-            if (typeof sheetState !== 'undefined' && sheetState !== 'closed') snapTo(sheetState);
+        if (isSearchFocused) return;
+        lockAppHeight();
+        map.resize();
+        if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+            snapTo(sheetState);
         }
     });
 } else {
     window.addEventListener('resize', () => {
-        if (!isSearchFocused) {
-            lockAppHeight();
-            if (typeof sheetState !== 'undefined' && sheetState !== 'closed') snapTo(sheetState);
+        if (isSearchFocused) return;
+        lockAppHeight();
+        map.resize();
+        if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+            snapTo(sheetState);
         }
     });
 }
 
-if (window.Telegram && window.Telegram.WebApp) {
-    window.Telegram.WebApp.onEvent('viewportChanged', () => {
-        if (!isSearchFocused) {
-            lockAppHeight();
-            if (typeof sheetState !== 'undefined' && sheetState !== 'closed') snapTo(sheetState);
+if (tgWebApp) {
+    tgWebApp.onEvent('viewportChanged', () => {
+        if (isSearchFocused) return;
+        map.resize();
+        if (typeof sheetState !== 'undefined' && sheetState !== 'closed') {
+            snapTo(sheetState);
         }
     });
 }
 
-// --- HELPERS ---
+map.touchZoomRotate.disableRotation();
 
 function getAccessColor(access) {
     switch(access) {
         case 'public': 
-        case 'yes': return '#28a745';
+        case 'yes': 
+           return '#28a745';
         case 'customers': return '#ffc107';
         case 'private': 
-        case 'no': return '#dc3545';
+        case 'no': 
+           return '#dc3545';
         case 'permissive': return '#17a2b8';
         default: return '#6c757d';
     }
@@ -192,10 +119,12 @@ function getAccessColor(access) {
 function getAccessLabel(access) {
     switch(access) {
         case 'public': 
-        case 'yes': return 'Public';
+        case 'yes': 
+           return 'Public';
         case 'customers': return 'Customers Only';
         case 'private': 
-        case 'no': return 'Private';
+        case 'no':
+           return 'Private';
         case 'permissive': return 'Permissive';
         default: return 'Not specified';
     }
@@ -240,7 +169,6 @@ async function loadGlobalPianos() {
                 const lat = el.lat || (el.center && el.center.lat);
                 return {
                     type: 'Feature',
-                    id: Number(el.id),
                     geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
                     properties: {
                         id: Number(el.id),
@@ -255,22 +183,22 @@ async function loadGlobalPianos() {
             });
 
         allFeatures = features;
-        if (map && map.getSource('pianos')) {
-            map.getSource('pianos').setData({ type: 'FeatureCollection', features: features });
-        }
-        if (loadingIndicator) loadingIndicator.style.display = 'none';
+
+        map.getSource('pianos').setData({
+            type: 'FeatureCollection',
+            features: features
+        });
+
+        loadingIndicator.style.display = 'none';
 
     } catch (e) {
-        appLog("Error loading data: " + e);
-        if (loadingIndicator) {
-            loadingIndicator.innerText = "Error loading data.";
-            loadingIndicator.style.background = "#dc3545";
-        }
+        loadingIndicator.innerText = "Error loading data.";
+        loadingIndicator.style.background = "#dc3545";
     }
 }
 
 function updateMarkers() {
-    if (!map || !map.getSource('pianos') || !map.isSourceLoaded('pianos')) return;
+    if (!map.getSource('pianos') || !map.isSourceLoaded('pianos')) return;
 
     const newMarkers = {};
     const features = map.querySourceFeatures('pianos');
@@ -282,10 +210,9 @@ function updateMarkers() {
         if (!coords || coords[0] === null || coords[1] === null || isNaN(coords[0]) || isNaN(coords[1])) continue;
 
         const isCluster = !!props.cluster;
-        const rawId = isCluster ? props.cluster_id : (props.id !== undefined && props.id !== null ? props.id : features[i].id);
-        if (rawId === undefined || rawId === null) continue;
+        const currentId = isCluster ? props.cluster_id : props.id;
+        if (currentId === undefined || currentId === null) continue;
 
-        const currentId = String(rawId);
         const id = isCluster ? `c_${currentId}` : `p_${currentId}`;
 
         if (newMarkers[id]) continue;
@@ -306,7 +233,7 @@ function updateMarkers() {
                 marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
             } else {
                 el.className = 'piano-marker';
-                el.innerHTML = window.markerSvg || `<div style="width:20px;height:20px;background:red;border-radius:50%;"></div>`;
+                el.innerHTML = window.markerSvg;
                 const pathEl = el.querySelector('.Colored');
                 if (pathEl) {
                     pathEl.setAttribute('fill', getAccessColor(props.access));
@@ -315,7 +242,7 @@ function updateMarkers() {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
                     map.flyTo({ center: coords, zoom: 15, essential: true });
-                    const fullFeature = allFeatures.find(f => String(f.properties.id) === currentId);
+                    const fullFeature = allFeatures.find(f => f.properties.id === props.id);
                     showBottomSheet(fullFeature ? fullFeature.properties : props, coords);
                 });
 
@@ -339,8 +266,9 @@ function updateMarkers() {
 
 function initLocation() {
     let tgLocationRequested = false;
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.LocationManager) {
-        const lm = window.Telegram.WebApp.LocationManager;
+    
+    if (tgWebApp && tgWebApp.LocationManager) {
+        const lm = tgWebApp.LocationManager;
         lm.init(function() {
             if (lm.isInited && lm.isLocationAvailable) {
                 tgLocationRequested = true;
@@ -348,7 +276,7 @@ function initLocation() {
                     if (data && data.latitude && data.longitude) {
                         userCoords = [data.longitude, data.latitude];
                         updateUserMarker(data.latitude, data.longitude);
-                        if (map) map.flyTo({ center: userCoords, zoom: 14, essential: true });
+                        map.flyTo({ center: userCoords, zoom: 14, essential: true });
                     } else {
                         fallbackGeolocation(true);
                     }
@@ -357,7 +285,12 @@ function initLocation() {
                 fallbackGeolocation(true);
             }
         });
-        setTimeout(() => { if (!tgLocationRequested && !userCoords) fallbackGeolocation(true); }, 3000);
+
+        setTimeout(() => {
+            if (!tgLocationRequested && !userCoords) {
+                fallbackGeolocation(true);
+            }
+        }, 3000);
     } else {
         fallbackGeolocation(true);
     }
@@ -371,18 +304,20 @@ function fallbackGeolocation(shouldCenter = false) {
                 const lng = position.coords.longitude;
                 userCoords = [lng, lat];
                 updateUserMarker(lat, lng);
-                if (shouldCenter && map) map.flyTo({ center: userCoords, zoom: 14, essential: true });
+                if (shouldCenter) {
+                    map.flyTo({ center: userCoords, zoom: 14, essential: true });
+                }
             },
-            (error) => {},
+            (error) => { console.error(error); },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
     }
 }
 
 function startWatchingLocation() {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.LocationManager) {
-        window.Telegram.WebApp.onEvent('locationManagerUpdated', () => {
-            const lm = window.Telegram.WebApp.LocationManager;
+    if (tgWebApp && tgWebApp.LocationManager) {
+        tgWebApp.onEvent('locationManagerUpdated', () => {
+            const lm = tgWebApp.LocationManager;
             if (lm.isInited && lm.isLocationAvailable) {
                 lm.getLocation((data) => {
                     if (data && data.latitude && data.longitude) {
@@ -404,20 +339,58 @@ function startWatchingLocation() {
     }
 }
 
-const locateBtn = document.getElementById('locateBtn');
-if (locateBtn) {
-    locateBtn.addEventListener('click', () => {
-        if (userCoords && map) {
-            map.flyTo({ center: userCoords, zoom: 14, essential: true });
-        } else {
-            initLocation();
+map.on('load', () => {
+    map.resize();
+
+    map.addSource('pianos', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+        cluster: true,
+        clusterMaxZoom: 13,
+        clusterRadius: 50
+    });
+
+    map.addLayer({
+        id: 'pianos-invisible-layer',
+        type: 'circle',
+        source: 'pianos',
+        paint: {
+            'circle-opacity': 0,
+            'circle-radius': 12
         }
     });
-}
 
-// --- BOTTOM SHEET ---
+    loadGlobalPianos();
+    initLocation();
+    startWatchingLocation();
+
+    map.on('data', (e) => {
+        if (e.sourceId !== 'pianos' || !e.isSourceLoaded) return;
+        updateMarkers();
+    });
+
+    map.on('move', updateMarkers);
+    map.on('moveend', updateMarkers);
+    
+    map.on('click', () => {
+        snapTo('closed');
+        searchResultsList.style.display = 'none';
+    });
+});
+
+document.getElementById('locateBtn').addEventListener('click', () => {
+    if (userCoords) {
+        map.flyTo({ center: userCoords, zoom: 14, essential: true });
+    } else {
+        initLocation();
+    }
+});
+
+/* Bottom Sheet Control */
 const sheet = document.getElementById('bottom-sheet');
 const sheetContent = document.getElementById('sheet-content');
+const sheetDragZone = document.getElementById('sheetDragZone');
+const sheetHeader = document.getElementById('sheetHeader');
 const tabBar = document.querySelector('.tab-bar');
 
 let currentTranslateY = window.innerHeight; 
@@ -429,84 +402,103 @@ let sheetState = 'closed';
 function getSnaps() {
     const h = window.innerHeight * 0.85; 
     const vh = window.innerHeight;
-    return { closed: h, peek: Math.max(0, h - 190), half: h - (vh * 0.50), full: 0 };
+    return {
+        closed: h,
+        peek: Math.max(0, h - 190), 
+        half: h - (vh * 0.50), 
+        full: 0 
+    };
 }
 
 function setTranslateY(val, animate = false) {
-    if (!sheet) return;
     const snaps = getSnaps();
     const h = window.innerHeight * 0.85;
     val = Math.max(0, Math.min(h, val));
     currentTranslateY = val;
 
-    sheet.style.transition = animate ? 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)' : 'none';
+    if (animate) {
+        sheet.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+    } else {
+        sheet.style.transition = 'none';
+    }
     sheet.style.transform = `translateY(${val}px)`;
 
-    if (sheetContent) {
-        const halfThreshold = snaps.peek - 20;
-        if (val < halfThreshold) {
-            sheetContent.style.opacity = '1';
-            sheetContent.style.pointerEvents = 'auto';
-        } else {
-            sheetContent.style.opacity = '0';
-            sheetContent.style.pointerEvents = 'none';
-        }
+    const halfThreshold = snaps.peek - 20;
+    if (val < halfThreshold) {
+        sheetContent.style.opacity = '1';
+        sheetContent.style.pointerEvents = 'auto';
+    } else {
+        sheetContent.style.opacity = '0';
+        sheetContent.style.pointerEvents = 'none';
     }
 }
 
 function snapTo(state) {
     sheetState = state;
-    setTranslateY(getSnaps()[state], true);
+    const snaps = getSnaps();
+    setTranslateY(snaps[state], true);
 }
 
 function handlePointerDown(e) {
-    if (e.target.closest('button') || e.target.closest('input')) return;
+    if (e.target.closest('button') || e.target.closest('input')) {
+        return;
+    }
+
     const isInsideContent = e.target.closest('#sheet-content');
-    if (isInsideContent && sheetState === 'full' && sheetContent && sheetContent.scrollTop > 0) return; 
+    if (isInsideContent) {
+        if (sheetState === 'full' && sheetContent.scrollTop > 0) {
+            return; 
+        }
+    }
 
     isDragging = true;
     dragStartY = e.clientY;
     dragStartTranslateY = currentTranslateY;
-    if (sheet) {
-        sheet.style.transition = 'none';
-        sheet.setPointerCapture(e.pointerId);
-    }
+    sheet.style.transition = 'none';
+    sheet.setPointerCapture(e.pointerId);
 }
 
 function handlePointerMove(e) {
     if (!isDragging) return;
-    let targetY = dragStartTranslateY + (e.clientY - dragStartY);
-    if (targetY < 0) targetY = targetY * 0.35; 
+    const deltaY = e.clientY - dragStartY;
+    let targetY = dragStartTranslateY + deltaY;
+
+    if (targetY < 0) {
+        targetY = targetY * 0.35; 
+    }
+
     setTranslateY(targetY);
 }
 
 function handlePointerUp(e) {
     if (!isDragging) return;
     isDragging = false;
-    if (sheet) sheet.releasePointerCapture(e.pointerId);
+    sheet.releasePointerCapture(e.pointerId);
 
     const snaps = getSnaps();
-    const minDiff = Math.min(
-        Math.abs(currentTranslateY - snaps.closed),
-        Math.abs(currentTranslateY - snaps.peek),
-        Math.abs(currentTranslateY - snaps.half),
-        Math.abs(currentTranslateY - snaps.full)
-    );
+    const diffClosed = Math.abs(currentTranslateY - snaps.closed);
+    const diffPeek = Math.abs(currentTranslateY - snaps.peek);
+    const diffHalf = Math.abs(currentTranslateY - snaps.half);
+    const diffFull = Math.abs(currentTranslateY - snaps.full);
 
-    if (minDiff === Math.abs(currentTranslateY - snaps.closed)) snapTo('closed');
-    else if (minDiff === Math.abs(currentTranslateY - snaps.peek)) snapTo('peek');
-    else if (minDiff === Math.abs(currentTranslateY - snaps.half)) snapTo('half');
-    else snapTo('full');
+    const minDiff = Math.min(diffClosed, diffPeek, diffHalf, diffFull);
+
+    if (minDiff === diffClosed) {
+        snapTo('closed');
+    } else if (minDiff === diffPeek) {
+        snapTo('peek');
+    } else if (minDiff === diffHalf) {
+        snapTo('half');
+    } else {
+        snapTo('full');
+    }
 }
 
-if (sheet) {
-    sheet.addEventListener('pointerdown', handlePointerDown);
-    sheet.addEventListener('pointermove', handlePointerMove);
-    sheet.addEventListener('pointerup', handlePointerUp);
-    sheet.addEventListener('pointercancel', handlePointerUp);
-}
+sheet.addEventListener('pointerdown', handlePointerDown);
+sheet.addEventListener('pointermove', handlePointerMove);
+sheet.addEventListener('pointerup', handlePointerUp);
+sheet.addEventListener('pointercancel', handlePointerUp);
 
-// --- DESCRIPTIONS & TRANSLATION ---
 function getTagValue(tags, keyBase, lang) {
     if (!tags) return null;
     return tags[`${keyBase}:${lang}`] || tags[`${keyBase}-${lang}`] || tags[`${keyBase}_${lang}`] || null;
@@ -514,40 +506,61 @@ function getTagValue(tags, keyBase, lang) {
 
 function resolveDescription(tags, targetLang, translationEnabled) {
     tags = tags || {};
-    const nativeDesc = getTagValue(tags, 'description', targetLang);
-    if (nativeDesc) return { text: nativeDesc, originalText: null, needsTranslation: false };
 
-    let sourceText = null, sourceLang = null;
+    const nativeDesc = getTagValue(tags, 'description', targetLang);
+    if (nativeDesc) {
+        return { text: nativeDesc, originalText: null, needsTranslation: false };
+    }
+
+    let sourceText = null;
+    let sourceLang = null;
     const englishDesc = getTagValue(tags, 'description', 'en');
     const defaultDesc = tags['description'] || null;
 
-    if (englishDesc) { sourceText = englishDesc; sourceLang = 'en'; } 
-    else if (defaultDesc) { sourceText = defaultDesc; sourceLang = 'auto'; } 
-    else {
+    if (englishDesc) {
+        sourceText = englishDesc;
+        sourceLang = 'en';
+    } else if (defaultDesc) {
+        sourceText = defaultDesc;
+        sourceLang = 'auto';
+    } else {
         for (const key in tags) {
             if (key.startsWith('description:') || key.startsWith('description-') || key.startsWith('description_')) {
                 const parts = key.split(/[:\-_]/);
-                if (parts[1]) { sourceText = tags[key]; sourceLang = parts[1]; break; }
+                if (parts[1]) {
+                    sourceText = tags[key];
+                    sourceLang = parts[1];
+                    break;
+                }
             }
         }
     }
 
-    if (!sourceText) return { text: 'No description provided.', originalText: null, needsTranslation: false };
-    if (!translationEnabled || (sourceLang === targetLang)) return { text: sourceText, originalText: null, needsTranslation: false };
+    if (!sourceText) {
+        return { text: 'No description provided.', originalText: null, needsTranslation: false };
+    }
+
+    if (!translationEnabled || (sourceLang === targetLang)) {
+        return { text: sourceText, originalText: null, needsTranslation: false };
+    }
 
     return { text: sourceText, originalText: sourceText, needsTranslation: true };
 }
 
-let currentTranslationText = "", currentOriginalText = "", isShowingOriginal = false, activePianoId = null;
+let currentTranslationText = "";
+let currentOriginalText = "";
+let isShowingOriginal = false;
+let activePianoId = null;
 
 function setupDescriptionToggle(translatedText, originalText) {
     currentTranslationText = translatedText;
     currentOriginalText = originalText;
     isShowingOriginal = false;
+
     const textEl = document.getElementById('info-desc');
     const toggleBtn = document.getElementById('info-desc-toggle');
-
     if (!toggleBtn) return;
+
     if (originalText && translatedText && originalText.trim().toLowerCase() !== translatedText.trim().toLowerCase()) {
         toggleBtn.style.display = 'inline-flex';
         const spanEl = toggleBtn.querySelector('span');
@@ -571,28 +584,21 @@ function setupDescriptionToggle(translatedText, originalText) {
 
 function showBottomSheet(props, coords) {
     activePianoCoords = coords; 
-    activePianoId = props.id;
 
-    const titleEl = document.getElementById('sheet-title');
-    if (titleEl) titleEl.innerText = props.name || 'Piano';
+    document.getElementById('sheet-title').innerText = props.name || 'Piano';
     
     const label = getInstrumentLabel(props.musical_instrument);
-    const subtitleEl = document.getElementById('sheet-subtitle');
-    if (subtitleEl) subtitleEl.innerText = label;
+    document.getElementById('sheet-subtitle').innerText = label;
 
     const iconContainer = document.getElementById('sheet-icon');
-    if (iconContainer) {
-        iconContainer.innerHTML = (props.musical_instrument === 'pipe_organ') ? (window.organSvg || '') : (window.pianoSvg || '');
+    if (props.musical_instrument === 'pipe_organ') {
+        iconContainer.innerHTML = window.organSvg;
+    } else {
+        iconContainer.innerHTML = window.pianoSvg;
     }
 
-    const accessEl = document.getElementById('info-access');
-    if (accessEl) accessEl.innerText = getAccessLabel(props.access);
-    
-    const typeEl = document.getElementById('info-type');
-    if (typeEl) typeEl.innerText = label;
-    
-    const lastSeenEl = document.getElementById('info-last-seen');
-    if (lastSeenEl) lastSeenEl.innerText = props.last_seen || 'Unknown';
+    document.getElementById('info-access').innerText = getAccessLabel(props.access);
+    activePianoId = props.id;
 
     const textEl = document.getElementById('info-desc');
     const spinnerEl = document.getElementById('info-desc-spinner');
@@ -612,8 +618,14 @@ function showBottomSheet(props, coords) {
 
         fetch('/api/translate/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Translate-Token': window.translateToken || '' },
-            body: JSON.stringify({ q: resolved.text, target: targetLang })
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Translate-Token': window.translateToken || ''
+            },
+            body: JSON.stringify({
+                q: resolved.text,
+                target: targetLang
+            })
         })
         .then(res => res.json())
         .then(data => {
@@ -624,34 +636,40 @@ function showBottomSheet(props, coords) {
                 setupDescriptionToggle(translated, resolved.text);
             }
         })
-        .catch(err => {
+        .catch(() => {
             if (activePianoId === requestPianoId) {
                 if (spinnerEl) spinnerEl.style.display = 'none';
                 if (textEl) textEl.innerText = resolved.text;
             }
         });
-    } else {
-        if (textEl) textEl.innerText = resolved.text;
+    } else if (textEl) {
+        textEl.innerText = resolved.text;
+    }
+    document.getElementById('info-type').innerText = label;
+    
+    const lastSeenEl = document.getElementById('info-last-seen');
+    if (lastSeenEl) {
+        lastSeenEl.innerText = props.last_seen || 'Unknown';
     }
 
     snapTo('peek'); 
 }
 
-// --- SEARCH & TABS ---
+/* Search Engine */
 const searchInput = document.getElementById('search-input');
 const searchResultsList = document.getElementById('searchResultsList');
 const searchClearBtn = document.getElementById('search-clear-btn');
 
 function performSearch(queryValue) {
-    if (!searchResultsList) return;
     const val = queryValue.toLowerCase().trim();
     if (!val) {
         searchResultsList.style.display = 'none';
-        if (searchClearBtn) searchClearBtn.style.display = 'none';
+        searchClearBtn.style.display = 'none';
         return;
     }
-    if (searchClearBtn) searchClearBtn.style.display = 'block';
-    
+
+    searchClearBtn.style.display = 'block';
+
     const filtered = allFeatures.filter(f => {
         const name = (f.properties.name || '').toLowerCase();
         const desc = (f.properties.description || '').toLowerCase();
@@ -661,12 +679,14 @@ function performSearch(queryValue) {
     if (filtered.length === 0) {
         searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No pianos found</div>`;
     } else {
-        searchResultsList.innerHTML = filtered.map(f => `
-            <div class="search-result-item" data-id="${f.properties.id}">
-                <span class="search-result-name">${f.properties.name || 'Piano'}</span>
-                <span class="search-result-details">${getInstrumentLabel(f.properties.musical_instrument)} • ${getAccessLabel(f.properties.access)}</span>
-            </div>
-        `).join('');
+        searchResultsList.innerHTML = filtered.map(f => {
+            return `
+                <div class="search-result-item" data-id="${f.properties.id}">
+                    <span class="search-result-name">${f.properties.name || 'Piano'}</span>
+                    <span class="search-result-details">${getInstrumentLabel(f.properties.musical_instrument)} • ${getAccessLabel(f.properties.access)}</span>
+                </div>
+            `;
+        }).join('');
 
         searchResultsList.querySelectorAll('.search-result-item').forEach(item => {
             item.addEventListener('click', (e) => {
@@ -675,93 +695,96 @@ function performSearch(queryValue) {
             });
         });
     }
+
     searchResultsList.style.display = 'block';
 }
 
 function selectPianoById(id) {
     const feature = allFeatures.find(f => f.properties.id == id);
-    if (feature && map) {
+    if (feature) {
         const coords = feature.geometry.coordinates;
-        if (searchInput) searchInput.blur();
-        if (searchResultsList) searchResultsList.style.display = 'none';
-        if (searchInput) searchInput.value = feature.properties.name || 'Piano';
+        searchInput.blur();
+        searchResultsList.style.display = 'none';
+        searchInput.value = feature.properties.name || 'Piano';
+        
         map.flyTo({ center: coords, zoom: 15, essential: true });
         showBottomSheet(feature.properties, coords);
     }
 }
 
-if (searchInput) {
-    searchInput.addEventListener('focus', () => {
-        isSearchFocused = true;
-        if (tabBar) {
-            tabBar.style.transform = 'translateY(100px)';
-            tabBar.style.opacity = '0';
-        }
-        performSearch(searchInput.value);
-    });
+searchInput.addEventListener('focus', () => {
+    isSearchFocused = true;
+    tabBar.style.transform = 'translateY(100px)';
+    tabBar.style.opacity = '0';
+    performSearch(searchInput.value);
+});
 
-    searchInput.addEventListener('blur', () => {
-        isSearchFocused = false;
-        setTimeout(() => {
-            if (document.activeElement !== searchInput) {
-                if (tabBar) {
-                    tabBar.style.transform = 'translateY(0)';
-                    tabBar.style.opacity = '1';
-                }
-                if (map) map.resize();
+searchInput.addEventListener('blur', () => {
+    isSearchFocused = false;
+    setTimeout(() => {
+        if (document.activeElement !== searchInput) {
+            tabBar.style.transform = 'translateY(0)';
+            tabBar.style.opacity = '1';
+            map.resize();
+        }
+    }, 150);
+});
+
+searchInput.addEventListener('input', (e) => {
+    performSearch(e.target.value);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const val = searchInput.value.toLowerCase().trim();
+        if (val) {
+            const matched = allFeatures.find(f => {
+                const name = (f.properties.name || '').toLowerCase();
+                const desc = (f.properties.description || '').toLowerCase();
+                return name.includes(val) || desc.includes(val);
+            });
+            if (matched) {
+                selectPianoById(matched.properties.id);
             }
-        }, 150);
-    });
-
-    searchInput.addEventListener('input', (e) => performSearch(e.target.value));
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const val = searchInput.value.toLowerCase().trim();
-            if (val) {
-                const matched = allFeatures.find(f => (f.properties.name || '').toLowerCase().includes(val) || (f.properties.description || '').toLowerCase().includes(val));
-                if (matched) selectPianoById(matched.properties.id);
-            }
         }
-    });
-}
-
-if (searchClearBtn) {
-    searchClearBtn.addEventListener('click', () => {
-        if (searchInput) searchInput.value = '';
-        if (searchResultsList) searchResultsList.style.display = 'none';
-        searchClearBtn.style.display = 'none';
-        if (searchInput) searchInput.focus();
-    });
-}
-
-// Settings Initialization
-document.addEventListener('DOMContentLoaded', () => {
-    try {
-        const langSelect = document.getElementById('settings-lang-select');
-        const translateToggle = document.getElementById('settings-translate-toggle');
-        if (langSelect) {
-            langSelect.value = safeGetStorage('appLang', 'en');
-            langSelect.addEventListener('change', (e) => safeSetStorage('appLang', e.target.value));
-        }
-        if (translateToggle) {
-            translateToggle.checked = safeGetStorage('translateEnabled', 'true') !== 'false';
-            translateToggle.addEventListener('change', (e) => safeSetStorage('translateEnabled', e.target.checked ? 'true' : 'false'));
-        }
-    } catch(e) {
-        appLog("Settings initialization error: " + e);
     }
 });
 
+searchClearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    searchResultsList.style.display = 'none';
+    searchClearBtn.style.display = 'none';
+    searchInput.focus();
+});
+
+/* Settings */
+const langSelect = document.getElementById('settings-lang-select');
+const translateToggle = document.getElementById('settings-translate-toggle');
+const mapContainer = document.getElementById('map-container');
+const searchContainer = document.querySelector('.search-container');
+const settingsContainer = document.getElementById('settings-container');
+
+if (langSelect) {
+    langSelect.value = safeGetStorage('appLang', 'en');
+    langSelect.addEventListener('change', (e) => {
+        safeSetStorage('appLang', e.target.value);
+    });
+}
+
+if (translateToggle) {
+    translateToggle.checked = safeGetStorage('translateEnabled', 'true') !== 'false';
+    translateToggle.addEventListener('change', (e) => {
+        safeSetStorage('translateEnabled', e.target.checked ? 'true' : 'false');
+    });
+}
+
+/* Tabs */
 const tabs = document.querySelectorAll('.tab-item');
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         snapTo('closed');
-
-        const mapContainer = document.getElementById('map-container');
-        const searchContainer = document.querySelector('.search-container');
-        const settingsContainer = document.getElementById('settings-container');
 
         if (tab.id === 'tab-settings') {
             if (mapContainer) mapContainer.style.display = 'none';
@@ -771,49 +794,77 @@ tabs.forEach(tab => {
             if (mapContainer) mapContainer.style.display = 'block';
             if (searchContainer) searchContainer.style.display = 'block';
             if (settingsContainer) settingsContainer.style.display = 'none';
-            setTimeout(() => { if (map) map.resize(); }, 50);
+            setTimeout(() => { map.resize(); }, 50);
         }
     });
 });
 
+/* Haversine distance calculator (meters) */
 function calculateDistance(coords1, coords2) {
-    const [lon1, lat1] = coords1, [lon2, lat2] = coords2;
-    const R = 6371e3, phi1 = lat1 * Math.PI / 180, phi2 = lat2 * Math.PI / 180;
-    const deltaPhi = (lat2 - lat1) * Math.PI / 180, deltaLambda = (lon2 - lon1) * Math.PI / 180;
-    const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
-    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    const [lon1, lat1] = coords1;
+    const [lon2, lat2] = coords2;
+    const R = 6371e3; 
+    const phi1 = lat1 * Math.PI / 180;
+    const phi2 = lat2 * Math.PI / 180;
+    const deltaPhi = (lat2 - lat1) * Math.PI / 180;
+    const deltaLambda = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(deltaPhi/2) * Math.sin(deltaPhi/2) +
+              Math.cos(phi1) * Math.cos(phi2) *
+              Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
 }
 
 function showNotification(msg) {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.showPopup) {
-        window.Telegram.WebApp.showPopup({ message: msg });
+    if (tgWebApp && tgWebApp.showPopup) {
+        tgWebApp.showPopup({ message: msg });
     } else {
         alert(msg);
     }
 }
 
-const btnStillHere = document.getElementById('btn-still-here');
-if (btnStillHere) {
-    btnStillHere.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!activePianoCoords) return;
-        if (!navigator.geolocation) return showNotification("Geolocation not supported.");
+/* Action Handlers */
+document.getElementById('btn-still-here').addEventListener('click', (e) => {
+    e.stopPropagation();
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude, lng = position.coords.longitude;
-                userCoords = [lng, lat];
-                updateUserMarker(lat, lng);
-                if (calculateDistance(userCoords, activePianoCoords) <= 150) {
-                    const lastSeenEl = document.getElementById('info-last-seen');
-                    if (lastSeenEl) lastSeenEl.innerText = "Just now (Confirmed)";
-                    showNotification("Thank you for confirming!");
-                } else {
-                    showNotification("You are too far away from this piano to confirm its presence.");
+    if (!activePianoCoords) return;
+
+    if (!navigator.geolocation) {
+        showNotification("Geolocation is not supported by your browser.");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            userCoords = [lng, lat];
+            updateUserMarker(lat, lng);
+
+            const distance = calculateDistance(userCoords, activePianoCoords);
+            const MAX_DISTANCE = 150; 
+
+            if (distance <= MAX_DISTANCE) {
+                const lastSeenEl = document.getElementById('info-last-seen');
+                if (lastSeenEl) {
+                    lastSeenEl.innerText = "Just now (Confirmed)";
                 }
-            },
-            () => showNotification("Unable to retrieve location."),
-            { enableHighAccuracy: true, timeout: 5000 }
-        );
-    });
-}
+                
+                showNotification("Thank you for confirming!");
+                
+                // TODO: Send backend API update request here
+            } else {
+                showNotification("You are too far away from this piano to confirm its presence.");
+            }
+        },
+        (error) => {
+            showNotification("Unable to retrieve your current location. Please check your GPS settings.");
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+    );
+});
+
+document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
+document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPropagation(); });

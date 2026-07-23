@@ -9,71 +9,9 @@
     <link href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <link rel="stylesheet" href="{% static 'example/webapp.css' %}?v=4" />
-
-
-
-
-
+    <link rel="stylesheet" href="{% static 'example/webapp.css' %}?v=6" />
 </head>
 <body>
-
-<button id="debug-toggle-btn" onclick="const el=document.getElementById('debug-overlay'); el.style.display = (el.style.display==='none'?'block':'none');" style="position: fixed; top: 64px; left: 12px; z-index: 100000; background: rgba(15,15,20,0.9); color: #00ff66; border: 1px solid #00ff66; border-radius: 20px; padding: 6px 12px; font-size: 11px; font-family: monospace; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.5);">🔍 Debug</button>
-
-
-<div id="debug-overlay" style="position: fixed; top: 0; left: 0; right: 0; max-height: 220px; overflow-y: auto; background: rgba(15, 15, 20, 0.95); color: #00ff66; font-family: monospace; font-size: 11px; padding: 8px; z-index: 99999; border-bottom: 2px solid #00ff66; pointer-events: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-
-    <div style="font-weight: bold; border-bottom: 1px solid rgba(0,255,102,0.3); padding-bottom: 4px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-        <span>🔍 DEBUG CONSOLE</span>
-        <div>
-            <button onclick="document.getElementById('debug-logs').innerHTML=''" style="background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 10px; padding: 2px 6px; margin-right: 4px; cursor: pointer;">Clear</button>
-            <button onclick="document.getElementById('debug-overlay').style.display='none'" style="background: #dc3545; color: white; border: none; border-radius: 4px; font-size: 10px; padding: 2px 6px; cursor: pointer;">Close</button>
-        </div>
-    </div>
-    <div id="debug-logs" style="word-break: break-all;"></div>
-</div>
-
-<script>
-    (function() {
-        const logsDiv = document.getElementById('debug-logs');
-        function addLog(msg, color) {
-            if (!logsDiv) return;
-            const item = document.createElement('div');
-            item.style.color = color || '#00ff66';
-            item.style.marginBottom = '2px';
-            item.innerText = '[' + new Date().toISOString().substring(11, 19) + '] ' + msg;
-            logsDiv.appendChild(item);
-            logsDiv.scrollTop = logsDiv.scrollHeight;
-        }
-
-        window.onerror = function(msg, url, line, col, error) {
-            const src = url ? url.substring(url.lastIndexOf('/') + 1) : 'script';
-            addLog('💥 ERROR: ' + msg + ' (' + src + ':' + line + ':' + col + ')', '#ff4444');
-            return false;
-        };
-
-        window.onunhandledrejection = function(e) {
-            addLog('💥 PROMISE REJECTION: ' + (e.reason ? (e.reason.message || e.reason) : e), '#ff4444');
-        };
-
-        const origLog = console.log;
-        console.log = function() {
-            origLog.apply(console, arguments);
-            const args = Array.prototype.slice.call(arguments);
-            addLog(args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' '), '#00ff66');
-        };
-
-        const origErr = console.error;
-        console.error = function() {
-            origErr.apply(console, arguments);
-            const args = Array.prototype.slice.call(arguments);
-            addLog('❌ ' + args.map(function(a) { return typeof a === 'object' ? JSON.stringify(a) : a; }).join(' '), '#ff4444');
-        };
-
-        console.log("Debug console initialized");
-    })();
-</script>
-
 
 <div id="app-root">
 
@@ -134,7 +72,7 @@
                 </div>
                 <div class="info-item-text">
                     <div class="info-label">Last seen</div>
-                    <div class="info-value">—</div>
+                    <div class="info-value" id="info-last-seen">—</div>
                 </div>
             </div>
             
@@ -263,7 +201,7 @@
     </script>
 
 
-    <script src="{% static 'example/webapp.js' %}?v=4"></script>
+    <script src="{% static 'example/webapp.js' %}?v=6"></script>
 
 
 
