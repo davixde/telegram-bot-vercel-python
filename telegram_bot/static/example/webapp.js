@@ -1,4 +1,13 @@
-console.log("🚀 webapp.js loading...");
+function appLog(msg) {
+    if (typeof log === 'function') {
+        log(msg);
+    } else {
+        log(msg);
+        console.log(msg);
+    }
+}
+
+appLog("🚀 webapp.js loading...");
 
 let isSearchFocused = false;
 let userCoords = null;
@@ -17,7 +26,7 @@ function safeGetStorage(key, defaultValue = null) {
     try {
         return localStorage.getItem(key) || defaultValue;
     } catch (e) {
-        console.warn("localStorage not accessible:", e);
+        appLog("localStorage not accessible: " + e);
         return defaultValue;
     }
 }
@@ -26,7 +35,7 @@ function safeSetStorage(key, value) {
     try {
         localStorage.setItem(key, value);
     } catch (e) {
-        console.warn("Unable to save to localStorage:", e);
+        appLog("Unable to save to localStorage: " + e);
     }
 }
 
@@ -54,7 +63,7 @@ if (window.Telegram && window.Telegram.WebApp) {
         webapp.setBackgroundColor('#111111');
     } catch (e) {}
 
-    console.log("✅ Telegram WebApp ready");
+    appLog("✅ Telegram WebApp ready");
 }
 
 // 2. Viewport Height Management
@@ -71,7 +80,6 @@ function lockAppHeight() {
 // 3. Map Initialization
 function initMap() {
     if (!window.maplibregl) {
-        console.warn("MapLibre GL not loaded yet, retrying...");
         setTimeout(initMap, 100);
         return;
     }
@@ -95,7 +103,6 @@ function initMap() {
         }
 
         map.on('load', () => {
-            console.log("🗺️ Map loaded successfully");
             map.resize();
 
             map.addSource('pianos', {
@@ -138,7 +145,7 @@ function initMap() {
         });
 
     } catch (err) {
-        console.error("Map initialization error:", err);
+        appLog("Map initialization error: " + err);
     }
 }
 
@@ -221,80 +228,44 @@ function updateUserMarker(lat, lng) {
 
 async function loadGlobalPianos() {
     try {
-        console.log("Fetching data from:", DATA_URL);
         const response = await fetch(DATA_URL);
         if (!response.ok) throw new Error(`Status: ${response.status}`);
         
         const data = await response.json();
-        console.log("Data loaded successfully, parsing elements...");
 
-        // Support standard GeoJSON (.features), Overpass format (.elements), or raw arrays
-        let rawItems = [];
-        if (Array.isArray(data)) {
-            rawItems = data;
-        } else if (data.features && Array.isArray(data.features)) {
-            rawItems = data.features;
-        } else if (data.elements && Array.isArray(data.elements)) {
-            rawItems = data.elements;
-        }
-
-        console.log(`Found ${rawItems.length} raw items to process.`);
-
-        const features = rawItems.map((el, index) => {
-            // Handle standard GeoJSON Feature format
-            if (el.type === 'Feature' && el.geometry && el.geometry.coordinates) {
-                const [lon, lat] = el.geometry.coordinates;
-                const props = el.properties || {};
-                const id = Number(props.id || el.id || index);
+        const features = (data.elements || [])
+            .filter(el => {
+                const lon = el.lon || (el.center && el.center.lon);
+                const lat = el.lat || (el.center && el.center.lat);
+                return el.id && lon !== undefined && lat !== undefined;
+            })
+            .map(el => {
+                const lon = el.lon || (el.center && el.center.lon);
+                const lat = el.lat || (el.center && el.center.lat);
                 return {
                     type: 'Feature',
-                    id: id,
+                    id: Number(el.id),
                     geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
                     properties: {
-                        id: id,
-                        name: props.name || 'Piano',
-                        access: props.access || 'unknown',
-                        description: props.description || '',
-                        musical_instrument: props.musical_instrument || '',
-                        last_seen: props.last_seen || 'Unknown',
-                        tags: props.tags || props
+                        id: Number(el.id),
+                        name: (el.tags && el.tags.name) || 'Piano',
+                        access: (el.tags && el.tags.access) || 'unknown',
+                        description: (el.tags && el.tags.description) || '',
+                        musical_instrument: (el.tags && el.tags.musical_instrument) || '',
+                        last_seen: (el.tags && el.tags.last_seen) || 'Unknown',
+                        tags: el.tags || {}
                     }
                 };
-            }
+            });
 
-            // Handle Overpass / custom format
-            const lon = el.lon || (el.center && el.center.lon);
-            const lat = el.lat || (el.center && el.center.lat);
-            if (lon === undefined || lat === undefined) return null;
-
-            const id = Number(el.id || index);
-            return {
-                type: 'Feature',
-                id: id,
-                geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
-                properties: {
-                    id: id,
-                    name: (el.tags && el.tags.name) || 'Piano',
-                    access: (el.tags && el.tags.access) || 'unknown',
-                    description: (el.tags && el.tags.description) || '',
-                    musical_instrument: (el.tags && el.tags.musical_instrument) || '',
-                    last_seen: (el.tags && el.tags.last_seen) || 'Unknown',
-                    tags: el.tags || {}
-                }
-            };
-        }).filter(f => f !== null);
-
-        console.log(`Successfully processed ${features.length} valid piano features.`);
         allFeatures = features;
-
         if (map && map.getSource('pianos')) {
             map.getSource('pianos').setData({ type: 'FeatureCollection', features: features });
-            console.log("Pianos data bound to map source.");
         }
         if (loadingIndicator) loadingIndicator.style.display = 'none';
 
     } catch (e) {
-        console.error("Error loading data:", e);
+        appLog("Error loading data: " + e);
         if (loadingIndicator) {
             loadingIndicator.innerText = "Error loading data.";
             loadingIndicator.style.background = "#dc3545";
@@ -781,7 +752,7 @@ document.addEventListener('DOMContentLoaded', () => {
             translateToggle.addEventListener('change', (e) => safeSetStorage('translateEnabled', e.target.checked ? 'true' : 'false'));
         }
     } catch(e) {
-        console.error("Settings initialization error:", e);
+        appLog("Settings initialization error: " + e);
     }
 });
 
