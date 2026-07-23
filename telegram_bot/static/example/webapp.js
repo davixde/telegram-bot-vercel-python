@@ -1,11 +1,7 @@
 function appLog(msg) {
-    if (typeof log === 'function') {
-        log(msg);
-    } else {
-        log(msg);
-        console.log(msg);
-    }
+    console.log(`[WebApp] ${msg}`);
 }
+
 
 appLog("🚀 webapp.js loading...");
 
