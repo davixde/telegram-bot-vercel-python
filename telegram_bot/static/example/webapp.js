@@ -40,7 +40,6 @@ if (window.Telegram && window.Telegram.WebApp) {
     } catch (e) {}
 
     try {
-        // Safe check for fullscreen support (API 8.0+) to avoid WebAppMethodUnsupported crash
         if (webapp.isVersionAtLeast && webapp.isVersionAtLeast('8.0') && typeof webapp.requestFullscreen === 'function') {
             webapp.requestFullscreen();
         } else if (typeof webapp.expand === 'function') {
@@ -72,6 +71,7 @@ function lockAppHeight() {
 // 3. Map Initialization
 function initMap() {
     if (!window.maplibregl) {
+        console.warn("MapLibre GL not loaded yet, retrying...");
         setTimeout(initMap, 100);
         return;
     }
@@ -95,6 +95,7 @@ function initMap() {
         }
 
         map.on('load', () => {
+            console.log("🗺️ Map loaded successfully");
             map.resize();
 
             map.addSource('pianos', {
@@ -220,39 +221,75 @@ function updateUserMarker(lat, lng) {
 
 async function loadGlobalPianos() {
     try {
+        console.log("Fetching data from:", DATA_URL);
         const response = await fetch(DATA_URL);
         if (!response.ok) throw new Error(`Status: ${response.status}`);
         
         const data = await response.json();
+        console.log("Data loaded successfully, parsing elements...");
 
-        const features = (data.elements || [])
-            .filter(el => {
-                const lon = el.lon || (el.center && el.center.lon);
-                const lat = el.lat || (el.center && el.center.lat);
-                return el.id && lon !== undefined && lat !== undefined;
-            })
-            .map(el => {
-                const lon = el.lon || (el.center && el.center.lon);
-                const lat = el.lat || (el.center && el.center.lat);
+        // Support standard GeoJSON (.features), Overpass format (.elements), or raw arrays
+        let rawItems = [];
+        if (Array.isArray(data)) {
+            rawItems = data;
+        } else if (data.features && Array.isArray(data.features)) {
+            rawItems = data.features;
+        } else if (data.elements && Array.isArray(data.elements)) {
+            rawItems = data.elements;
+        }
+
+        console.log(`Found ${rawItems.length} raw items to process.`);
+
+        const features = rawItems.map((el, index) => {
+            // Handle standard GeoJSON Feature format
+            if (el.type === 'Feature' && el.geometry && el.geometry.coordinates) {
+                const [lon, lat] = el.geometry.coordinates;
+                const props = el.properties || {};
+                const id = Number(props.id || el.id || index);
                 return {
                     type: 'Feature',
-                    id: Number(el.id),
+                    id: id,
                     geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
                     properties: {
-                        id: Number(el.id),
-                        name: (el.tags && el.tags.name) || 'Piano',
-                        access: (el.tags && el.tags.access) || 'unknown',
-                        description: (el.tags && el.tags.description) || '',
-                        musical_instrument: (el.tags && el.tags.musical_instrument) || '',
-                        last_seen: (el.tags && el.tags.last_seen) || 'Unknown',
-                        tags: el.tags || {}
+                        id: id,
+                        name: props.name || 'Piano',
+                        access: props.access || 'unknown',
+                        description: props.description || '',
+                        musical_instrument: props.musical_instrument || '',
+                        last_seen: props.last_seen || 'Unknown',
+                        tags: props.tags || props
                     }
                 };
-            });
+            }
 
+            // Handle Overpass / custom format
+            const lon = el.lon || (el.center && el.center.lon);
+            const lat = el.lat || (el.center && el.center.lat);
+            if (lon === undefined || lat === undefined) return null;
+
+            const id = Number(el.id || index);
+            return {
+                type: 'Feature',
+                id: id,
+                geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
+                properties: {
+                    id: id,
+                    name: (el.tags && el.tags.name) || 'Piano',
+                    access: (el.tags && el.tags.access) || 'unknown',
+                    description: (el.tags && el.tags.description) || '',
+                    musical_instrument: (el.tags && el.tags.musical_instrument) || '',
+                    last_seen: (el.tags && el.tags.last_seen) || 'Unknown',
+                    tags: el.tags || {}
+                }
+            };
+        }).filter(f => f !== null);
+
+        console.log(`Successfully processed ${features.length} valid piano features.`);
         allFeatures = features;
+
         if (map && map.getSource('pianos')) {
             map.getSource('pianos').setData({ type: 'FeatureCollection', features: features });
+            console.log("Pianos data bound to map source.");
         }
         if (loadingIndicator) loadingIndicator.style.display = 'none';
 
