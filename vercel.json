@@ -6,5 +6,11 @@
       "use": "@vercel/python"
     }
   ],
-  "buildCommand": "python manage.py collectstatic --noinput && mkdir -p public/static && cp -R telegram_bot/static/. public/static/"
+  "buildCommand": "python manage.py collectstatic --noinput && mkdir -p public/static && cp -R telegram_bot/static/. public/static/",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "vercel_app/wsgi.py"
+    }
+  ]
 }
