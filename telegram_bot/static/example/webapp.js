@@ -1,3 +1,4 @@
+import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.mjs';
 let isSearchFocused = false;
 let userCoords = null;
 let userMarker = null;
@@ -52,7 +53,7 @@ if (tgWebApp) {
         tgWebApp.setBackgroundColor('#111111');
     } catch (e) {}
 }
-import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.mjs';
+
 document.fonts.load("24px 'Rampart One'");
 const map = new maplibregl.Map({
     container: 'map',

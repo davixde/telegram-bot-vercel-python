@@ -192,7 +192,7 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@6.0.0/dist/maplibre-gl.js"></script>
+    
 
     {# SVG icons injected as JS globals — needed before webapp.js loads #}
     <script>
@@ -204,7 +204,7 @@
     </script>
 
 
-    <script src="{% static 'example/webapp.js' %}?v=6"></script>
+    <script type="module" src="{% static 'example/webapp.js' %}"></script>
 
 
 
