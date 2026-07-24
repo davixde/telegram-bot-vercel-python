@@ -52,7 +52,8 @@ if (tgWebApp) {
         tgWebApp.setBackgroundColor('#111111');
     } catch (e) {}
 }
-
+import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.mjs';
+document.fonts.load("24px 'Rampart One'");
 const map = new maplibregl.Map({
     container: 'map',
     style: window.styleJsonUrl || "/static/example/style.json",
