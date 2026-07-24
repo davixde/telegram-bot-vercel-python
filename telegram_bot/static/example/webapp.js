@@ -54,7 +54,7 @@ if (tgWebApp) {
     } catch (e) {}
 }
 
-document.fonts.load("24px 'Rampart One'");
+document.fonts.load("24px 'Inter'");
 const map = new maplibregl.Map({
     container: 'map',
     style: window.styleJsonUrl || "/static/example/style.json",
@@ -77,22 +77,43 @@ function updateMapLanguage(lang) {
     function injectLanguage(expr, targetLang) {
         if (typeof expr === 'string') {
             if (expr === '{name}' || expr === 'name') {
-                return ['coalesce', ['get', `name:${targetLang}`], ['get', `name_${targetLang}`], ['get', 'name']];
+                const coalesced = [
+                    'coalesce',
+                    ['get', `name:${targetLang}`],
+                    ['get', `name_${targetLang}`],
+                    ['get', 'name:en'],
+                    ['get', 'name'],
+                    ''
+                ];
+                return ['to-title-case', coalesced];
             }
             return expr;
         }
 
         if (!Array.isArray(expr)) return expr;
 
-        if (expr[0] === 'get' && typeof expr[1] === 'string' && expr[1].startsWith('name')) {
-            if (expr[1] === 'name:nonlatin') return expr;
+        if (expr[0] === 'get' && typeof expr[1] === 'string') {
+            const propName = expr[1];
 
-            return [
-                'coalesce',
-                ['get', `name:${targetLang}`],
-                ['get', `name_${targetLang}`],
-                expr
-            ];
+            if (propName === 'name:nonlatin' || propName.includes('nonlatin')) {
+                if (targetLang !== 'en') {
+                    return '';
+                }
+                return expr;
+            }
+
+            if (propName.startsWith('name')) {
+                const coalesced = [
+                    'coalesce',
+                    ['get', `name:${targetLang}`],
+                    ['get', `name_${targetLang}`],
+                    ['get', 'name:en'],
+                    ['get', 'name'],
+                    ''
+                ];
+
+                return ['to-title-case', coalesced];
+            }
         }
 
         return expr.map(child => injectLanguage(child, targetLang));
