@@ -1,14 +1,10 @@
 {
+  "version": 2,
   "builds": [
     {
       "src": "vercel_app/wsgi.py",
       "use": "@vercel/python"
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "vercel_app/wsgi.py"
-    }
-  ]
+  "buildCommand": "python manage.py collectstatic --noinput && mkdir -p public/static && cp -R telegram_bot/static/. public/static/"
 }

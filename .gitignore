@@ -1,5 +1,6 @@
 .vercel
 staticfiles/
+public/
 *.log
 *.pyc
 __pycache__
