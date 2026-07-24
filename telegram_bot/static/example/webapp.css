@@ -1,6 +1,8 @@
 :root {
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-top: env(safe-area-inset-top, 0px);
+    --tg-safe-area-top: var(--tg-content-safe-area-inset-top, env(safe-area-inset-top, 20px));
+    --header-padding-top: calc(var(--tg-safe-area-top) + 36px);
     
     /* Color Palette */
     --color-primary: #1A2026;

@@ -64,6 +64,53 @@ const map = new maplibregl.Map({
     attributionControl: true
 });
 
+function updateMapLanguage(lang) {
+    if (!map) return;
+
+    if (!map.isStyleLoaded()) {
+        map.once('styledata', () => updateMapLanguage(lang));
+        return;
+    }
+
+    function injectLanguage(expr, targetLang) {
+        if (typeof expr === 'string') {
+            if (expr === '{name}' || expr === 'name') {
+                return ['coalesce', ['get', `name:${targetLang}`], ['get', `name_${targetLang}`], ['get', 'name']];
+            }
+            return expr;
+        }
+
+        if (!Array.isArray(expr)) return expr;
+
+        if (expr[0] === 'get' && typeof expr[1] === 'string' && expr[1].startsWith('name')) {
+            if (expr[1] === 'name:nonlatin') return expr;
+
+            return [
+                'coalesce',
+                ['get', `name:${targetLang}`],
+                ['get', `name_${targetLang}`],
+                expr
+            ];
+        }
+
+        return expr.map(child => injectLanguage(child, targetLang));
+    }
+
+    const layers = map.getStyle().layers || [];
+
+    layers.forEach(layer => {
+        if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+            const currentTextField = layer.layout['text-field'];
+            const textFieldStr = JSON.stringify(currentTextField);
+
+            if (textFieldStr.includes('name')) {
+                const updatedTextField = injectLanguage(currentTextField, lang);
+                map.setLayoutProperty(layer.id, 'text-field', updatedTextField);
+            }
+        }
+    });
+}
+
 const appRoot = document.getElementById('app-root');
 function lockAppHeight() {
     appRoot.style.height = (window.visualViewport ? window.visualViewport.height : window.innerHeight) + 'px';
@@ -341,6 +388,8 @@ function startWatchingLocation() {
 
 map.on('load', () => {
     map.resize();
+
+    updateMapLanguage(safeGetStorage('appLang', 'en'));
 
     map.addSource('pianos', {
         type: 'geojson',
@@ -768,6 +817,7 @@ if (langSelect) {
     langSelect.value = safeGetStorage('appLang', 'en');
     langSelect.addEventListener('change', (e) => {
         safeSetStorage('appLang', e.target.value);
+        updateMapLanguage(e.target.value);
     });
 }
 

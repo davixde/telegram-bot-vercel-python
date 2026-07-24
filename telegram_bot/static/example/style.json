@@ -16,7 +16,8 @@
     }
   },
   "sprite": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm",
-  "glyphs": "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  "glyphs": "/static/example/fonts/{fontstack}/{range}.pbf",
+  
   "layers": [
     {
       "id": "background",
@@ -2800,7 +2801,7 @@
           ],
           ["concat", "✈ ", ["coalesce", ["get", "name_en"], ["get", "name"]]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-letter-spacing": 0,
         "text-max-width": 5,
         "text-size": 12
@@ -2832,7 +2833,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-letter-spacing": 0.08,
         "text-size": ["interpolate", ["linear"], ["zoom"], 0, 10, 8, 14],
         "icon-text-fit": "none",
@@ -2869,7 +2870,7 @@
           ["concat", ["get", "name:latin"], " ", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Italic"],
+        "text-font": ["Inter Italic"],
         "text-letter-spacing": 0.2,
         "text-max-width": 5,
         "text-size": 14
@@ -2906,7 +2907,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Italic"],
+        "text-font": ["Inter Italic"],
         "text-max-width": 9,
         "text-offset": [0, 0.6],
         "text-size": 12
@@ -2945,7 +2946,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Italic"],
+        "text-font": ["Inter Italic"],
         "text-max-width": 9,
         "text-offset": [0, 0.6],
         "text-size": 12
@@ -2984,7 +2985,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Italic"],
+        "text-font": ["Inter Italic"],
         "text-max-width": 9,
         "text-offset": [0, 0.6],
         "text-size": 12
@@ -3020,7 +3021,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-max-width": 9,
         "text-offset": [0.9, 0],
         "text-line-height": 1.1,
@@ -3057,7 +3058,7 @@
           ["concat", ["get", "name:latin"], " ", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-rotation-alignment": "map",
         "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13]
       },
@@ -3092,7 +3093,7 @@
           ["concat", ["get", "name:latin"], " ", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-rotation-alignment": "map",
         "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 9],
         "text-transform": "uppercase"
@@ -3125,7 +3126,7 @@
           ["concat", ["get", "name:latin"], " ", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-rotation-alignment": "map",
         "text-size": ["interpolate", ["linear"], ["zoom"], 13, 12, 14, 13]
       },
@@ -3167,7 +3168,7 @@
         "symbol-placement": ["step", ["zoom"], "point", 11, "line"],
         "symbol-spacing": 200,
         "text-field": ["to-string", ["get", "ref"]],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-rotation-alignment": "viewport",
         "text-size": 10
       },
@@ -3209,7 +3210,7 @@
         "symbol-placement": ["step", ["zoom"], "point", 7, "line", 8, "line"],
         "symbol-spacing": 200,
         "text-field": ["to-string", ["get", "ref"]],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-rotation-alignment": "viewport",
         "text-size": 10
       }
@@ -3244,7 +3245,7 @@
         "symbol-placement": ["step", ["zoom"], "point", 11, "line"],
         "symbol-spacing": 200,
         "text-field": ["to-string", ["get", "ref"]],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-rotation-alignment": "viewport",
         "text-size": 10
       }
@@ -3266,7 +3267,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-max-width": 9,
         "text-offset": [0, 0.6],
         "text-optional": true,
@@ -3302,7 +3303,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-letter-spacing": 0.1,
         "text-max-width": 9,
         "text-size": ["interpolate", ["linear"], ["zoom"], 8, 9, 12, 10],
@@ -3334,7 +3335,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Regular"],
+        "text-font": ["Inter Regular"],
         "text-max-width": 8,
         "text-size": [
           "interpolate",
@@ -3389,7 +3390,7 @@
             ["coalesce", ["get", "name_en"], ["get", "name"]]
           ]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-size": [
           "interpolate",
           ["exponential", 1.2],
@@ -3427,7 +3428,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Italic"],
+        "text-font": ["Inter Italic"],
         "text-letter-spacing": 0.2,
         "text-max-width": 9,
         "text-size": ["interpolate", ["linear"], ["zoom"], 5, 10, 8, 14],
@@ -3479,7 +3480,7 @@
             ["coalesce", ["get", "name_en"], ["get", "name"]]
           ]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-max-width": 8,
         "text-offset": [0, -0.1],
         "text-size": [
@@ -3542,7 +3543,7 @@
             ["coalesce", ["get", "name_en"], ["get", "name"]]
           ]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Bold"],
         "text-max-width": 8,
         "text-offset": [0, -0.2],
         "text-size": [
@@ -3586,7 +3587,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Black"],
         "text-max-width": 6.25,
         "text-size": ["interpolate", ["linear"], ["zoom"], 3, 9, 7, 17],
         "text-transform": "uppercase"
@@ -3616,7 +3617,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Black"],
         "text-max-width": 6.25,
         "text-size": ["interpolate", ["linear"], ["zoom"], 2, 9, 5, 17],
         "text-transform": "uppercase"
@@ -3646,7 +3647,7 @@
           ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
           ["coalesce", ["get", "name_en"], ["get", "name"]]
         ],
-        "text-font": ["Noto Sans Bold"],
+        "text-font": ["Inter Black"],
         "text-max-width": 6.25,
         "text-size": ["interpolate", ["linear"], ["zoom"], 1, 9, 4, 17],
         "text-transform": "uppercase"
