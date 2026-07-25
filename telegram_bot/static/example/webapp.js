@@ -77,25 +77,38 @@ function updateMapLanguage(lang) {
     function injectLanguage(expr, targetLang) {
         if (typeof expr === 'string') {
             if (expr === '{name}' || expr === 'name') {
-                const coalesced = ['coalesce', ['get', `name:${targetLang}`], ['get', `name_${targetLang}`], ['get', 'name']];
-                return ['concat', ['upcase', ['slice', coalesced, 0, 1]], ['slice', coalesced, 1]];
+                return [
+                    'coalesce',
+                    ['get', `name:${targetLang}`],
+                    ['get', `name_${targetLang}`],
+                    ['get', 'name:en'],
+                    ['get', 'name']
+                ];
             }
             return expr;
         }
 
         if (!Array.isArray(expr)) return expr;
 
-        if (expr[0] === 'get' && typeof expr[1] === 'string' && expr[1].startsWith('name')) {
-            if (expr[1] === 'name:nonlatin') return expr;
+        if (expr[0] === 'get' && typeof expr[1] === 'string') {
+            const propName = expr[1];
 
-            const coalesced = [
-                'coalesce',
-                ['get', `name:${targetLang}`],
-                ['get', `name_${targetLang}`],
-                expr
-            ];
+            if (propName === 'name:nonlatin' || propName.includes('nonlatin')) {
+                if (targetLang !== 'en') {
+                    return '';
+                }
+                return expr;
+            }
 
-            return ['concat', ['upcase', ['slice', coalesced, 0, 1]], ['slice', coalesced, 1]];
+            if (propName.startsWith('name')) {
+                return [
+                    'coalesce',
+                    ['get', `name:${targetLang}`],
+                    ['get', `name_${targetLang}`],
+                    ['get', 'name:en'],
+                    ['get', 'name']
+                ];
+            }
         }
 
         return expr.map(child => injectLanguage(child, targetLang));

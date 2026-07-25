@@ -3623,7 +3623,7 @@
       },
       "paint": {
         "text-color": "#C1B0B9",
-        "text-halo-color": "rgba(88, 78, 88, 1)",
+        "text-halo-color": "rgba(41, 38, 41, 1)",
         "text-halo-blur": 0,
         "text-halo-width": 1
       }
