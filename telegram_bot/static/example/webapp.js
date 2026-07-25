@@ -78,7 +78,7 @@ function updateMapLanguage(lang) {
         if (typeof expr === 'string') {
             if (expr === '{name}' || expr === 'name') {
                 const coalesced = ['coalesce', ['get', `name:${targetLang}`], ['get', `name_${targetLang}`], ['get', 'name']];
-                return ['concat', ['upcase', ['substr', coalesced, 0, 1]], ['substr', coalesced, 1]];
+                return ['concat', ['upcase', ['slice', coalesced, 0, 1]], ['slice', coalesced, 1]];
             }
             return expr;
         }
@@ -95,7 +95,7 @@ function updateMapLanguage(lang) {
                 expr
             ];
 
-            return ['concat', ['upcase', ['substr', coalesced, 0, 1]], ['substr', coalesced, 1]];
+            return ['concat', ['upcase', ['slice', coalesced, 0, 1]], ['slice', coalesced, 1]];
         }
 
         return expr.map(child => injectLanguage(child, targetLang));
