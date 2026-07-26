@@ -201,8 +201,8 @@ html, body {
 .user-location-marker {
     width: 20px;
     height: 20px;
-    background-color: var(--color-accent);
-    border: 3px solid var(--color-text-primary); 
+    background-color: #4B77E7;
+    border: 3px solid #FFFFFF;
     border-radius: 50%;
     box-shadow: 0 0 10px rgba(0,0,0,0.4);
     box-sizing: border-box;
@@ -220,7 +220,6 @@ html, body {
 .piano-marker svg {
     width: 20px;
     height: 28px;
-    fill: var(--color-accent);
 }
 
 .custom-cluster-marker {

@@ -268,6 +268,30 @@ async function loadGlobalPianos() {
     }
 }
 
+function isOlderThanFourYears(tags) {
+    if (!tags) return false;
+    const dateStr = tags['survey:date'] || tags['check_date'];
+    if (!dateStr) return false;
+
+    try {
+        const match = dateStr.match(/^(\d{4})/);
+        if (!match) return false;
+        
+        const year = parseInt(match[1], 10);
+        const parsedDate = new Date(dateStr);
+        if (isNaN(parsedDate.getTime())) {
+            const currentYear = new Date().getFullYear();
+            return (currentYear - year) > 4;
+        }
+
+        const now = new Date();
+        const fourYearsInMs = 4 * 365.25 * 24 * 60 * 60 * 1000;
+        return (now.getTime() - parsedDate.getTime()) > fourYearsInMs;
+    } catch (e) {
+        return false;
+    }
+}
+
 function updateMarkers() {
     if (!map.getSource('pianos') || !map.isSourceLoaded('pianos')) return;
 
@@ -304,11 +328,27 @@ function updateMarkers() {
                 marker = markers[id] = new maplibregl.Marker({ element: el }).setLngLat(coords);
             } else {
                 el.className = 'piano-marker';
-                el.innerHTML = window.markerSvg;
-                const pathEl = el.querySelector('.Colored');
-                if (pathEl) {
-                    pathEl.setAttribute('fill', getAccessColor(props.access));
+                
+                const fullFeature = allFeatures.find(f => f.properties.id === props.id);
+                const tags = fullFeature ? (fullFeature.properties.tags || {}) : (props.tags || {});
+                const access = fullFeature ? (fullFeature.properties.access || 'unknown') : (props.access || 'unknown');
+                
+                let markerSvgHtml = window.unknownSvg;
+                if (isOlderThanFourYears(tags)) {
+                    markerSvgHtml = window.stillHereSvg;
+                } else if (access === 'public' || access === 'yes') {
+                    markerSvgHtml = window.publicSvg;
+                } else if (access === 'customers') {
+                    markerSvgHtml = window.customersSvg;
+                } else if (access === 'permissive') {
+                    markerSvgHtml = window.permissiveSvg;
+                } else if (access === 'students') {
+                    markerSvgHtml = window.studentsSvg;
+                } else {
+                    markerSvgHtml = window.unknownSvg;
                 }
+                
+                el.innerHTML = markerSvgHtml;
 
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
