@@ -1,4 +1,5 @@
 import * as maplibregl from 'https://unpkg.com/maplibre-gl@6.0.0/dist/maplibre-gl.mjs';
+
 let isSearchFocused = false;
 let userCoords = null;
 let userMarker = null;
@@ -55,6 +56,11 @@ if (tgWebApp) {
 }
 
 document.fonts.load("24px 'Inter'");
+try {
+    document.fonts.load('700 24px "SF Pro Rounded"').catch(() => {
+    });
+} catch (e) {
+}
 const map = new maplibregl.Map({
     container: 'map',
     style: window.styleJsonUrl || "/static/example/style.json",
