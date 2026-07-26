@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-07-20T21:14:06Z",
+    "timestamp_osm_base": "2026-07-26T02:03:18Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -830,8 +830,8 @@
 {
   "type": "node",
   "id": 4802490562,
-  "lat": 52.0901461,
-  "lon": 5.1111027,
+  "lat": 52.0892897,
+  "lon": 5.1105654,
   "tags": {
     "amenity": "piano",
     "layer": "2",
@@ -3959,19 +3959,6 @@
 },
 {
   "type": "node",
-  "id": 14011243080,
-  "lat": 45.8290617,
-  "lon": 6.9500039,
-  "tags": {
-    "access": "yes",
-    "amenity": "piano",
-    "indoor": "yes",
-    "musical_instrument": "piano",
-    "operator": "Skyway Monte Bianco"
-  }
-},
-{
-  "type": "node",
   "id": 14011336351,
   "lat": 45.4076783,
   "lon": 11.8771542,
@@ -3987,8 +3974,8 @@
 {
   "type": "node",
   "id": 14014917814,
-  "lat": 43.1089553,
-  "lon": -71.4775657,
+  "lat": 43.1089732,
+  "lon": -71.4775614,
   "tags": {
     "amenity": "piano"
   }
