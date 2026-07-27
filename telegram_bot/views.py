@@ -291,42 +291,83 @@ def osm_oauth_callback(request):
     allowed_origin = f"{parsed.scheme}://{parsed.netloc}"
 
     # ------------------------------------------------------------------
-    # PRIMARY HANDOFF: send a Telegram bot message with a WebApp button.
-    # This works universally on mobile and desktop regardless of the
-    # browser used for the OAuth flow.
+    # PRIMARY HANDOFF: send a Telegram bot message to the user.
+    #
+    # We use sendPhoto with a banner image and a ReplyKeyboardMarkup that
+    # shows a WebApp keyboard button (the keyboard suggestion bar below the
+    # chat input). The user taps it to re-open the Mini App with the token
+    # already in the URL – no inline button attached to the message.
+    #
+    # Falls back to a plain sendMessage if the banner image is unavailable.
     # ------------------------------------------------------------------
     bot_message_sent = False
     bot_token        = getenv("TOKEN", "")
+
+    # Reply keyboard: a single WebApp button shown in the suggestion bar.
+    # one_time_keyboard hides it after the user taps it.
+    reply_keyboard = json.dumps({
+        "keyboard": [[{
+            "text":    "\U0001f3b9 Return to Piano Map",
+            "web_app": {"url": osm_return_url},
+        }]],
+        "resize_keyboard":   True,
+        "one_time_keyboard": True,
+    })
+
+    # Banner served from the project's static files.
+    # Place your image at:  telegram_bot/static/example/assets/osm_banner.jpg
+    banner_url = f"{allowed_origin}/static/example/assets/osm_banner.jpg"
+
+    caption = (
+        "\u2705 <b>OpenStreetMap account connected!</b>\n\n"
+        "Tap the \u201cReturn to Piano Map\u201d button that appeared in your keyboard."
+    )
+
     if tg_user_id and bot_token:
+        # Try sendPhoto first (banner + caption + reply keyboard)
         try:
-            msg_body = json.dumps({
-                "chat_id": int(tg_user_id),
-                "text": (
-                    "\u2705 <b>OpenStreetMap account connected!</b>\n\n"
-                    "Tap the button below to return to the Piano Map."
-                ),
-                "parse_mode": "HTML",
-                "reply_markup": json.dumps({
-                    "inline_keyboard": [[
-                        {
-                            "text": "\U0001f3b9 Return to Piano Map",
-                            "web_app": {"url": osm_return_url},
-                        }
-                    ]]
-                }),
+            photo_body = json.dumps({
+                "chat_id":      int(tg_user_id),
+                "photo":        banner_url,
+                "caption":      caption,
+                "parse_mode":   "HTML",
+                "reply_markup": reply_keyboard,
             }).encode()
 
-            bot_req = urllib.request.Request(
-                f"https://api.telegram.org/bot{bot_token}/sendMessage",
-                data=msg_body,
+            photo_req = urllib.request.Request(
+                f"https://api.telegram.org/bot{bot_token}/sendPhoto",
+                data=photo_body,
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(bot_req, timeout=8) as bot_resp:
-                result = json.loads(bot_resp.read().decode())
+            with urllib.request.urlopen(photo_req, timeout=8) as r:
+                result = json.loads(r.read().decode())
                 bot_message_sent = result.get("ok", False)
         except Exception as exc:
-            print("OSM bot sendMessage error:", exc)
+            print("OSM bot sendPhoto error:", exc)
+
+        # Fallback to plain text if sendPhoto failed
+        if not bot_message_sent:
+            try:
+                text_body = json.dumps({
+                    "chat_id":      int(tg_user_id),
+                    "text":         caption,
+                    "parse_mode":   "HTML",
+                    "reply_markup": reply_keyboard,
+                }).encode()
+
+                text_req = urllib.request.Request(
+                    f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                    data=text_body,
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(text_req, timeout=8) as r:
+                    result = json.loads(r.read().decode())
+                    bot_message_sent = result.get("ok", False)
+            except Exception as exc:
+                print("OSM bot sendMessage error:", exc)
+
 
     context = {
         "access_token":    access_token,

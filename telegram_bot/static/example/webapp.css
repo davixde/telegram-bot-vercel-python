@@ -759,6 +759,15 @@ input:checked + .slider:before {
    OSM Authentication section
 ----------------------------------------------------------------------- */
 
+/* OSM auth items are mutually exclusive (only one visible at a time).
+   Suppress the divider that .settings-item normally renders, because the
+   hidden sibling is still the last DOM child so :last-child doesn't fire
+   on the visible one. */
+#osm-logged-in,
+#osm-logged-out {
+    border-bottom: none;
+}
+
 /* Account row when logged in: avatar + username side by side */
 .osm-account-row {
     display: flex;
