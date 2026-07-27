@@ -136,8 +136,11 @@ def osm_oauth_start(request):
     Step 1 of the OSM OAuth 2.0 PKCE flow.
 
     Generates a random state value and a PKCE code_verifier / code_challenge
-    pair, stores the verifier in a short-lived signed HttpOnly cookie, then
-    redirects the browser to the OSM authorization endpoint.
+    pair, stores them in a short-lived signed HttpOnly cookie alongside the
+    caller's Telegram user ID, then redirects to the OSM authorization page.
+
+    The Telegram user ID (tg_user_id) is passed as a GET param by the Mini App
+    so that the callback can send a bot message back to the correct user.
     """
     if not OSM_CLIENT_ID or not OSM_REDIRECT_URI:
         return HttpResponseBadRequest(
@@ -145,16 +148,19 @@ def osm_oauth_start(request):
         )
 
     # One-time random value to prevent CSRF on the callback
-    state = secrets.token_urlsafe(32)
+    state    = secrets.token_urlsafe(32)
     verifier, challenge = _pkce_pair()
 
-    # Build the authorization URL
+    # Telegram user ID sent by the Mini App (used later to deliver the bot message)
+    tg_user_id = request.GET.get("tg_user_id", "")
+
+    # Build the OSM authorization URL
     params = urllib.parse.urlencode({
-        "response_type": "code",
-        "client_id":     OSM_CLIENT_ID,
-        "redirect_uri":  OSM_REDIRECT_URI,
-        "scope":         "read_prefs",
-        "state":         state,
+        "response_type":          "code",
+        "client_id":              OSM_CLIENT_ID,
+        "redirect_uri":           OSM_REDIRECT_URI,
+        "scope":                  "read_prefs",
+        "state":                  state,
         "code_challenge":         challenge,
         "code_challenge_method":  "S256",
     })
@@ -162,15 +168,19 @@ def osm_oauth_start(request):
 
     response = redirect(auth_url)
 
-    # Store verifier + state in a signed cookie so the callback can verify them.
-    # HttpOnly + SameSite=None + Secure are required because the OSM redirect
-    # will arrive from a different origin in most browser configurations.
+    # Persist state, verifier and user_id in a JSON payload inside a signed
+    # HttpOnly cookie.  SameSite=None + Secure is required so the browser
+    # sends the cookie back when OSM redirects to our callback (cross-site).
     signer = TimestampSigner()
-    cookie_value = signer.sign(f"{state}:{verifier}")
+    cookie_payload = json.dumps({
+        "state":    state,
+        "verifier": verifier,
+        "user_id":  tg_user_id,
+    })
     response.set_cookie(
         _OSM_VERIFIER_COOKIE,
-        cookie_value,
-        max_age=600,          # 10 minutes – long enough for the user to log in
+        signer.sign(cookie_payload),
+        max_age=600,      # 10 minutes – enough time for the user to log in
         httponly=True,
         secure=True,
         samesite="None",
@@ -184,20 +194,27 @@ def osm_oauth_callback(request):
     Step 2 of the OSM OAuth 2.0 PKCE flow.
 
     OSM redirects here with ?code=...&state=... after the user grants access.
-    We verify the state cookie, exchange the authorization code for an access
-    token, then render a small relay page that passes the token back to the
-    Telegram Mini App via window.postMessage.
+    We verify the state cookie, exchange the code for an access token, then
+    use TWO parallel handoff strategies to get the token back into the Mini App:
+
+      1. PRIMARY (all platforms): Send a Telegram bot message to the user with a
+         WebApp button that opens the Mini App at WEBAPP_URL?osm_token=<token>.
+         The Mini App reads the token from the URL query param on load.
+
+      2. SECONDARY (same-browser / Telegram Web): The relay page writes the token
+         into localStorage so the Mini App can pick it up via the 'storage' event
+         in real time, without any user interaction.
     """
     code  = request.GET.get("code")
     state = request.GET.get("state")
     error = request.GET.get("error")
 
-    # Surface authorization errors to the relay page so the UI can react
+    # Surface OSM-side authorization errors to the relay page
     if error or not code or not state:
         reason = error or "missing_code_or_state"
         return render(request, "example/osm_callback.html", {"error": reason})
 
-    # Verify the state + retrieve the stored code_verifier from the signed cookie
+    # Retrieve and verify the signed PKCE cookie
     cookie_value = request.COOKIES.get(_OSM_VERIFIER_COOKIE)
     if not cookie_value:
         return render(request, "example/osm_callback.html",
@@ -206,10 +223,17 @@ def osm_oauth_callback(request):
     signer = TimestampSigner()
     try:
         unsigned = signer.unsign(cookie_value, max_age=600)
-        stored_state, verifier = unsigned.split(":", 1)
-    except (BadSignature, SignatureExpired, ValueError):
+        # Cookie payload is a JSON object {state, verifier, user_id}
+        cookie_data = json.loads(unsigned)
+        stored_state = cookie_data["state"]
+        verifier     = cookie_data["verifier"]
+        tg_user_id   = cookie_data.get("user_id", "")
+    except (BadSignature, SignatureExpired):
         return render(request, "example/osm_callback.html",
                       {"error": "invalid_or_expired_cookie"})
+    except (json.JSONDecodeError, KeyError):
+        return render(request, "example/osm_callback.html",
+                      {"error": "malformed_cookie"})
 
     if stored_state != state:
         return render(request, "example/osm_callback.html",
@@ -217,7 +241,7 @@ def osm_oauth_callback(request):
 
     # Exchange the authorization code for an access token
     try:
-        payload = urllib.parse.urlencode({
+        token_payload = urllib.parse.urlencode({
             "grant_type":    "authorization_code",
             "code":          code,
             "redirect_uri":  OSM_REDIRECT_URI,
@@ -227,17 +251,17 @@ def osm_oauth_callback(request):
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-        # Include client_secret only when configured (confidential client)
+        # Include client_secret only for confidential clients
         if OSM_CLIENT_SECRET:
-            import base64
-            credentials = base64.b64encode(
+            import base64 as _b64
+            credentials = _b64.b64encode(
                 f"{OSM_CLIENT_ID}:{OSM_CLIENT_SECRET}".encode()
             ).decode()
             headers["Authorization"] = f"Basic {credentials}"
 
         req = urllib.request.Request(
             OSM_TOKEN_URL,
-            data=payload,
+            data=token_payload,
             headers=headers,
             method="POST",
         )
@@ -253,20 +277,63 @@ def osm_oauth_callback(request):
         return render(request, "example/osm_callback.html",
                       {"error": "no_access_token"})
 
-    # Determine the allowed origin for postMessage security:
-    # use WEBAPP_URL env var, or fall back to the request's own origin.
-    webapp_url = getenv("WEBAPP_URL", "")
-    if webapp_url:
-        from urllib.parse import urlparse as _urlparse
-        parsed = _urlparse(webapp_url)
-        allowed_origin = f"{parsed.scheme}://{parsed.netloc}"
-    else:
-        allowed_origin = request.build_absolute_uri("/").rstrip("/")
+    # Build the Mini App return URL – the token travels as a query param.
+    # The Mini App reads it, saves it to localStorage, then immediately strips
+    # it from the URL via history.replaceState to minimise exposure.
+    webapp_url = getenv("WEBAPP_URL", "").rstrip("/")
+    if not webapp_url:
+        webapp_url = request.build_absolute_uri("/webapp")
+    osm_return_url = f"{webapp_url}?osm_token={urllib.parse.quote(access_token, safe='')}"
 
-    response = render(request, "example/osm_callback.html", {
-        "access_token":   access_token,
-        "allowed_origin": allowed_origin,
-    })
-    # Expire the PKCE cookie – it's no longer needed
+    # Determine the allowed origin for the relay-page postMessage fallback
+    from urllib.parse import urlparse as _urlparse
+    parsed        = _urlparse(webapp_url)
+    allowed_origin = f"{parsed.scheme}://{parsed.netloc}"
+
+    # ------------------------------------------------------------------
+    # PRIMARY HANDOFF: send a Telegram bot message with a WebApp button.
+    # This works universally on mobile and desktop regardless of the
+    # browser used for the OAuth flow.
+    # ------------------------------------------------------------------
+    bot_message_sent = False
+    bot_token        = getenv("TOKEN", "")
+    if tg_user_id and bot_token:
+        try:
+            msg_body = json.dumps({
+                "chat_id": int(tg_user_id),
+                "text": (
+                    "\u2705 <b>OpenStreetMap account connected!</b>\n\n"
+                    "Tap the button below to return to the Piano Map."
+                ),
+                "parse_mode": "HTML",
+                "reply_markup": json.dumps({
+                    "inline_keyboard": [[
+                        {
+                            "text": "\U0001f3b9 Return to Piano Map",
+                            "web_app": {"url": osm_return_url},
+                        }
+                    ]]
+                }),
+            }).encode()
+
+            bot_req = urllib.request.Request(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                data=msg_body,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(bot_req, timeout=8) as bot_resp:
+                result = json.loads(bot_resp.read().decode())
+                bot_message_sent = result.get("ok", False)
+        except Exception as exc:
+            print("OSM bot sendMessage error:", exc)
+
+    context = {
+        "access_token":    access_token,
+        "allowed_origin":  allowed_origin,
+        "bot_message_sent": bot_message_sent,
+        "osm_return_url":  osm_return_url,
+    }
+    response = render(request, "example/osm_callback.html", context)
     response.delete_cookie(_OSM_VERIFIER_COOKIE)
     return response

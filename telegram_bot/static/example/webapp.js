@@ -1083,63 +1083,79 @@ document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPr
 
 // ==========================================================================
 // OSM Authentication module
-// Manages the full OAuth 2.0 PKCE flow lifecycle inside the Mini App:
-//   - Persisting the access token in localStorage
-//   - Fetching the OSM user profile to display the username
-//   - Initiating the external OAuth flow via Telegram.WebApp.openLink
-//   - Receiving the token back via a secure window.postMessage
+// Manages the full OAuth 2.0 PKCE flow lifecycle inside the Mini App.
+//
+// Token handoff strategies (in priority order):
+//
+//  1. URL query param  ?osm_token=...
+//     Set by the Telegram bot message WebApp button. Works universally on
+//     mobile and desktop regardless of which browser was used for OAuth.
+//
+//  2. localStorage  'osm_pending_token'
+//     Written by the relay page. Works when the relay page and Mini App
+//     share the same browser (Telegram Web). Picked up via 'storage' event
+//     (real-time) or 'visibilitychange' (user switches back to Telegram).
+//
+//  3. postMessage   (tertiary / popup fallback)
+//     Works only when window.opener is available, i.e. when the flow was
+//     opened via window.open() and NOT via Telegram.WebApp.openLink().
 // ==========================================================================
 
 const osmAuth = (() => {
-    // Storage keys
+    // ── Storage keys ──────────────────────────────────────────────────────
     const TOKEN_KEY    = 'osm_access_token';
     const USERNAME_KEY = 'osm_username';
+    const PENDING_KEY  = 'osm_pending_token';
+    const PENDING_TS   = 'osm_pending_timestamp';
+    const PENDING_TTL  = 5 * 60 * 1000; // 5 minutes max validity for pending token
 
-    // DOM elements in the Settings tab
-    const elLoggedIn     = document.getElementById('osm-logged-in');
-    const elLoggedOut    = document.getElementById('osm-logged-out');
-    const elUsername     = document.getElementById('osm-username');
-    const elConnectBtn   = document.getElementById('osm-connect-btn');
+    // ── DOM elements in the Settings tab ─────────────────────────────────
+    const elLoggedIn      = document.getElementById('osm-logged-in');
+    const elLoggedOut     = document.getElementById('osm-logged-out');
+    const elUsername      = document.getElementById('osm-username');
+    const elConnectBtn    = document.getElementById('osm-connect-btn');
     const elDisconnectBtn = document.getElementById('osm-disconnect-btn');
 
-    // -----------------------------------------------------------------------
-    // localStorage helpers
-    // -----------------------------------------------------------------------
+    // ── localStorage helpers ──────────────────────────────────────────────
 
-    function getToken() {
-        return safeGetStorage(TOKEN_KEY, null);
-    }
-
-    function setToken(token) {
-        safeSetStorage(TOKEN_KEY, token);
-    }
-
+    function getToken()      { return safeGetStorage(TOKEN_KEY, null); }
+    function setToken(t)     { safeSetStorage(TOKEN_KEY, t); }
     function clearToken() {
-        try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+        try { localStorage.removeItem(TOKEN_KEY);    } catch (e) {}
         try { localStorage.removeItem(USERNAME_KEY); } catch (e) {}
     }
 
-    // -----------------------------------------------------------------------
-    // OSM API: fetch the authenticated user's display name
-    // -----------------------------------------------------------------------
+    /**
+     * Consume (read-and-delete) the pending token left by the relay page.
+     * Returns the token string or null if absent / expired.
+     */
+    function consumePendingToken() {
+        const token = safeGetStorage(PENDING_KEY, null);
+        const ts    = parseInt(safeGetStorage(PENDING_TS, '0'), 10);
+        try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
+        try { localStorage.removeItem(PENDING_TS);  } catch (e) {}
+        if (!token) return null;
+        if (Date.now() - ts > PENDING_TTL) return null; // expired
+        return token;
+    }
+
+    // ── OSM API ───────────────────────────────────────────────────────────
 
     async function fetchOsmUser(token) {
         const resp = await fetch(
             'https://api.openstreetmap.org/api/0.6/user/details.json',
             { headers: { Authorization: `Bearer ${token}` } }
         );
-        if (!resp.ok) throw new Error(`OSM API error: ${resp.status}`);
+        if (!resp.ok) throw new Error(`OSM API ${resp.status}`);
         const data = await resp.json();
         return data?.user?.display_name || null;
     }
 
-    // -----------------------------------------------------------------------
-    // UI helpers
-    // -----------------------------------------------------------------------
+    // ── UI helpers ────────────────────────────────────────────────────────
 
     function showLoggedIn(username) {
         if (elLoggedIn)  elLoggedIn.style.display  = 'flex';
-        if (elLoggedOut) elLoggedOut.style.display  = 'none';
+        if (elLoggedOut) elLoggedOut.style.display = 'none';
         if (elUsername) {
             elUsername.classList.remove('loading');
             elUsername.textContent = username || 'OSM User';
@@ -1148,175 +1164,203 @@ const osmAuth = (() => {
 
     function showLoggedOut() {
         if (elLoggedIn)  elLoggedIn.style.display  = 'none';
-        if (elLoggedOut) elLoggedOut.style.display  = 'flex';
+        if (elLoggedOut) elLoggedOut.style.display = 'flex';
     }
 
     function showLoadingUsername() {
         if (elLoggedIn)  elLoggedIn.style.display  = 'flex';
-        if (elLoggedOut) elLoggedOut.style.display  = 'none';
+        if (elLoggedOut) elLoggedOut.style.display = 'none';
         if (elUsername) {
-            elUsername.textContent = 'Loading…';
+            elUsername.textContent = 'Loading\u2026';
             elUsername.classList.add('loading');
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Initialise: restore state from cache on app start
-    // -----------------------------------------------------------------------
+    // ── Core: save token, update UI, fetch username ───────────────────────
 
-    async function init() {
-        const token = getToken();
-        if (!token) {
-            showLoggedOut();
-            return;
-        }
-
-        // Try to use a cached username first for instant display
-        const cachedName = safeGetStorage(USERNAME_KEY, null);
-        if (cachedName) {
-            showLoggedIn(cachedName);
-        } else {
-            showLoadingUsername();
-        }
-
-        // Refresh the username from the API in the background
+    async function applyToken(token) {
+        setToken(token);
+        showLoadingUsername();
         try {
             const name = await fetchOsmUser(token);
             if (name) {
                 safeSetStorage(USERNAME_KEY, name);
                 showLoggedIn(name);
             } else {
-                // Token may be invalid – clear and show logged-out state
+                // Token invalid or revoked – clear it
                 clearToken();
                 showLoggedOut();
             }
         } catch (err) {
             console.warn('OSM user fetch failed:', err);
-            // Keep the cached name on network error; don't log the user out
-            if (!cachedName) {
-                clearToken();
-                showLoggedOut();
-            }
+            // Network error: keep the token and show a generic label
+            showLoggedIn(safeGetStorage(USERNAME_KEY, null));
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Initiate the OAuth flow
-    // Opens the Django /api/osm/start/ endpoint in an external browser window
-    // so the user can log in on openstreetmap.org without leaving Telegram.
-    // -----------------------------------------------------------------------
+    // ── Init ─────────────────────────────────────────────────────────────
+    //
+    // Called once on app load. Checks token sources in priority order:
+    //   (a) ?osm_token= URL param   – from the bot message WebApp button
+    //   (b) osm_pending_token       – from relay page in same-browser context
+    //   (c) already-stored token    – from a previous session
+    // ─────────────────────────────────────────────────────────────────────
 
-    function startLogin() {
-        const startUrl = window.osmOauthStartUrl;
-        if (!startUrl) {
-            console.error('osmOauthStartUrl is not defined.');
+    async function init() {
+        // (a) Bot message path: token is in the URL query string.
+        //     The Telegram bot sends a WebApp button pointing to
+        //     WEBAPP_URL?osm_token=TOKEN. When the user taps it, Telegram
+        //     opens the Mini App at exactly that URL.
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken  = urlParams.get('osm_token');
+        if (urlToken) {
+            // Remove the token from the address bar immediately so it does
+            // not linger in Telegram's title bar or the browser history.
+            try {
+                const clean = new URL(window.location.href);
+                clean.searchParams.delete('osm_token');
+                window.history.replaceState({}, '', clean.toString());
+            } catch (e) {}
+            await applyToken(urlToken);
             return;
         }
 
-        // Resolve relative URL to absolute (needed for openLink)
-        const absoluteUrl = new URL(startUrl, window.location.href).href;
+        // (b) Same-browser path: relay page wrote token to localStorage.
+        const pendingToken = consumePendingToken();
+        if (pendingToken) {
+            await applyToken(pendingToken);
+            return;
+        }
 
-        if (tgWebApp && typeof tgWebApp.openLink === 'function') {
-            // Primary path: opens a real browser tab outside Telegram.
-            // try_instant_view: false prevents Telegram from rendering the
-            // OSM login page as a plain-text instant view.
-            tgWebApp.openLink(absoluteUrl, { try_instant_view: false });
+        // (c) Restore an existing session from a previous login.
+        const token = getToken();
+        if (!token) { showLoggedOut(); return; }
+
+        const cachedName = safeGetStorage(USERNAME_KEY, null);
+        if (cachedName) {
+            showLoggedIn(cachedName); // instant display while API refreshes
         } else {
-            // Fallback: standard popup; the relay page will postMessage back.
-            window.open(absoluteUrl, 'osm_auth', 'width=520,height=720,noopener');
+            showLoadingUsername();
+        }
+
+        try {
+            const name = await fetchOsmUser(token);
+            if (name) {
+                safeSetStorage(USERNAME_KEY, name);
+                showLoggedIn(name);
+            } else {
+                // Token revoked or expired
+                clearToken();
+                showLoggedOut();
+            }
+        } catch (err) {
+            console.warn('OSM user fetch failed:', err);
+            // On network errors keep the cached name; don't log the user out
+            if (!cachedName) { clearToken(); showLoggedOut(); }
         }
     }
 
-    // -----------------------------------------------------------------------
-    // Handle the token arriving back via postMessage from the relay page.
-    // We validate the origin strictly before accepting any data.
-    // -----------------------------------------------------------------------
+    // ── Start login ───────────────────────────────────────────────────────
+    //
+    // Opens /api/osm/start/ in an external browser, passing the Telegram
+    // user ID so the Django callback can send the return bot message.
+    // ─────────────────────────────────────────────────────────────────────
+
+    function startLogin() {
+        const startUrl = window.osmOauthStartUrl;
+        if (!startUrl) { console.error('osmOauthStartUrl not defined'); return; }
+
+        const url = new URL(startUrl, window.location.href);
+
+        // Include the Telegram user ID so the callback can message the user
+        const tgUserId = tgWebApp?.initDataUnsafe?.user?.id;
+        if (tgUserId) url.searchParams.set('tg_user_id', String(tgUserId));
+
+        if (tgWebApp && typeof tgWebApp.openLink === 'function') {
+            // Standard Telegram API: opens in the device's real browser.
+            // try_instant_view: false is essential – without it Telegram may
+            // render the OSM login as a plain-text instant view article.
+            tgWebApp.openLink(url.href, { try_instant_view: false });
+        } else {
+            // Non-Telegram context (browser testing): use a popup so
+            // the postMessage fallback can still fire.
+            window.open(url.href, 'osm_auth', 'width=520,height=720');
+        }
+    }
+
+    // ── Storage event listener (Telegram Web / same-browser) ──────────────
+    //
+    // When the relay page (in a different tab of the SAME browser) writes
+    // 'osm_pending_token', the 'storage' event fires here in real time.
+    // This gives an instant UI update without any user interaction.
+    // ─────────────────────────────────────────────────────────────────────
+
+    function setupStorageListener() {
+        window.addEventListener('storage', async (event) => {
+            if (event.key !== PENDING_KEY || !event.newValue) return;
+            const token = consumePendingToken();
+            if (token) await applyToken(token);
+        });
+    }
+
+    // ── Visibility change listener ────────────────────────────────────────
+    //
+    // Fires when the user switches back to Telegram (and thus to the Mini App)
+    // after completing the OAuth flow in the external browser. At that moment
+    // we check localStorage for a pending token as a belt-and-suspenders
+    // measure alongside the bot message.
+    // ─────────────────────────────────────────────────────────────────────
+
+    function setupVisibilityListener() {
+        document.addEventListener('visibilitychange', async () => {
+            if (document.hidden) return;
+            const token = consumePendingToken();
+            if (token) await applyToken(token);
+        });
+    }
+
+    // ── postMessage listener (popup / window.open fallback) ───────────────
 
     function setupMessageListener() {
         window.addEventListener('message', async (event) => {
-            // Security: only accept messages that look like our OSM auth relay.
-            // We check that the data has the right type before doing anything.
             const data = event.data;
-            if (!data || data.type !== 'osm_auth_success' && data.type !== 'osm_auth_error') {
-                return; // Not our message
-            }
+            if (!data) return;
+            if (data.type !== 'osm_auth_success' && data.type !== 'osm_auth_error') return;
 
-            // Verify the origin: must match the host serving the Mini App
-            // (i.e. the same Vercel domain) OR the same origin as this page.
-            const expectedOrigin = window.location.origin;
-            if (event.origin !== expectedOrigin) {
-                console.warn(
-                    `OSM postMessage rejected: unexpected origin "${event.origin}". ` +
-                    `Expected "${expectedOrigin}".`
-                );
+            // Strict origin check: only accept from our own domain
+            if (event.origin !== window.location.origin) {
+                console.warn(`OSM postMessage blocked: unexpected origin "${event.origin}"`);
                 return;
             }
 
             if (data.type === 'osm_auth_error') {
-                console.error('OSM auth error:', data.error);
                 showNotification('OpenStreetMap login failed. Please try again.');
                 showLoggedOut();
                 return;
             }
-
-            // Success: store the token and update the UI
-            const token = data.access_token;
-            if (!token) return;
-
-            setToken(token);
-            showLoadingUsername();
-
-            try {
-                const name = await fetchOsmUser(token);
-                if (name) {
-                    safeSetStorage(USERNAME_KEY, name);
-                    showLoggedIn(name);
-                } else {
-                    clearToken();
-                    showLoggedOut();
-                }
-            } catch (err) {
-                console.warn('OSM user fetch after login failed:', err);
-                // Still show as connected – the token is valid, name fetch may retry later
-                showLoggedIn(null);
-            }
+            if (data.access_token) await applyToken(data.access_token);
         });
     }
 
-    // -----------------------------------------------------------------------
-    // Disconnect: clear stored credentials and update UI
-    // -----------------------------------------------------------------------
+    // ── Disconnect ────────────────────────────────────────────────────────
 
-    function disconnect() {
-        clearToken();
-        showLoggedOut();
-    }
+    function disconnect() { clearToken(); showLoggedOut(); }
 
-    // -----------------------------------------------------------------------
-    // Wire up button event listeners
-    // -----------------------------------------------------------------------
+    // ── Wire up buttons and listeners ─────────────────────────────────────
 
     if (elConnectBtn) {
-        elConnectBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            startLogin();
-        });
+        elConnectBtn.addEventListener('click', (e) => { e.stopPropagation(); startLogin(); });
     }
-
     if (elDisconnectBtn) {
-        elDisconnectBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            disconnect();
-        });
+        elDisconnectBtn.addEventListener('click', (e) => { e.stopPropagation(); disconnect(); });
     }
 
-    // Register the postMessage listener as soon as the module loads,
-    // so tokens arriving in any order are always caught.
     setupMessageListener();
+    setupStorageListener();
+    setupVisibilityListener();
 
-    // Expose minimal public API (useful for debugging or future extensions)
     return { init, getToken, clearToken };
 })();
 
-// Initialise the OSM auth UI once the module is set up
+// Kick off the OSM auth UI (checks URL param, localStorage, cached session)
 osmAuth.init();
