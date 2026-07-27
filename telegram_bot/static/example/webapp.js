@@ -1281,6 +1281,7 @@ const osmAuth = (() => {
             // try_instant_view: false is essential – without it Telegram may
             // render the OSM login as a plain-text instant view article.
             tgWebApp.openLink(url.href, { try_instant_view: false });
+            tgWebApp.close()
         } else {
             // Non-Telegram context (browser testing): use a popup so
             // the postMessage fallback can still fire.
