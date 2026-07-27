@@ -315,8 +315,8 @@ def osm_oauth_callback(request):
     })
 
     # Banner served from the project's static files.
-    # Place your image at:  telegram_bot/static/example/assets/osm_banner.jpg
-    banner_url = f"{allowed_origin}/static/example/assets/osm_banner.jpg"
+    # Place your image at:  telegram_bot/static/example/assets/osm_banner.png
+    banner_url = f"{allowed_origin}/static/example/assets/osm_banner.png"
 
     caption = (
         "\u2705 <b>OpenStreetMap account connected!</b>\n\n"
