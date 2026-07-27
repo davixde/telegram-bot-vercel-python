@@ -22,6 +22,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
+            overflow: hidden;
             background: var(--bg);
             color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont, "Inter", Roboto, sans-serif;
@@ -33,14 +34,11 @@
         }
 
         .card {
-            background: var(--card);
-            border: 1px solid rgba(255,255,255,.07);
             border-radius: 20px;
             padding: 40px 28px;
             max-width: 340px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 8px 40px rgba(0,0,0,.45);
         }
 
         .icon {
@@ -140,8 +138,8 @@
     <h1>Connected to OpenStreetMap!</h1>
     <p>You can close this page and return to Telegram.</p>
     <div class="hint">
-        <strong>Go back to Telegram</strong> — a message with a
-        <em>Return to Piano Map</em> button is waiting for you in the chat.
+        <strong>Go back to Telegram</strong> 
+            {% include "assets/image.svg" %}
     </div>
     <button class="close-btn" onclick="window.close()">Close this page</button>
 
