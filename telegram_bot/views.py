@@ -1,13 +1,27 @@
 import asyncio
+import hashlib
 import json
+import os
+import secrets
 import urllib.request
 import urllib.parse
 from os import getenv
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 from .bot import bot_tele
+
+# ---------------------------------------------------------------------------
+# OSM OAuth 2.0 PKCE constants – configure via environment variables
+# ---------------------------------------------------------------------------
+OSM_CLIENT_ID     = getenv("OSM_CLIENT_ID", "")
+OSM_CLIENT_SECRET = getenv("OSM_CLIENT_SECRET", "")
+OSM_REDIRECT_URI  = getenv("OSM_REDIRECT_URI", "")
+OSM_AUTH_URL      = "https://www.openstreetmap.org/oauth2/authorize"
+OSM_TOKEN_URL     = "https://www.openstreetmap.org/oauth2/token"
+# Cookie name used to carry the PKCE code_verifier across the redirect
+_OSM_VERIFIER_COOKIE = "osm_pkce_verifier"
 
 
 def index(request):
@@ -102,5 +116,157 @@ def translate_text(request):
     return JsonResponse({'translatedText': text})
 
 
+# ---------------------------------------------------------------------------
+# OSM OAuth 2.0 PKCE flow
+# ---------------------------------------------------------------------------
+
+def _pkce_pair():
+    """Generate a random PKCE code_verifier and its SHA-256 code_challenge."""
+    verifier = secrets.token_urlsafe(64)
+    digest = hashlib.sha256(verifier.encode()).digest()
+    challenge = urllib.parse.quote(
+        # base64url without padding
+        __import__('base64').urlsafe_b64encode(digest).rstrip(b'=').decode()
+    )
+    return verifier, challenge
 
 
+def osm_oauth_start(request):
+    """
+    Step 1 of the OSM OAuth 2.0 PKCE flow.
+
+    Generates a random state value and a PKCE code_verifier / code_challenge
+    pair, stores the verifier in a short-lived signed HttpOnly cookie, then
+    redirects the browser to the OSM authorization endpoint.
+    """
+    if not OSM_CLIENT_ID or not OSM_REDIRECT_URI:
+        return HttpResponseBadRequest(
+            "OSM OAuth is not configured. Set OSM_CLIENT_ID and OSM_REDIRECT_URI."
+        )
+
+    # One-time random value to prevent CSRF on the callback
+    state = secrets.token_urlsafe(32)
+    verifier, challenge = _pkce_pair()
+
+    # Build the authorization URL
+    params = urllib.parse.urlencode({
+        "response_type": "code",
+        "client_id":     OSM_CLIENT_ID,
+        "redirect_uri":  OSM_REDIRECT_URI,
+        "scope":         "read_prefs",
+        "state":         state,
+        "code_challenge":         challenge,
+        "code_challenge_method":  "S256",
+    })
+    auth_url = f"{OSM_AUTH_URL}?{params}"
+
+    response = redirect(auth_url)
+
+    # Store verifier + state in a signed cookie so the callback can verify them.
+    # HttpOnly + SameSite=None + Secure are required because the OSM redirect
+    # will arrive from a different origin in most browser configurations.
+    signer = TimestampSigner()
+    cookie_value = signer.sign(f"{state}:{verifier}")
+    response.set_cookie(
+        _OSM_VERIFIER_COOKIE,
+        cookie_value,
+        max_age=600,          # 10 minutes – long enough for the user to log in
+        httponly=True,
+        secure=True,
+        samesite="None",
+    )
+    return response
+
+
+@csrf_exempt
+def osm_oauth_callback(request):
+    """
+    Step 2 of the OSM OAuth 2.0 PKCE flow.
+
+    OSM redirects here with ?code=...&state=... after the user grants access.
+    We verify the state cookie, exchange the authorization code for an access
+    token, then render a small relay page that passes the token back to the
+    Telegram Mini App via window.postMessage.
+    """
+    code  = request.GET.get("code")
+    state = request.GET.get("state")
+    error = request.GET.get("error")
+
+    # Surface authorization errors to the relay page so the UI can react
+    if error or not code or not state:
+        reason = error or "missing_code_or_state"
+        return render(request, "example/osm_callback.html", {"error": reason})
+
+    # Verify the state + retrieve the stored code_verifier from the signed cookie
+    cookie_value = request.COOKIES.get(_OSM_VERIFIER_COOKIE)
+    if not cookie_value:
+        return render(request, "example/osm_callback.html",
+                      {"error": "missing_verifier_cookie"})
+
+    signer = TimestampSigner()
+    try:
+        unsigned = signer.unsign(cookie_value, max_age=600)
+        stored_state, verifier = unsigned.split(":", 1)
+    except (BadSignature, SignatureExpired, ValueError):
+        return render(request, "example/osm_callback.html",
+                      {"error": "invalid_or_expired_cookie"})
+
+    if stored_state != state:
+        return render(request, "example/osm_callback.html",
+                      {"error": "state_mismatch"})
+
+    # Exchange the authorization code for an access token
+    try:
+        payload = urllib.parse.urlencode({
+            "grant_type":    "authorization_code",
+            "code":          code,
+            "redirect_uri":  OSM_REDIRECT_URI,
+            "client_id":     OSM_CLIENT_ID,
+            "code_verifier": verifier,
+        }).encode()
+
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        # Include client_secret only when configured (confidential client)
+        if OSM_CLIENT_SECRET:
+            import base64
+            credentials = base64.b64encode(
+                f"{OSM_CLIENT_ID}:{OSM_CLIENT_SECRET}".encode()
+            ).decode()
+            headers["Authorization"] = f"Basic {credentials}"
+
+        req = urllib.request.Request(
+            OSM_TOKEN_URL,
+            data=payload,
+            headers=headers,
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            token_data = json.loads(resp.read().decode())
+    except Exception as exc:
+        print("OSM token exchange error:", exc)
+        return render(request, "example/osm_callback.html",
+                      {"error": "token_exchange_failed"})
+
+    access_token = token_data.get("access_token")
+    if not access_token:
+        return render(request, "example/osm_callback.html",
+                      {"error": "no_access_token"})
+
+    # Determine the allowed origin for postMessage security:
+    # use WEBAPP_URL env var, or fall back to the request's own origin.
+    webapp_url = getenv("WEBAPP_URL", "")
+    if webapp_url:
+        from urllib.parse import urlparse as _urlparse
+        parsed = _urlparse(webapp_url)
+        allowed_origin = f"{parsed.scheme}://{parsed.netloc}"
+    else:
+        allowed_origin = request.build_absolute_uri("/").rstrip("/")
+
+    response = render(request, "example/osm_callback.html", {
+        "access_token":   access_token,
+        "allowed_origin": allowed_origin,
+    })
+    # Expire the PKCE cookie – it's no longer needed
+    response.delete_cookie(_OSM_VERIFIER_COOKIE)
+    return response

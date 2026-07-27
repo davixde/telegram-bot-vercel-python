@@ -233,28 +233,28 @@ async function loadGlobalPianos() {
         const data = await response.json();
 
         const features = (data.elements || [])
-            .filter(el => {
-                const lon = el.lon || (el.center && el.center.lon);
-                const lat = el.lat || (el.center && el.center.lat);
-                return el.id && lon !== undefined && lat !== undefined;
-            })
+            .filter(el => el.id && (el.lon ?? el.center?.lon) !== undefined && (el.lat ?? el.center?.lat) !== undefined)
             .map(el => {
-                const lon = el.lon || (el.center && el.center.lon);
-                const lat = el.lat || (el.center && el.center.lat);
-                return {
-                    type: 'Feature',
-                    geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
-                    properties: {
-                        id: Number(el.id),
-                        name: (el.tags && el.tags.name) || 'Piano',
-                        access: (el.tags && el.tags.access) || 'unknown',
-                        description: (el.tags && el.tags.description) || '',
-                        musical_instrument: (el.tags && el.tags.musical_instrument) || '',
-                        last_seen: (el.tags && el.tags.last_seen) || 'Unknown',
-                        tags: el.tags || {}
-                    }
-                };
-            });
+            const lon = el.lon || el.center?.lon;
+            const lat = el.lat || el.center?.lat;
+            const t = el.tags || {};
+        
+            const dates = [t['check_date'], t['survey:date'], t.last_seen].filter(Boolean).sort().reverse();
+
+            return {
+               type: 'Feature',
+               geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
+               properties: {
+                id: Number(el.id),
+                name: t.name || 'Piano',
+                access: t.access || 'unknown',
+                description: t.description || '',
+                musical_instrument: t.musical_instrument || '',
+                last_seen: dates[0] || 'Unknown',
+                tags: t
+            }
+        };
+    });
 
         allFeatures = features;
 
@@ -1080,3 +1080,243 @@ document.getElementById('btn-still-here').addEventListener('click', (e) => {
 
 document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
 document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPropagation(); });
+
+// ==========================================================================
+// OSM Authentication module
+// Manages the full OAuth 2.0 PKCE flow lifecycle inside the Mini App:
+//   - Persisting the access token in localStorage
+//   - Fetching the OSM user profile to display the username
+//   - Initiating the external OAuth flow via Telegram.WebApp.openLink
+//   - Receiving the token back via a secure window.postMessage
+// ==========================================================================
+
+const osmAuth = (() => {
+    // Storage keys
+    const TOKEN_KEY    = 'osm_access_token';
+    const USERNAME_KEY = 'osm_username';
+
+    // DOM elements in the Settings tab
+    const elLoggedIn     = document.getElementById('osm-logged-in');
+    const elLoggedOut    = document.getElementById('osm-logged-out');
+    const elUsername     = document.getElementById('osm-username');
+    const elConnectBtn   = document.getElementById('osm-connect-btn');
+    const elDisconnectBtn = document.getElementById('osm-disconnect-btn');
+
+    // -----------------------------------------------------------------------
+    // localStorage helpers
+    // -----------------------------------------------------------------------
+
+    function getToken() {
+        return safeGetStorage(TOKEN_KEY, null);
+    }
+
+    function setToken(token) {
+        safeSetStorage(TOKEN_KEY, token);
+    }
+
+    function clearToken() {
+        try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+        try { localStorage.removeItem(USERNAME_KEY); } catch (e) {}
+    }
+
+    // -----------------------------------------------------------------------
+    // OSM API: fetch the authenticated user's display name
+    // -----------------------------------------------------------------------
+
+    async function fetchOsmUser(token) {
+        const resp = await fetch(
+            'https://api.openstreetmap.org/api/0.6/user/details.json',
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!resp.ok) throw new Error(`OSM API error: ${resp.status}`);
+        const data = await resp.json();
+        return data?.user?.display_name || null;
+    }
+
+    // -----------------------------------------------------------------------
+    // UI helpers
+    // -----------------------------------------------------------------------
+
+    function showLoggedIn(username) {
+        if (elLoggedIn)  elLoggedIn.style.display  = 'flex';
+        if (elLoggedOut) elLoggedOut.style.display  = 'none';
+        if (elUsername) {
+            elUsername.classList.remove('loading');
+            elUsername.textContent = username || 'OSM User';
+        }
+    }
+
+    function showLoggedOut() {
+        if (elLoggedIn)  elLoggedIn.style.display  = 'none';
+        if (elLoggedOut) elLoggedOut.style.display  = 'flex';
+    }
+
+    function showLoadingUsername() {
+        if (elLoggedIn)  elLoggedIn.style.display  = 'flex';
+        if (elLoggedOut) elLoggedOut.style.display  = 'none';
+        if (elUsername) {
+            elUsername.textContent = 'Loading…';
+            elUsername.classList.add('loading');
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Initialise: restore state from cache on app start
+    // -----------------------------------------------------------------------
+
+    async function init() {
+        const token = getToken();
+        if (!token) {
+            showLoggedOut();
+            return;
+        }
+
+        // Try to use a cached username first for instant display
+        const cachedName = safeGetStorage(USERNAME_KEY, null);
+        if (cachedName) {
+            showLoggedIn(cachedName);
+        } else {
+            showLoadingUsername();
+        }
+
+        // Refresh the username from the API in the background
+        try {
+            const name = await fetchOsmUser(token);
+            if (name) {
+                safeSetStorage(USERNAME_KEY, name);
+                showLoggedIn(name);
+            } else {
+                // Token may be invalid – clear and show logged-out state
+                clearToken();
+                showLoggedOut();
+            }
+        } catch (err) {
+            console.warn('OSM user fetch failed:', err);
+            // Keep the cached name on network error; don't log the user out
+            if (!cachedName) {
+                clearToken();
+                showLoggedOut();
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Initiate the OAuth flow
+    // Opens the Django /api/osm/start/ endpoint in an external browser window
+    // so the user can log in on openstreetmap.org without leaving Telegram.
+    // -----------------------------------------------------------------------
+
+    function startLogin() {
+        const startUrl = window.osmOauthStartUrl;
+        if (!startUrl) {
+            console.error('osmOauthStartUrl is not defined.');
+            return;
+        }
+
+        // Resolve relative URL to absolute (needed for openLink)
+        const absoluteUrl = new URL(startUrl, window.location.href).href;
+
+        if (tgWebApp && typeof tgWebApp.openLink === 'function') {
+            // Primary path: opens a real browser tab outside Telegram.
+            // try_instant_view: false prevents Telegram from rendering the
+            // OSM login page as a plain-text instant view.
+            tgWebApp.openLink(absoluteUrl, { try_instant_view: false });
+        } else {
+            // Fallback: standard popup; the relay page will postMessage back.
+            window.open(absoluteUrl, 'osm_auth', 'width=520,height=720,noopener');
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Handle the token arriving back via postMessage from the relay page.
+    // We validate the origin strictly before accepting any data.
+    // -----------------------------------------------------------------------
+
+    function setupMessageListener() {
+        window.addEventListener('message', async (event) => {
+            // Security: only accept messages that look like our OSM auth relay.
+            // We check that the data has the right type before doing anything.
+            const data = event.data;
+            if (!data || data.type !== 'osm_auth_success' && data.type !== 'osm_auth_error') {
+                return; // Not our message
+            }
+
+            // Verify the origin: must match the host serving the Mini App
+            // (i.e. the same Vercel domain) OR the same origin as this page.
+            const expectedOrigin = window.location.origin;
+            if (event.origin !== expectedOrigin) {
+                console.warn(
+                    `OSM postMessage rejected: unexpected origin "${event.origin}". ` +
+                    `Expected "${expectedOrigin}".`
+                );
+                return;
+            }
+
+            if (data.type === 'osm_auth_error') {
+                console.error('OSM auth error:', data.error);
+                showNotification('OpenStreetMap login failed. Please try again.');
+                showLoggedOut();
+                return;
+            }
+
+            // Success: store the token and update the UI
+            const token = data.access_token;
+            if (!token) return;
+
+            setToken(token);
+            showLoadingUsername();
+
+            try {
+                const name = await fetchOsmUser(token);
+                if (name) {
+                    safeSetStorage(USERNAME_KEY, name);
+                    showLoggedIn(name);
+                } else {
+                    clearToken();
+                    showLoggedOut();
+                }
+            } catch (err) {
+                console.warn('OSM user fetch after login failed:', err);
+                // Still show as connected – the token is valid, name fetch may retry later
+                showLoggedIn(null);
+            }
+        });
+    }
+
+    // -----------------------------------------------------------------------
+    // Disconnect: clear stored credentials and update UI
+    // -----------------------------------------------------------------------
+
+    function disconnect() {
+        clearToken();
+        showLoggedOut();
+    }
+
+    // -----------------------------------------------------------------------
+    // Wire up button event listeners
+    // -----------------------------------------------------------------------
+
+    if (elConnectBtn) {
+        elConnectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startLogin();
+        });
+    }
+
+    if (elDisconnectBtn) {
+        elDisconnectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            disconnect();
+        });
+    }
+
+    // Register the postMessage listener as soon as the module loads,
+    // so tokens arriving in any order are always caught.
+    setupMessageListener();
+
+    // Expose minimal public API (useful for debugging or future extensions)
+    return { init, getToken, clearToken };
+})();
+
+// Initialise the OSM auth UI once the module is set up
+osmAuth.init();

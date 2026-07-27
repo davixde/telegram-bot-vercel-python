@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenStreetMap – Authenticating…</title>
+    <style>
+        /* ---------------------------------------------------------------
+           Relay page: shown only for a moment while postMessage fires.
+           Uses the same dark palette as the main Mini App.
+        --------------------------------------------------------------- */
+        :root {
+            --bg:   #1A2026;
+            --card: #202931;
+            --text: #FFFFFF;
+            --sub:  #8694A1;
+            --ok:   #4CB2FF;
+            --err:  #FF6B6B;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", Roboto, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 20px;
+            padding: 40px 32px;
+            max-width: 340px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 40px rgba(0,0,0,.45);
+        }
+
+        .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .icon.ok  { background: rgba(76,178,255,.15); }
+        .icon.err { background: rgba(255,107,107,.15); }
+
+        .icon svg { width: 28px; height: 28px; }
+
+        h1 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+
+        p  { font-size: 14px; color: var(--sub); line-height: 1.5; }
+
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,.12);
+            border-top-color: var(--ok);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="card" id="card">
+
+    {% if error %}
+    <!-- Error state ---------------------------------------------------- -->
+    <div class="icon err">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+    </div>
+    <h1>Authentication failed</h1>
+    <p>Error: <code>{{ error }}</code><br>You can close this window and try again.</p>
+
+    {% else %}
+    <!-- Success / loading state ---------------------------------------- -->
+    <div class="spinner"></div>
+    <h1>Connecting your account…</h1>
+    <p>This window will close automatically.</p>
+    {% endif %}
+
+</div>
+
+<script>
+    // ------------------------------------------------------------------
+    // Relay script – runs after a successful OAuth exchange.
+    // Sends the access token back to the Mini App opener via postMessage,
+    // then tries to close this window.
+    // ------------------------------------------------------------------
+
+    (function () {
+        "use strict";
+
+        // Values injected by the Django template
+        var accessToken  = "{{ access_token|default:'' }}";
+        var allowedOrigin = "{{ allowed_origin|default:'' }}";
+        var error        = "{{ error|default:'' }}";
+
+        // Build the message payload
+        var message = error
+            ? { type: "osm_auth_error", error: error }
+            : { type: "osm_auth_success", access_token: accessToken };
+
+        function sendAndClose() {
+            // 1. Try postMessage to the opener (popup flow via openLink)
+            if (window.opener && allowedOrigin) {
+                try {
+                    window.opener.postMessage(message, allowedOrigin);
+                } catch (e) {
+                    console.warn("postMessage to opener failed:", e);
+                }
+            }
+
+            // 2. Try Telegram WebApp sendData (in-app browser flow).
+            //    sendData can only carry a string, so we JSON-encode it.
+            //    Note: sendData closes the Mini App – only call it when we
+            //    actually have a token so we don't close on error accidentally.
+            if (!error && window.Telegram && window.Telegram.WebApp
+                    && typeof window.Telegram.WebApp.sendData === "function") {
+                try {
+                    window.Telegram.WebApp.sendData(
+                        JSON.stringify(message)
+                    );
+                } catch (e) {
+                    console.warn("Telegram.WebApp.sendData failed:", e);
+                }
+            }
+
+            // 3. Close the relay window after a short delay so the postMessage
+            //    handler in the opener has time to fire.
+            setTimeout(function () {
+                try { window.close(); } catch (e) {}
+            }, 800);
+        }
+
+        // If there is no error, fire immediately; otherwise keep the page
+        // visible so the user can read the error message.
+        if (!error) {
+            sendAndClose();
+        }
+    })();
+</script>
+
+<!-- Telegram WebApp SDK – needed for the sendData fallback path -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
