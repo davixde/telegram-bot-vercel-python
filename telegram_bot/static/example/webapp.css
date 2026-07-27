@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
+
 @font-face {
     font-family: 'SF Pro Rounded';
     src: local('SF Pro Rounded');
@@ -33,10 +35,9 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", Roboto, Helvetica, Arial, sans-serif; 
     background: var(--color-primary);
 }
-
 
 #app-root {
     position: fixed;
@@ -58,6 +59,7 @@ html, body {
     height: 100%;
 }
 
+/* Search Bar */
 .search-container {
     position: absolute;
     top: calc(55px + var(--safe-top));
@@ -252,7 +254,7 @@ html, body {
     background: rgba(26, 32, 38, 0.7) !important;
     color: var(--color-text-secondary) !important;
     padding: 2px 8px !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
     font-size: 10px !important;
 }
 .maplibregl-ctrl-attrib a {
@@ -261,18 +263,18 @@ html, body {
 }
 
 .maplibregl-ctrl-attrib-button {
-    background-color: rgba(26, 32, 38, 0.8) !important;
     filter: invert(1) brightness(1.6);
 }
 
+/* Tab Bar Navigation */
 .tab-bar {
     position: fixed;
     bottom: calc(var(--tab-bar-margin) + var(--safe-bottom));
     left: var(--tab-bar-margin);
     right: var(--tab-bar-margin);
     height: var(--tab-bar-height);
-    background: rgba(26, 32, 38, 0.78);
-    backdrop-filter: blur(24px) saturate(1.4);
+    background: rgba(30, 30, 30, 0.55);
+    backdrop-filter: blur(25px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(1.4);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 999px;
@@ -293,14 +295,9 @@ html, body {
     left: 0;
     width: 0;
     border-radius: 999px;
-    background: linear-gradient(155deg, rgba(255, 255, 255, 0.24), rgba(76, 178, 255, 0.08) 45%, rgba(76, 178, 255, 0.22));
+    background: rgba(255, 255, 255, 0.165);
     -webkit-backdrop-filter: blur(3px) url(#liquidGlassFilter) saturate(1.8) brightness(1.08);
     backdrop-filter: blur(3px) url(#liquidGlassFilter) saturate(1.8) brightness(1.08);
-    box-shadow:
-        inset 0 0.5px 1px rgba(255, 255, 255, 0.6),
-        inset 0 -7px 10px rgba(0, 0, 0, 0.18),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.14),
-        0 6px 16px rgba(0, 0, 0, 0.3);
     transition: left 0.55s cubic-bezier(0.22, 1, 0.36, 1), width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
     transform-origin: center;
     pointer-events: none;
@@ -330,37 +327,54 @@ html, body {
     cursor: pointer;
     text-decoration: none;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 200;
+    font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     flex: 1;
     height: 100%;
     border-radius: 999px;
     z-index: 2;
-    transition: color 0.2s ease;
+    transition: color 0.25s ease, font-weight 0.25s ease, opacity 0.2s ease;
+    will-change: color, font-weight, opacity;
 }
 
 .tab-item.active {
     color: var(--color-accent);
-    font-weight: 700;
+    font-weight: 600;
 }
 
-.tab-item svg {
+/* Material Symbols Styling & Animations */
+.tab-item .tab-icon {
+    font-size: 24px;
     width: 24px;
     height: 24px;
-    fill: currentColor;
+    display: inline-block;
+    line-height: 1;
+    color: #ffffffc2;
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 300,
+        'GRAD' 0,
+        'opsz' 24;
+    transition: 
+        color 0.25s ease,
+        transform 0.15s ease;
+    will-change: font-variation-settings, color, transform;
 }
 
-.tab-item svg.lucide {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
+.tab-item.active .tab-icon {
+    color: var(--color-accent);
+    font-variation-settings:
+        'FILL' 1,
+        'wght' 350,
+        'GRAD' 0,
+        'opsz' 24;
 }
 
-.tab-item.active svg.lucide {
-    fill: currentColor;
-    stroke: currentColor;
-    stroke-width: 1.5;
+.tab-item:active .tab-icon {
+    transform: scale(0.92);
 }
 
+/* Bottom Sheet Component */
 #bottom-sheet {
     position: fixed;
     bottom: 0;
