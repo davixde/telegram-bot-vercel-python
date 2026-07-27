@@ -619,7 +619,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "rgba(200, 147, 102, 1)",
+        "line-color": "rgba(41, 47, 53, 1)",
         "line-dasharray": [0.5, 0.25],
         "line-width": [
           "interpolate",
@@ -864,7 +864,7 @@
       ],
       "layout": {"line-join": "round"},
       "paint": {
-        "line-color": "rgba(244, 209, 158, 1)",
+        "line-color": "#394357",
         "line-width": [
           "interpolate",
           ["exponential", 1.2],
@@ -3657,7 +3657,7 @@
             ["coalesce", ["get", "name_en"], ["get", "name"]]
           ]
         ],
-        "text-font": ["Inter Bold"],
+        "text-font": ["Open Sans", "Inter Bold"],
         "text-max-width": 8,
         "text-offset": [0, -0.2],
         "text-size": [

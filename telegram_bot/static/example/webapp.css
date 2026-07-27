@@ -14,8 +14,13 @@
     --color-primary: #1A2026;
     --color-secondary: #202931;
     --color-accent: #4CB2FF;
+    --color-accent-soft: rgba(76, 178, 255, 0.18);
     --color-text-primary: #FFFFFF;
     --color-text-secondary: #8694A1;
+
+    --tab-bar-height: 64px;
+    --tab-bar-margin: 14px;
+    --tab-bar-clearance: calc(var(--tab-bar-height) + var(--tab-bar-margin) * 2 + var(--safe-bottom));
 }
 
 * {
@@ -170,7 +175,7 @@ html, body {
 
 .locate-btn {
     position: absolute;
-    bottom: 94px;
+    bottom: calc(var(--tab-bar-clearance) + 14px);
     left: 20px;
     z-index: 10;
     width: 48px;
@@ -209,8 +214,8 @@ html, body {
 }
 
 .piano-marker {
-    width: 20px;
-    height: 28px;
+    width: 30px;
+    height: 42px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -218,15 +223,15 @@ html, body {
 }
 
 .piano-marker svg {
-    width: 20px;
-    height: 28px;
+    width: 30px;
+    height: 42px;
 }
 
 .custom-cluster-marker {
-    width: 38px;
-    height: 38px;
-    background-color: var(--color-secondary);
-    border: 2px solid var(--color-accent);
+    width: 30px;
+    height: 30px;
+    background-color: #536277;
+    border: 2px solid #68799F;
     border-radius: 50%;
     color: var(--color-text-primary);
     font-size: 13px;
@@ -236,6 +241,11 @@ html, body {
     align-items: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     cursor: pointer;
+}
+
+.maplibregl-ctrl-bottom-right {
+    bottom: calc(var(--tab-bar-clearance) + 6px) !important;
+    transition: bottom 0.2s ease;
 }
 
 .maplibregl-ctrl-attrib {
@@ -250,52 +260,105 @@ html, body {
     text-decoration: none !important;
 }
 
+.maplibregl-ctrl-attrib-button {
+    background-color: rgba(26, 32, 38, 0.8) !important;
+    filter: invert(1) brightness(1.6);
+}
+
 .tab-bar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(64px + var(--safe-bottom));
-    background: rgba(26, 32, 38, 0.94);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    bottom: calc(var(--tab-bar-margin) + var(--safe-bottom));
+    left: var(--tab-bar-margin);
+    right: var(--tab-bar-margin);
+    height: var(--tab-bar-height);
+    background: rgba(26, 32, 38, 0.78);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
     display: flex;
     justify-content: space-around;
     align-items: center;
+    gap: 2px;
+    padding: 4px;
     z-index: 90;
-    padding-bottom: var(--safe-bottom);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
+.tab-slider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(155deg, rgba(255, 255, 255, 0.24), rgba(76, 178, 255, 0.08) 45%, rgba(76, 178, 255, 0.22));
+    -webkit-backdrop-filter: blur(3px) url(#liquidGlassFilter) saturate(1.8) brightness(1.08);
+    backdrop-filter: blur(3px) url(#liquidGlassFilter) saturate(1.8) brightness(1.08);
+    box-shadow:
+        inset 0 0.5px 1px rgba(255, 255, 255, 0.6),
+        inset 0 -7px 10px rgba(0, 0, 0, 0.18),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+        0 6px 16px rgba(0, 0, 0, 0.3);
+    transition: left 0.55s cubic-bezier(0.22, 1, 0.36, 1), width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-origin: center;
+    pointer-events: none;
+    z-index: 1;
+    will-change: left, width, transform;
+}
+
+@keyframes glass-squish {
+    0%   { transform: scaleY(1) scaleX(1); }
+    30%  { transform: scaleY(0.78) scaleX(1.06); }
+    62%  { transform: scaleY(1.1) scaleX(0.97); }
+    100% { transform: scaleY(1) scaleX(1); }
+}
+
+.tab-slider.morphing {
+    animation: glass-squish 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .tab-item {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 2px;
     color: var(--color-text-secondary);
     cursor: pointer;
     text-decoration: none;
-    font-size: 10px;
+    font-size: 13px;
     font-weight: 500;
     flex: 1;
     height: 100%;
+    border-radius: 999px;
+    z-index: 2;
+    transition: color 0.2s ease;
 }
 
 .tab-item.active {
     color: var(--color-accent);
+    font-weight: 700;
 }
 
 .tab-item svg {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     fill: currentColor;
-    margin-bottom: 4px;
 }
 
 .tab-item svg.lucide {
     fill: none;
     stroke: currentColor;
+    stroke-width: 2;
+}
+
+.tab-item.active svg.lucide {
+    fill: currentColor;
+    stroke: currentColor;
+    stroke-width: 1.5;
 }
 
 #bottom-sheet {
@@ -526,12 +589,13 @@ html, body {
     top: var(--safe-top);
     left: 0;
     width: 100%;
-    height: calc(100% - 64px - var(--safe-bottom));
+    height: calc(100% - var(--safe-top));
     background: var(--color-primary);
     display: none;
     flex-direction: column;
     z-index: 20;
     padding: 20px;
+    padding-bottom: calc(var(--tab-bar-clearance) + 20px);
     overflow-y: auto;
 }
 

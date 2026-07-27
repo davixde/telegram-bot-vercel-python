@@ -56,6 +56,7 @@ if (tgWebApp) {
 }
 
 document.fonts.load("24px 'Inter'");
+document.fonts.load("24px 'Open Sans'");
 try {
     document.fonts.load('700 24px "SF Pro Rounded"').catch(() => {
     });
@@ -69,8 +70,10 @@ const map = new maplibregl.Map({
     pitchWithRotate: true,
     dragRotate: true,
     touchZoomRotate: true,
-    attributionControl: true
+    attributionControl: false
 });
+
+map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
 function updateMapLanguage(lang) {
     if (!map) return;
@@ -892,12 +895,107 @@ if (translateToggle) {
     });
 }
 
+/* Liquid Glass tab slider */
+const tabSlider = document.getElementById('tabSlider');
+const glassDisplacementMap = document.getElementById('glassDisplacementMap');
+const liquidGlassDisplace = document.getElementById('liquidGlassDisplace');
+
+function buildLiquidGlassMap(width, height, edgeRatio) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(width, height);
+    const data = imgData.data;
+    const cx = width / 2;
+    const cy = height / 2;
+    const rx = width / 2;
+    const ry = height / 2;
+    const innerEdge = 1 - edgeRatio;
+
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const nx = (x - cx) / rx;
+            const ny = (y - cy) / ry;
+            const dist = Math.sqrt(nx * nx + ny * ny);
+            const idx = (y * width + x) * 4;
+            let r;
+            let g;
+
+            if (dist < innerEdge) {
+                const pull = (1 - dist / innerEdge) * 5;
+                r = 128 - nx * pull;
+                g = 128 - ny * pull;
+            } else {
+                const t = Math.min(1, (dist - innerEdge) / edgeRatio);
+                const strength = Math.pow(t, 1.7) * 120;
+                const len = dist || 1;
+                r = 128 + (nx / len) * strength;
+                g = 128 + (ny / len) * strength;
+            }
+
+            data[idx] = Math.max(0, Math.min(255, r));
+            data[idx + 1] = Math.max(0, Math.min(255, g));
+            data[idx + 2] = 128;
+            data[idx + 3] = 255;
+        }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+    return canvas.toDataURL('image/png');
+}
+
+function refreshLiquidGlassMap() {
+    if (!glassDisplacementMap || !tabSlider) return;
+    const w = Math.max(40, Math.round(tabSlider.offsetWidth || 160));
+    const h = Math.max(30, Math.round(tabSlider.offsetHeight || 56));
+    const dataUrl = buildLiquidGlassMap(w, h, 0.45);
+    glassDisplacementMap.setAttribute('href', dataUrl);
+    glassDisplacementMap.setAttributeNS('http://www.w3.org/1999/xlink', 'href', dataUrl);
+    if (liquidGlassDisplace) {
+        liquidGlassDisplace.setAttribute('scale', '46');
+    }
+}
+
+function positionSlider(tab, animate) {
+    if (!tab || !tabSlider) return;
+    if (!animate) {
+        tabSlider.style.transition = 'none';
+    }
+    tabSlider.style.left = tab.offsetLeft + 'px';
+    tabSlider.style.width = tab.offsetWidth + 'px';
+    if (!animate) {
+        void tabSlider.offsetWidth;
+        tabSlider.style.transition = '';
+    }
+}
+
+function playGlassSquish() {
+    if (!tabSlider) return;
+    tabSlider.classList.remove('morphing');
+    void tabSlider.offsetWidth;
+    tabSlider.classList.add('morphing');
+    setTimeout(() => tabSlider.classList.remove('morphing'), 600);
+}
+
+const initiallyActiveTab = document.querySelector('.tab-item.active') || document.getElementById('tab-map');
+positionSlider(initiallyActiveTab, false);
+refreshLiquidGlassMap();
+
+window.addEventListener('resize', () => {
+    const activeTab = document.querySelector('.tab-item.active');
+    positionSlider(activeTab, false);
+    refreshLiquidGlassMap();
+});
+
 /* Tabs */
 const tabs = document.querySelectorAll('.tab-item');
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
+        positionSlider(tab, true);
+        playGlassSquish();
         snapTo('closed');
 
         if (tab.id === 'tab-settings') {
