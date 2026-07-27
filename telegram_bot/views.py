@@ -319,8 +319,8 @@ def osm_oauth_callback(request):
     banner_url = f"{allowed_origin}/static/example/assets/osm_banner.png"
 
     caption = (
-        "\u2705 <b>OpenStreetMap account connected!</b>\n\n"
-        "Tap the \u201cReturn to Piano Map\u201d button that appeared in your keyboard."
+        "🎉 <b>OpenStreetMap Account Connected!</b>\n\n"
+        "⚠️ <b>One last step:</b> Tap the button below to complete the setup."
     )
 
     if tg_user_id and bot_token:
