@@ -13,6 +13,15 @@
     "openmaptiles": {
       "type": "vector",
       "url": "https://tiles.openfreemap.org/planet"
+    },
+    "aws-dem": {
+      "type": "raster-dem",
+      "tiles": [
+        "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
+      ],
+      "encoding": "terrarium",
+      "tileSize": 256,
+      "maxzoom": 15
     }
   },
   "sprite": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm",
@@ -21,6 +30,20 @@
       "id": "background",
       "type": "background",
       "paint": {"background-color": "#3C4C62", "background-opacity": 1}
+    },
+     {
+      "id": "natural-earth-raster",
+      "type": "raster",
+      "source": "ne2_shaded",
+      "minzoom": 0,
+      "maxzoom": 7,
+      "paint": {
+        "raster-opacity": 0.25,
+        "raster-hue-rotate": 50,
+        "raster-saturation": 0.4,
+        "raster-contrast": 0.3,
+        "raster-brightness-max": 0.6
+      }
     },
     {
       "id": "landcover-glacier",
@@ -270,6 +293,18 @@
         ],
         "line-opacity": 0.5
       }
+    },
+    {
+      "id": "hillshade-layer",
+      "type": "hillshade",
+      "source": "aws-dem",
+      "minzoom": 6,
+      "paint": {
+        "hillshade-exaggeration": 0.3,
+        "hillshade-shadow-color": "rgba(0, 0, 0, 0.2)",
+        "hillshade-highlight-color": "#3C4C62",
+        "hillshade-accent-color": "#000000"
+  }
     },
     {
       "id": "waterway-other",
