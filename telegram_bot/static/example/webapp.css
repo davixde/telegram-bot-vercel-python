@@ -610,10 +610,10 @@ html, body {
 /* Settings View Styling */
 #settings-container {
     position: absolute;
-    top: var(--safe-top);
+    top: var(--tg-safe-area-top);
     left: 0;
     width: 100%;
-    height: calc(100% - var(--safe-top));
+    height: calc(100% - var(--tg-safe-area-top));
     background: var(--color-primary);
     display: none;
     flex-direction: column;

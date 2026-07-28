@@ -38,7 +38,15 @@
       "minzoom": 0,
       "maxzoom": 7,
       "paint": {
-        "raster-opacity": 0.25,
+       "raster-opacity": [
+         "interpolate",
+        ["exponential", 1.2],
+        ["zoom"],
+          0, 0.5,   
+          3, 0.4,  
+          6, 0,
+          7, 0
+        ],
         "raster-hue-rotate": 50,
         "raster-saturation": 0.4,
         "raster-contrast": 0.3,
