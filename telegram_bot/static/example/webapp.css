@@ -122,7 +122,6 @@ html, body {
     border-radius: 12px;
     max-height: 250px;
     overflow-y: auto;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
     z-index: 30;
 }
 
@@ -167,7 +166,6 @@ html, body {
     font-weight: bold;
     z-index: 20;
     display: block;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     pointer-events: none;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -189,7 +187,6 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     transition: background 0.2s, transform 0.1s;
 }
 
@@ -209,7 +206,6 @@ html, body {
     background-color: #4B77E7;
     border: 3px solid #FFFFFF;
     border-radius: 50%;
-    box-shadow: 0 0 10px rgba(0,0,0,0.4);
     box-sizing: border-box;
 }
 
@@ -239,7 +235,6 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     cursor: pointer;
 }
 
@@ -1150,7 +1145,6 @@ input:checked + .slider:before {
     border: none;
     border-radius: 14px;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
     transition: background 0.2s, transform 0.1s;
 }
 
@@ -1176,7 +1170,6 @@ input:checked + .slider:before {
     background: var(--color-accent);
     color: #111;
     border: none;
-    box-shadow: 0 6px 20px rgba(76, 178, 255, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1192,6 +1185,10 @@ input:checked + .slider:before {
 .add-fab-btn:active {
     transform: scale(0.9);
 }
+
+/* ==========================================================================
+   Map Picker Overlay
+   ========================================================================== */
 
 /* ==========================================================================
    Map Picker Overlay
@@ -1213,7 +1210,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(var(--safe-top) + 12px) 16px 12px 16px;
+    padding: calc(var(--safe-top) + 16px) 16px 14px 16px;
     background: var(--color-secondary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     z-index: 110;
@@ -1248,12 +1245,26 @@ input:checked + .slider:before {
 
 .map-picker-search-bar {
     position: absolute;
-    top: calc(var(--safe-top) + 60px);
+    top: calc(var(--safe-top) + 68px);
     left: 50%;
     transform: translateX(-50%);
     width: calc(100% - 32px);
     max-width: 480px;
     z-index: 110;
+}
+
+#map-picker-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: 15px;
+    outline: none;
+    width: 100%;
+}
+
+#map-picker-search-input::placeholder {
+    color: var(--color-text-secondary);
 }
 
 .map-picker-body {
@@ -1280,9 +1291,8 @@ input:checked + .slider:before {
 }
 
 .picker-center-pin span {
-    font-size: 42px;
+    font-size: 44px;
     color: #ff3b30;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
 }
 
 .picker-locate-btn {
@@ -1321,7 +1331,6 @@ input:checked + .slider:before {
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
     padding: 20px 20px calc(var(--safe-bottom) + 24px) 20px;
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 125;
     animation: slideUpSheet 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
@@ -1362,7 +1371,7 @@ input:checked + .slider:before {
 .preset-grid-3 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    gap: 16px 12px;
 }
 
 .preset-grid-card {
@@ -1370,23 +1379,21 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 16px 8px;
+    background: none;
+    border: none;
+    padding: 6px 4px;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: transform 0.1s;
     text-align: center;
 }
 
 .preset-grid-card:active {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(0.95);
+    transform: scale(0.92);
 }
 
 .preset-icon-box {
-    width: 48px;
-    height: 48px;
+    width: 64px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1394,13 +1401,18 @@ input:checked + .slider:before {
 }
 
 .preset-icon-box img {
-    width: 36px;
-    height: 36px;
+    width: 64px;
+    height: 64px;
     object-fit: contain;
 }
 
+.preset-custom-icon {
+    background: #2E2F33;
+    border-radius: 50%;
+}
+
 .preset-custom-icon span {
-    font-size: 36px;
+    font-size: 34px;
     color: var(--color-accent);
 }
 
@@ -1409,4 +1421,13 @@ input:checked + .slider:before {
     font-weight: 600;
     color: var(--color-text-primary);
     line-height: 1.2;
+}
+
+/* Hide FAB and Tab Bar when keyboard is open / writing in a field */
+.keyboard-open .tab-bar,
+.keyboard-open .add-fab-btn {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateY(120px) !important;
+    transition: opacity 0.15s ease, transform 0.15s ease;
 }

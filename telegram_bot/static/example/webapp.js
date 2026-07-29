@@ -1379,6 +1379,28 @@ osmAuth.init();
 // Add Tab Module & OpenStreetMap OAuth 2 Submission
 // ==========================================================================
 
+// Keyboard open detection: prevent tab bar and floating buttons from jumping up when typing
+document.addEventListener('focusin', (e) => {
+    if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        document.body.classList.add('keyboard-open');
+        const appRoot = document.getElementById('app-root');
+        if (appRoot) appRoot.classList.add('keyboard-open');
+    }
+});
+
+document.addEventListener('focusout', (e) => {
+    if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+        setTimeout(() => {
+            const activeTag = document.activeElement ? document.activeElement.tagName : '';
+            if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+                document.body.classList.remove('keyboard-open');
+                const appRoot = document.getElementById('app-root');
+                if (appRoot) appRoot.classList.remove('keyboard-open');
+            }
+        }, 50);
+    }
+});
+
 function updateAddTabAuthViewState() {
     const token = osmAuth.getToken();
     const loggedOutView = document.getElementById('add-logged-out');
