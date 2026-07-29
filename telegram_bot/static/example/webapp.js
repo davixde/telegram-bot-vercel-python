@@ -870,7 +870,7 @@ searchClearBtn.addEventListener('click', () => {
     searchInput.value = '';
     searchResultsList.style.display = 'none';
     searchClearBtn.style.display = 'none';
-    searchInput.focus();
+searchInput.focus();
 });
 
 /* Settings */
@@ -879,6 +879,7 @@ const translateToggle = document.getElementById('settings-translate-toggle');
 const mapContainer = document.getElementById('map-container');
 const searchContainer = document.querySelector('.search-container');
 const settingsContainer = document.getElementById('settings-container');
+const addContainer = document.getElementById('add-container');
 
 if (langSelect) {
     langSelect.value = safeGetStorage('appLang', 'en');
@@ -1002,10 +1003,18 @@ tabs.forEach(tab => {
             if (mapContainer) mapContainer.style.display = 'none';
             if (searchContainer) searchContainer.style.display = 'none';
             if (settingsContainer) settingsContainer.style.display = 'flex';
+            if (addContainer) addContainer.style.display = 'none';
+        } else if (tab.id === 'tab-add') {
+            if (mapContainer) mapContainer.style.display = 'none';
+            if (searchContainer) searchContainer.style.display = 'none';
+            if (settingsContainer) settingsContainer.style.display = 'none';
+            if (addContainer) addContainer.style.display = 'flex';
+            updateAddTabAuthViewState();
         } else {
             if (mapContainer) mapContainer.style.display = 'block';
             if (searchContainer) searchContainer.style.display = 'block';
             if (settingsContainer) settingsContainer.style.display = 'none';
+            if (addContainer) addContainer.style.display = 'none';
             setTimeout(() => { map.resize(); }, 50);
         }
     });
@@ -1365,3 +1374,549 @@ const osmAuth = (() => {
 
 // Kick off the OSM auth UI (checks URL param, localStorage, cached session)
 osmAuth.init();
+
+// ==========================================================================
+// Add Tab Module & OpenStreetMap OAuth 2 Submission
+// ==========================================================================
+
+function updateAddTabAuthViewState() {
+    const token = osmAuth.getToken();
+    const loggedOutView = document.getElementById('add-logged-out');
+    const loggedInView = document.getElementById('add-logged-in');
+    if (!token) {
+        if (loggedOutView) loggedOutView.style.display = 'flex';
+        if (loggedInView) loggedInView.style.display = 'none';
+    } else {
+        if (loggedOutView) loggedOutView.style.display = 'none';
+        if (loggedInView) loggedInView.style.display = 'flex';
+    }
+}
+
+document.getElementById('add-goto-settings-btn')?.addEventListener('click', () => {
+    const settingsTab = document.getElementById('tab-settings');
+    if (settingsTab) settingsTab.click();
+});
+
+// HTML & XML escaping helpers
+function escapeHtml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function escapeXml(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+// Add Form State
+let addFormTags = [
+    { key: 'musical_instrument', value: 'piano', readonly: true }
+];
+let selectedPinCoords = null; // [lng, lat]
+
+// Render Tag Editor List
+function renderAddTagsList() {
+    const container = document.getElementById('add-tags-list');
+    const countEl = document.getElementById('add-tags-count');
+    if (!container) return;
+
+    if (countEl) {
+        countEl.textContent = `${addFormTags.length} tag${addFormTags.length === 1 ? '' : 's'}`;
+    }
+
+    container.innerHTML = '';
+
+    addFormTags.forEach((tag, idx) => {
+        const item = document.createElement('div');
+        item.className = 'tag-item-card';
+
+        // Key element
+        const keyBox = document.createElement('div');
+        keyBox.className = 'tag-key-box';
+        if (tag.readonly) {
+            keyBox.innerHTML = `<span class="tag-key-label">${escapeHtml(tag.key)}</span>`;
+        } else {
+            const keyInput = document.createElement('input');
+            keyInput.type = 'text';
+            keyInput.className = 'tag-key-input';
+            keyInput.value = tag.key;
+            keyInput.placeholder = 'Tag Key';
+            keyInput.addEventListener('change', (e) => {
+                tag.key = e.target.value.trim();
+            });
+            keyBox.appendChild(keyInput);
+        }
+
+        // Value element
+        const valBox = document.createElement('div');
+        valBox.className = 'tag-val-box';
+
+        const keyLower = (tag.key || '').toLowerCase();
+
+        if (keyLower === 'indoor' || keyLower === 'covered') {
+            // True / False selector (or yes / no)
+            const select = document.createElement('select');
+            select.className = 'tag-val-select';
+            
+            const isTrue = (tag.value === 'true' || tag.value === 'yes' || tag.value === true);
+            
+            select.innerHTML = `
+                <option value="true" ${isTrue ? 'selected' : ''}>True (yes)</option>
+                <option value="false" ${!isTrue ? 'selected' : ''}>False (no)</option>
+            `;
+            select.addEventListener('change', (e) => {
+                if (keyLower === 'covered') {
+                    tag.value = e.target.value === 'true' ? 'yes' : 'no';
+                } else {
+                    tag.value = e.target.value; // 'true' or 'false'
+                }
+            });
+            valBox.appendChild(select);
+        } else if (keyLower === 'wheelchair') {
+            // True / False selector (default true)
+            const select = document.createElement('select');
+            select.className = 'tag-val-select';
+            const isTrue = (tag.value !== 'false' && tag.value !== 'no');
+            select.innerHTML = `
+                <option value="true" ${isTrue ? 'selected' : ''}>True (yes)</option>
+                <option value="false" ${!isTrue ? 'selected' : ''}>False (no)</option>
+            `;
+            select.addEventListener('change', (e) => {
+                tag.value = e.target.value;
+            });
+            valBox.appendChild(select);
+        } else if (keyLower === 'access') {
+            // Multiple values selector (public, permissive, clients, students - default public)
+            const select = document.createElement('select');
+            select.className = 'tag-val-select';
+            const values = ['public', 'permissive', 'clients', 'students'];
+            const currentVal = values.includes(tag.value) ? tag.value : 'public';
+            select.innerHTML = values.map(v => 
+                `<option value="${v}" ${v === currentVal ? 'selected' : ''}>${v.charAt(0).toUpperCase() + v.slice(1)}</option>`
+            ).join('');
+            select.addEventListener('change', (e) => {
+                tag.value = e.target.value;
+            });
+            valBox.appendChild(select);
+        } else if (keyLower === 'airside') {
+            // Selector yes / no
+            const select = document.createElement('select');
+            select.className = 'tag-val-select';
+            const isYes = (tag.value === 'yes' || tag.value === 'true');
+            select.innerHTML = `
+                <option value="yes" ${isYes ? 'selected' : ''}>Yes</option>
+                <option value="no" ${!isYes ? 'selected' : ''}>No</option>
+            `;
+            select.addEventListener('change', (e) => {
+                tag.value = e.target.value;
+            });
+            valBox.appendChild(select);
+        } else {
+            // Standard text input
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'tag-val-input';
+            input.value = tag.value || '';
+            input.placeholder = 'Tag Value';
+            input.addEventListener('change', (e) => {
+                tag.value = e.target.value.trim();
+            });
+            valBox.appendChild(input);
+        }
+
+        item.appendChild(keyBox);
+        item.appendChild(valBox);
+
+        if (!tag.readonly) {
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'tag-remove-btn';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.addEventListener('click', () => {
+                addFormTags.splice(idx, 1);
+                renderAddTagsList();
+            });
+            item.appendChild(removeBtn);
+        }
+
+        container.appendChild(item);
+    });
+}
+
+// Initialize tag editor list
+renderAddTagsList();
+
+// Helper to add or update tag in list
+function addTagOrUpdate(key, defaultVal) {
+    const existing = addFormTags.find(t => (t.key || '').toLowerCase() === key.toLowerCase());
+    if (existing) {
+        existing.value = defaultVal;
+    } else {
+        addFormTags.push({ key, value: defaultVal });
+    }
+    renderAddTagsList();
+}
+
+// Presets Overlay Modal Handling
+const presetOverlay = document.getElementById('preset-overlay');
+const presetFab = document.getElementById('add-preset-fab');
+const presetBackdrop = document.getElementById('preset-backdrop');
+const presetCloseBtn = document.getElementById('preset-close-btn');
+const presetBackBtn = document.getElementById('preset-back-btn');
+const presetTitle = document.getElementById('preset-sheet-title');
+
+function openPresetOverlay() {
+    if (presetOverlay) presetOverlay.style.display = 'flex';
+    showPresetView('main', 'Add Tag Presets');
+}
+
+function closePresetOverlay() {
+    if (presetOverlay) presetOverlay.style.display = 'none';
+}
+
+function showPresetView(viewName, titleText) {
+    const views = {
+        'main': document.getElementById('preset-view-main'),
+        'general-info': document.getElementById('preset-view-general-info'),
+        'indoor-outdoor': document.getElementById('preset-view-indoor-outdoor'),
+        'access': document.getElementById('preset-view-access'),
+    };
+
+    Object.keys(views).forEach(v => {
+        if (views[v]) views[v].style.display = (v === viewName) ? 'grid' : 'none';
+    });
+
+    if (presetTitle) presetTitle.textContent = titleText;
+    if (presetBackBtn) {
+        presetBackBtn.style.display = (viewName === 'main') ? 'none' : 'flex';
+    }
+}
+
+presetFab?.addEventListener('click', openPresetOverlay);
+presetBackdrop?.addEventListener('click', closePresetOverlay);
+presetCloseBtn?.addEventListener('click', closePresetOverlay);
+presetBackBtn?.addEventListener('click', () => showPresetView('main', 'Add Tag Presets'));
+
+// Handle preset button clicks
+document.querySelectorAll('.preset-grid-card').forEach(card => {
+    card.addEventListener('click', () => {
+        const preset = card.dataset.preset;
+        const action = card.dataset.action;
+
+        if (preset) {
+            if (preset === 'general-info') {
+                showPresetView('general-info', 'General Info');
+            } else if (preset === 'indoor-outdoor') {
+                showPresetView('indoor-outdoor', 'Indoor / Outdoor');
+            } else if (preset === 'wheelchair') {
+                addTagOrUpdate('wheelchair', 'true');
+                closePresetOverlay();
+            } else if (preset === 'access') {
+                showPresetView('access', 'Access');
+            } else if (preset === 'custom') {
+                addFormTags.push({ key: '', value: '' });
+                renderAddTagsList();
+                closePresetOverlay();
+            }
+        } else if (action) {
+            if (action === 'add-level') {
+                addTagOrUpdate('level', '0');
+            } else if (action === 'add-indoor') {
+                addTagOrUpdate('indoor', 'true');
+            } else if (action === 'add-covered') {
+                addTagOrUpdate('covered', 'yes');
+            } else if (action === 'add-outdoor') {
+                addTagOrUpdate('indoor', 'false');
+            } else if (action === 'add-access') {
+                addTagOrUpdate('access', 'public');
+            } else if (action === 'add-airside') {
+                addTagOrUpdate('airside', 'yes');
+            } else if (action === 'add-access-students') {
+                addTagOrUpdate('access', 'students');
+            }
+            closePresetOverlay();
+        }
+    });
+});
+
+// Map Location Picker Overlay Logic
+let pickerMap = null;
+const mapPickerOverlay = document.getElementById('map-picker-overlay');
+const locationTrigger = document.getElementById('add-location-trigger');
+const locationBtn = document.getElementById('add-location-btn');
+const mapPickerCloseBtn = document.getElementById('map-picker-back-btn');
+const mapPickerConfirmBtn = document.getElementById('map-picker-confirm-btn');
+const pickerLocateBtn = document.getElementById('pickerLocateBtn');
+
+function openMapPicker() {
+    if (mapPickerOverlay) mapPickerOverlay.style.display = 'flex';
+    
+    if (!pickerMap) {
+        pickerMap = new maplibregl.Map({
+            container: 'picker-map',
+            style: window.styleJsonUrl || "/static/example/style.json",
+            center: selectedPinCoords || (userCoords ? userCoords : [12.4964, 41.9028]),
+            zoom: 15,
+            attributionControl: false
+        });
+    } else {
+        if (selectedPinCoords) {
+            pickerMap.setCenter(selectedPinCoords);
+        } else if (userCoords) {
+            pickerMap.setCenter(userCoords);
+        }
+        setTimeout(() => pickerMap.resize(), 100);
+    }
+}
+
+function closeMapPicker() {
+    if (mapPickerOverlay) mapPickerOverlay.style.display = 'none';
+}
+
+locationTrigger?.addEventListener('click', openMapPicker);
+locationBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openMapPicker();
+});
+mapPickerCloseBtn?.addEventListener('click', closeMapPicker);
+
+mapPickerConfirmBtn?.addEventListener('click', () => {
+    if (!pickerMap) return;
+    const center = pickerMap.getCenter();
+    selectedPinCoords = [center.lng, center.lat];
+
+    const coordsText = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
+    const titleEl = document.getElementById('add-location-title');
+    const subEl = document.getElementById('add-location-coords');
+    
+    if (titleEl) titleEl.textContent = "Location Pin Set";
+    if (subEl) subEl.textContent = coordsText;
+
+    closeMapPicker();
+});
+
+pickerLocateBtn?.addEventListener('click', () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const lng = pos.coords.longitude;
+            const lat = pos.coords.latitude;
+            userCoords = [lng, lat];
+            updateUserMarker(lat, lng);
+            if (pickerMap) {
+                pickerMap.flyTo({ center: [lng, lat], zoom: 17 });
+            }
+        }, () => {
+            showNotification("Could not retrieve current location.");
+        });
+    }
+});
+
+// Map Picker Place Search (Nominatim)
+const pickerSearchInput = document.getElementById('map-picker-search-input');
+const pickerSearchResults = document.getElementById('mapPickerSearchResults');
+const pickerSearchClear = document.getElementById('map-picker-search-clear');
+
+let pickerSearchTimeout = null;
+
+pickerSearchInput?.addEventListener('input', (e) => {
+    const q = e.target.value.trim();
+    if (pickerSearchClear) pickerSearchClear.style.display = q ? 'block' : 'none';
+
+    if (pickerSearchTimeout) clearTimeout(pickerSearchTimeout);
+    if (!q) {
+        if (pickerSearchResults) pickerSearchResults.style.display = 'none';
+        return;
+    }
+
+    pickerSearchTimeout = setTimeout(async () => {
+        try {
+            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`);
+            if (!resp.ok) return;
+            const results = await resp.json();
+            
+            if (!pickerSearchResults) return;
+            pickerSearchResults.innerHTML = '';
+
+            if (results.length === 0) {
+                pickerSearchResults.style.display = 'none';
+                return;
+            }
+
+            results.slice(0, 5).forEach(res => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div class="search-result-name">${escapeHtml(res.display_name.split(',')[0])}</div>
+                    <div class="search-result-details">${escapeHtml(res.display_name)}</div>
+                `;
+                item.addEventListener('click', () => {
+                    const lat = parseFloat(res.lat);
+                    const lon = parseFloat(res.lon);
+                    if (pickerMap) pickerMap.flyTo({ center: [lon, lat], zoom: 16 });
+                    pickerSearchResults.style.display = 'none';
+                    pickerSearchInput.value = res.display_name.split(',')[0];
+                });
+                pickerSearchResults.appendChild(item);
+            });
+            pickerSearchResults.style.display = 'block';
+        } catch (err) {
+            console.warn("Location search error:", err);
+        }
+    }, 300);
+});
+
+pickerSearchClear?.addEventListener('click', () => {
+    if (pickerSearchInput) pickerSearchInput.value = '';
+    if (pickerSearchClear) pickerSearchClear.style.display = 'none';
+    if (pickerSearchResults) pickerSearchResults.style.display = 'none';
+});
+
+// Commit to OpenStreetMap API
+const addSubmitBtn = document.getElementById('add-submit-btn');
+
+addSubmitBtn?.addEventListener('click', async () => {
+    const token = osmAuth.getToken();
+    if (!token) {
+        showNotification("Please log in with OpenStreetMap in Settings first.");
+        return;
+    }
+
+    if (!selectedPinCoords) {
+        showNotification("Please set a location pin on the map first.");
+        return;
+    }
+
+    const nameInput = document.getElementById('add-name-input');
+    const descInput = document.getElementById('add-desc-input');
+    const name = nameInput ? nameInput.value.trim() : '';
+    const description = descInput ? descInput.value.trim() : '';
+
+    const [lon, lat] = selectedPinCoords;
+
+    addSubmitBtn.disabled = true;
+    addSubmitBtn.innerHTML = '<span class="material-symbols-outlined">sync</span> Committing...';
+
+    try {
+        // Step 1: Create changeset with changeset comment tag
+        const commentText = name ? `Add piano location: ${name}` : 'Add new piano location via Telegram Bot';
+        const csXml = `<osm><changeset><tag k="created_by" v="Telegram Piano Bot WebApp"/><tag k="comment" v="${escapeXml(commentText)}"/></changeset></osm>`;
+        
+        const csResp = await fetch('https://api.openstreetmap.org/api/0.6/changeset/create', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/xml'
+            },
+            body: csXml
+        });
+
+        if (!csResp.ok) {
+            throw new Error(`Failed to create changeset (HTTP ${csResp.status})`);
+        }
+
+        const changesetId = (await csResp.text()).trim();
+
+        // Step 2: Build Node XML
+        let tagsXml = `<tag k="musical_instrument" v="piano"/>`;
+        if (name) tagsXml += `<tag k="name" v="${escapeXml(name)}"/>`;
+        if (description) tagsXml += `<tag k="description" v="${escapeXml(description)}"/>`;
+
+        addFormTags.forEach(t => {
+            if (t.key && t.value !== undefined && t.value !== '') {
+                tagsXml += `<tag k="${escapeXml(t.key.trim())}" v="${escapeXml(String(t.value).trim())}"/>`;
+            }
+        });
+
+        const nodeXml = `<osm><node lat="${lat}" lon="${lon}" changeset="${changesetId}">${tagsXml}</node></osm>`;
+        
+        const nodeResp = await fetch('https://api.openstreetmap.org/api/0.6/node/create', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/xml'
+            },
+            body: nodeXml
+        });
+
+        if (!nodeResp.ok) {
+            throw new Error(`Failed to create node (HTTP ${nodeResp.status})`);
+        }
+
+        const nodeId = (await nodeResp.text()).trim();
+
+        // Step 3: Close changeset
+        try {
+            await fetch(`https://api.openstreetmap.org/api/0.6/changeset/${changesetId}/close`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        } catch (e) {
+            console.warn("Changeset close warning:", e);
+        }
+
+        showNotification(`Successfully committed to OpenStreetMap! (Node ID: ${nodeId})`);
+
+        // Dynamically add feature to current map view
+        const newFeature = {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [lon, lat] },
+            properties: {
+                id: Number(nodeId),
+                name: name || 'Piano',
+                access: addFormTags.find(t => (t.key || '').toLowerCase() === 'access')?.value || 'unknown',
+                description: description,
+                musical_instrument: 'piano',
+                last_seen: 'Just now',
+                tags: {
+                    name,
+                    description,
+                    musical_instrument: 'piano',
+                    ...Object.fromEntries(addFormTags.map(t => [t.key, t.value]))
+                }
+            }
+        };
+
+        allFeatures.push(newFeature);
+        if (map.getSource('pianos')) {
+            map.getSource('pianos').setData({
+                type: 'FeatureCollection',
+                features: allFeatures
+            });
+        }
+
+        // Reset form
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+        selectedPinCoords = null;
+        
+        const titleEl = document.getElementById('add-location-title');
+        const subEl = document.getElementById('add-location-coords');
+        if (titleEl) titleEl.textContent = "Tap to set location on map";
+        if (subEl) subEl.textContent = "No pin selected";
+        
+        addFormTags = [{ key: 'musical_instrument', value: 'piano', readonly: true }];
+        renderAddTagsList();
+
+        // Switch back to Map tab and fly to new node location
+        const mapTab = document.getElementById('tab-map');
+        if (mapTab) mapTab.click();
+        map.flyTo({ center: [lon, lat], zoom: 16 });
+
+    } catch (err) {
+        console.error("OSM commit error:", err);
+        showNotification(`Error saving to OpenStreetMap: ${err.message}`);
+    } finally {
+        addSubmitBtn.disabled = false;
+        addSubmitBtn.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span><span>Commit to OpenStreetMap</span>';
+    }
+});
+

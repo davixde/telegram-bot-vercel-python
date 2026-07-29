@@ -14,9 +14,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
     
     <!-- Google Material Symbols Outlined -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=account_circle,add_location_alt,map,settings" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
-    <link rel="stylesheet" href="{% static 'example/webapp.css' %}?v=6" />
+    <link rel="stylesheet" href="{% static 'example/webapp.css' %}" />
 </head>
 <body>
 
@@ -217,6 +217,224 @@
         </div>
     </div>
 
+    <!-- Add Tab Container -->
+    <div id="add-container" class="add-container" style="display: none;">
+        <!-- Logged-out state -->
+        <div class="add-logged-out" id="add-logged-out">
+            <div class="add-logged-out-card">
+                <div class="add-logged-out-icon">
+                    <span class="material-symbols-outlined">account_circle</span>
+                </div>
+                <h3>Authentication Required</h3>
+                <p>You must log in with your OpenStreetMap account to add new piano locations.</p>
+                <button class="add-goto-settings-btn" id="add-goto-settings-btn">
+                    <span class="material-symbols-outlined">settings</span>
+                    Go to Settings
+                </button>
+            </div>
+        </div>
+
+        <!-- Logged-in state -->
+        <div class="add-logged-in" id="add-logged-in" style="display: none;">
+            <div class="add-header">
+                <h2>Add Piano Location</h2>
+            </div>
+            
+            <div class="add-form-scroll">
+                <!-- Name input -->
+                <div class="add-form-group">
+                    <label for="add-name-input">Name</label>
+                    <input type="text" id="add-name-input" placeholder="e.g. Grand Piano, Public Piano..." autocomplete="off" />
+                </div>
+
+                <!-- Description input -->
+                <div class="add-form-group">
+                    <label for="add-desc-input">Description</label>
+                    <textarea id="add-desc-input" rows="3" placeholder="Details about location, access, condition..."></textarea>
+                </div>
+
+                <!-- Location picker trigger -->
+                <div class="add-form-group">
+                    <label>Location</label>
+                    <div class="add-location-card" id="add-location-trigger">
+                        <div class="add-location-info">
+                            <span class="material-symbols-outlined add-location-icon">pin_drop</span>
+                            <div class="add-location-text">
+                                <div class="add-location-title" id="add-location-title">Tap to set location on map</div>
+                                <div class="add-location-sub" id="add-location-coords">No pin selected</div>
+                            </div>
+                        </div>
+                        <button type="button" class="add-location-btn" id="add-location-btn">Set Pin</button>
+                    </div>
+                </div>
+
+                <!-- Tag Editor List -->
+                <div class="add-form-group">
+                    <div class="add-tags-header">
+                        <label>Tags</label>
+                        <span class="add-tags-count" id="add-tags-count">1 tag</span>
+                    </div>
+                    <div class="add-tags-list" id="add-tags-list">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="add-submit-wrapper">
+                    <button class="add-submit-btn" id="add-submit-btn">
+                        <span class="material-symbols-outlined">cloud_upload</span>
+                        <span>Commit to OpenStreetMap</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Floating (+) Preset Button -->
+            <button class="add-fab-btn" id="add-preset-fab" aria-label="Add Preset Tag">
+                <span class="material-symbols-outlined">add</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Map Picker Overlay -->
+    <div id="map-picker-overlay" class="map-picker-overlay" style="display: none;">
+        <div class="map-picker-header">
+            <button class="map-picker-back-btn" id="map-picker-back-btn">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div class="map-picker-title">Set Location Pin</div>
+            <button class="map-picker-confirm-btn" id="map-picker-confirm-btn">Confirm</button>
+        </div>
+
+        <div class="map-picker-search-bar">
+            <div class="search-bar-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+                <input type="text" id="map-picker-search-input" placeholder="Search address or location..." autocomplete="off" spellcheck="false" />
+                <button id="map-picker-search-clear" style="display: none;">&times;</button>
+            </div>
+            <div class="search-results-list" id="mapPickerSearchResults" style="display: none;"></div>
+        </div>
+
+        <div class="map-picker-body">
+            <div id="picker-map"></div>
+            <!-- Center pin indicator -->
+            <div class="picker-center-pin">
+                <span class="material-symbols-outlined">location_on</span>
+            </div>
+            <button class="locate-btn picker-locate-btn" id="pickerLocateBtn" aria-label="Find my location">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Presets Overlay Modal -->
+    <div id="preset-overlay" class="preset-overlay" style="display: none;">
+        <div class="preset-backdrop" id="preset-backdrop"></div>
+        <div class="preset-sheet">
+            <div class="preset-sheet-header">
+                <button class="preset-back-btn" id="preset-back-btn" style="display: none;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <h3 class="preset-sheet-title" id="preset-sheet-title">Add Tag Presets</h3>
+                <button class="preset-close-btn" id="preset-close-btn">&times;</button>
+            </div>
+            <div class="preset-sheet-content">
+                <!-- Main Presets View (3 columns) -->
+                <div id="preset-view-main" class="preset-grid-3">
+                    <button class="preset-grid-card" data-preset="general-info">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/general-info.svg' %}" alt="General Info" />
+                        </div>
+                        <span>General Info</span>
+                    </button>
+
+                    <button class="preset-grid-card" data-preset="indoor-outdoor">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/indoor.svg' %}" alt="Indoor / Outdoor" />
+                        </div>
+                        <span>Indoor / Outdoor</span>
+                    </button>
+
+                    <button class="preset-grid-card" data-preset="wheelchair">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/wheelchair.svg' %}" alt="Wheelchair" />
+                        </div>
+                        <span>Wheelchair</span>
+                    </button>
+
+                    <button class="preset-grid-card" data-preset="access">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/access.svg' %}" alt="Access" />
+                        </div>
+                        <span>Access</span>
+                    </button>
+
+                    <button class="preset-grid-card" data-preset="custom">
+                        <div class="preset-icon-box preset-custom-icon">
+                            <span class="material-symbols-outlined">add_circle</span>
+                        </div>
+                        <span>Custom Tag</span>
+                    </button>
+                </div>
+
+                <!-- Submenu: General Info -->
+                <div id="preset-view-general-info" class="preset-grid-3" style="display: none;">
+                    <button class="preset-grid-card" data-action="add-level">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/level.svg' %}" alt="Level" />
+                        </div>
+                        <span>Level</span>
+                    </button>
+                </div>
+
+                <!-- Submenu: Indoor / Outdoor -->
+                <div id="preset-view-indoor-outdoor" class="preset-grid-3" style="display: none;">
+                    <button class="preset-grid-card" data-action="add-indoor">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/indoor.svg' %}" alt="Indoor" />
+                        </div>
+                        <span>Indoor</span>
+                    </button>
+                    <button class="preset-grid-card" data-action="add-covered">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/covered.svg' %}" alt="Covered" />
+                        </div>
+                        <span>Covered</span>
+                    </button>
+                    <button class="preset-grid-card" data-action="add-outdoor">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/outdoor.svg' %}" alt="Outdoor" />
+                        </div>
+                        <span>Outdoor</span>
+                    </button>
+                </div>
+
+                <!-- Submenu: Access -->
+                <div id="preset-view-access" class="preset-grid-3" style="display: none;">
+                    <button class="preset-grid-card" data-action="add-access">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/access.svg' %}" alt="Change Access" />
+                        </div>
+                        <span>Change Access</span>
+                    </button>
+                    <button class="preset-grid-card" data-action="add-airside">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/airside.svg' %}" alt="Airside" />
+                        </div>
+                        <span>Airside</span>
+                    </button>
+                    <button class="preset-grid-card" data-action="add-access-students">
+                        <div class="preset-icon-box">
+                            <img src="{% static 'example/assets/presets/access-students.svg' %}" alt="Only students" />
+                        </div>
+                        <span>Only students</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="tab-bar" id="tabBar">
         <div class="tab-slider" id="tabSlider"></div>
         <div class="tab-item active" id="tab-map">
@@ -247,6 +465,16 @@
         window.studentsSvg     = `{% include "example/assets/students.svg" %}`;
         window.unknownSvg      = `{% include "example/assets/unknown.svg" %}`;
         window.stillHereSvg    = `{% include "example/assets/still_here.svg" %}`;
+
+        window.presetGeneralInfoSvg = "{% static 'example/assets/presets/general-info.svg' %}";
+        window.presetIndoorSvg      = "{% static 'example/assets/presets/indoor.svg' %}";
+        window.presetCoveredSvg     = "{% static 'example/assets/presets/covered.svg' %}";
+        window.presetOutdoorSvg     = "{% static 'example/assets/presets/outdoor.svg' %}";
+        window.presetWheelchairSvg  = "{% static 'example/assets/presets/wheelchair.svg' %}";
+        window.presetAccessSvg      = "{% static 'example/assets/presets/access.svg' %}";
+        window.presetAirsideSvg     = "{% static 'example/assets/presets/airside.svg' %}";
+        window.presetAccessStudentsSvg = "{% static 'example/assets/presets/access-students.svg' %}";
+        window.presetLevelSvg       = "{% static 'example/assets/presets/level.svg' %}";
     </script>
 
     <script type="module" src="{% static 'example/webapp.js' %}"></script>
