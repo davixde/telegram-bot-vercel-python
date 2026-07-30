@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
 
 @font-face {
@@ -8,7 +9,7 @@
 
 :root {
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-top: env(safe-area-inset-top, 45px);
     --tg-safe-area-top: var(--tg-content-safe-area-inset-top, env(safe-area-inset-top, 20px));
     --header-padding-top: calc(var(--tg-safe-area-top) + 36px);
     
@@ -90,6 +91,7 @@ html, body {
 }
 
 #search-input {
+    font-family: 'DM Sans', sans-serif;
     flex: 1;
     background: transparent;
     border: none;
@@ -431,6 +433,7 @@ html, body {
 }
 
 .sheet-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 20px;
     font-weight: 700;
     color: var(--color-text-primary);
@@ -451,7 +454,6 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sheet-icon-container svg {
@@ -626,6 +628,7 @@ html, body {
 }
 
 .settings-header h2 {
+    font-family: "Bricolage Grotesque", sans-serif;
     font-size: 22px;
     font-weight: 700;
     margin: 0;
@@ -939,16 +942,16 @@ input:checked + .slider:before {
 }
 
 .add-header {
-    padding: calc(var(--safe-top) + 20px) 20px 16px 20px;
-    background: rgba(32, 41, 49, 0.8);
+    padding: 65px 20px 16px 20px;
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .add-header h2 {
+    font-family: 'Bricolage Grotesque', sans-serif;
     margin: 0;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 600;
     color: var(--color-text-primary);
 }
 
@@ -1210,7 +1213,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(var(--safe-top) + 16px) 16px 14px 16px;
+    padding: 65px 16px 14px 16px;
     background: var(--color-secondary);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     z-index: 110;
@@ -1327,11 +1330,8 @@ input:checked + .slider:before {
 
 .preset-sheet {
     position: relative;
-    background: #202127;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+    background: #202124;
     padding: 20px 20px calc(var(--safe-bottom) + 24px) 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 125;
     animation: slideUpSheet 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
 }
@@ -1359,8 +1359,9 @@ input:checked + .slider:before {
 .preset-close-btn {
     background: none;
     border: none;
-    color: var(--color-text-secondary);
-    font-size: 24px;
+    color: #E8EAED;
+    font-weight: 200;
+    font-size: 30px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1417,9 +1418,10 @@ input:checked + .slider:before {
 }
 
 .preset-grid-card span {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--color-text-primary);
+    font: Roboto;
+    font-size: 14px;
+    font-weight: 440;
+    color: #E8EAEC;
     line-height: 1.2;
 }
 
