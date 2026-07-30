@@ -159,7 +159,7 @@ def osm_oauth_start(request):
         "response_type":          "code",
         "client_id":              OSM_CLIENT_ID,
         "redirect_uri":           OSM_REDIRECT_URI,
-        "scope":                  "read_prefs",
+        "scope":                  "read_prefs write_api",
         "state":                  state,
         "code_challenge":         challenge,
         "code_challenge_method":  "S256",

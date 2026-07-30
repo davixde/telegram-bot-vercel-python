@@ -1401,11 +1401,15 @@ document.addEventListener('focusout', (e) => {
     }
 });
 
+// Dev mode: bypass OSM auth requirement when running on localhost
+const IS_DEV_MODE = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+
 function updateAddTabAuthViewState() {
     const token = osmAuth.getToken();
     const loggedOutView = document.getElementById('add-logged-out');
     const loggedInView = document.getElementById('add-logged-in');
-    if (!token) {
+    // On localhost, always show the form even without a token
+    if (!token && !IS_DEV_MODE) {
         if (loggedOutView) loggedOutView.style.display = 'flex';
         if (loggedInView) loggedInView.style.display = 'none';
     } else {
@@ -1805,6 +1809,35 @@ const addSubmitBtn = document.getElementById('add-submit-btn');
 
 addSubmitBtn?.addEventListener('click', async () => {
     const token = osmAuth.getToken();
+
+    // In dev mode on localhost, simulate a successful commit without hitting the OSM API
+    if (IS_DEV_MODE && !token) {
+        const nameInput = document.getElementById('add-name-input');
+        const name = nameInput ? nameInput.value.trim() : '';
+        showNotification(`[DEV] "${name || 'Piano'}" would be committed to OSM here.`);
+        if (selectedPinCoords) {
+            const [lon, lat] = selectedPinCoords;
+            const devFeature = {
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: [lon, lat] },
+                properties: {
+                    id: 'dev-' + Date.now(),
+                    name: name || 'Piano (dev)',
+                    access: 'unknown',
+                    musical_instrument: 'piano'
+                }
+            };
+            allFeatures.push(devFeature);
+            if (map.getSource('pianos')) {
+                map.getSource('pianos').setData({ type: 'FeatureCollection', features: allFeatures });
+            }
+            const mapTab = document.getElementById('tab-map');
+            if (mapTab) mapTab.click();
+            map.flyTo({ center: [lon, lat], zoom: 16 });
+        }
+        return;
+    }
+
     if (!token) {
         showNotification("Please log in with OpenStreetMap in Settings first.");
         return;
