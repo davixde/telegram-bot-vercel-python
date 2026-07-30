@@ -1327,7 +1327,7 @@ input:checked + .slider:before {
 
 .preset-sheet {
     position: relative;
-    background: #1e252c;
+    background: #202127;
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
     padding: 20px 20px calc(var(--safe-bottom) + 24px) 20px;
