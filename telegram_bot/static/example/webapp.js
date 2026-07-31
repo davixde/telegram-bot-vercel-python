@@ -1443,7 +1443,7 @@ function escapeXml(str) {
 
 // Add Form State
 let addFormTags = [
-    { key: 'musical_instrument', value: 'piano', readonly: true }
+    { key: 'amenity', value: 'piano', readonly: true }
 ];
 let selectedPinCoords = null; // [lng, lat]
 
@@ -1467,7 +1467,13 @@ function renderAddTagsList() {
         const keyBox = document.createElement('div');
         keyBox.className = 'tag-key-box';
         if (tag.readonly) {
-            keyBox.innerHTML = `<span class="tag-key-label">${escapeHtml(tag.key)}</span>`;
+            const keyInput = document.createElement('input');
+            keyInput.type = 'text';
+            keyInput.className = 'tag-key-input tag-readonly-input';
+            keyInput.value = tag.key;
+            keyInput.readOnly = true;
+            keyInput.disabled = true;
+            keyBox.appendChild(keyInput);
         } else {
             const keyInput = document.createElement('input');
             keyInput.type = 'text';
@@ -1486,7 +1492,15 @@ function renderAddTagsList() {
 
         const keyLower = (tag.key || '').toLowerCase();
 
-        if (keyLower === 'indoor' || keyLower === 'covered') {
+        if (tag.readonly) {
+            const valInput = document.createElement('input');
+            valInput.type = 'text';
+            valInput.className = 'tag-val-input tag-readonly-input';
+            valInput.value = tag.value;
+            valInput.readOnly = true;
+            valInput.disabled = true;
+            valBox.appendChild(valInput);
+        } else if (keyLower === 'indoor' || keyLower === 'covered') {
             // True / False selector (or yes / no)
             const select = document.createElement('select');
             select.className = 'tag-val-select';
@@ -1560,6 +1574,18 @@ function renderAddTagsList() {
         item.appendChild(keyBox);
         item.appendChild(valBox);
 
+        // Info button (OSM Wiki / Taginfo preview)
+        const infoBtn = document.createElement('button');
+        infoBtn.type = 'button';
+        infoBtn.className = 'tag-info-btn';
+        infoBtn.title = 'Tag info';
+        infoBtn.innerHTML = '<span class="material-symbols-outlined">info</span>';
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openTagInfo(tag.key, tag.value);
+        });
+        item.appendChild(infoBtn);
+
         if (!tag.readonly) {
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
@@ -1576,6 +1602,82 @@ function renderAddTagsList() {
     });
 }
 
+// Tag Info Modal & Taginfo API fetch
+async function openTagInfo(key, val) {
+    if (!key) return;
+    const modal = document.getElementById('tag-info-modal');
+    const titleEl = document.getElementById('tag-info-title');
+    const spinner = document.getElementById('tag-info-spinner');
+    const descEl = document.getElementById('tag-info-desc');
+    const linkEl = document.getElementById('tag-info-link');
+
+    if (modal) modal.style.display = 'flex';
+    if (titleEl) titleEl.textContent = val ? `${key} = ${val}` : key;
+    if (spinner) spinner.style.display = 'block';
+    if (descEl) descEl.style.display = 'none';
+    if (linkEl) linkEl.style.display = 'none';
+
+    try {
+        let foundPage = null;
+
+        function pickUsablePage(pages) {
+            return pages.find(p => p.lang === 'en' && (p.description || p.wiki_url)) || null;
+        }
+
+        if (val) {
+            const tagApiUrl = `https://taginfo.openstreetmap.org/api/4/tag/wiki_pages?key=${encodeURIComponent(key)}&value=${encodeURIComponent(val)}&lang=en`;
+            const tagResp = await fetch(tagApiUrl);
+            if (tagResp.ok) {
+                const tagData = await tagResp.json();
+                foundPage = pickUsablePage(tagData.data || []);
+            }
+        }
+
+        if (!foundPage) {
+            const keyApiUrl = `https://taginfo.openstreetmap.org/api/4/key/wiki_pages?key=${encodeURIComponent(key)}&lang=en`;
+            const keyResp = await fetch(keyApiUrl);
+            if (keyResp.ok) {
+                const keyData = await keyResp.json();
+                foundPage = pickUsablePage(keyData.data || []);
+            }
+        }
+
+        if (spinner) spinner.style.display = 'none';
+
+        if (foundPage && (foundPage.description || foundPage.wiki_url)) {
+            if (descEl) {
+                descEl.textContent = foundPage.description || "No short description text available in OSM Wiki.";
+                descEl.style.display = 'block';
+            }
+            if (linkEl && foundPage.wiki_url) {
+                linkEl.href = foundPage.wiki_url;
+                linkEl.style.display = 'inline-block';
+            }
+        } else {
+            if (descEl) {
+                descEl.textContent = `No detailed OSM Wiki description found for "${key}${val ? '=' + val : ''}".`;
+                descEl.style.display = 'block';
+            }
+        }
+    } catch (err) {
+        console.warn("Taginfo fetch error:", err);
+        if (spinner) spinner.style.display = 'none';
+        if (descEl) {
+            descEl.textContent = `Tag: ${key}${val ? ' = ' + val : ''}`;
+            descEl.style.display = 'block';
+        }
+    }
+}
+
+document.getElementById('tag-info-close-btn')?.addEventListener('click', () => {
+    const modal = document.getElementById('tag-info-modal');
+    if (modal) modal.style.display = 'none';
+});
+document.getElementById('tag-info-backdrop')?.addEventListener('click', () => {
+    const modal = document.getElementById('tag-info-modal');
+    if (modal) modal.style.display = 'none';
+});
+
 // Initialize tag editor list
 renderAddTagsList();
 
@@ -1590,9 +1692,112 @@ function addTagOrUpdate(key, defaultVal) {
     renderAddTagsList();
 }
 
+// Name input warning logic ("Public", "Street", "Piano")
+const addNameInput = document.getElementById('add-name-input');
+const nameWarningDropdown = document.getElementById('name-warning-dropdown');
+
+addNameInput?.addEventListener('input', (e) => {
+    const text = (e.target.value || '').toLowerCase();
+    if (text.includes('public') || text.includes('street') || text.includes('piano')) {
+        if (nameWarningDropdown) nameWarningDropdown.style.display = 'block';
+    } else {
+        if (nameWarningDropdown) nameWarningDropdown.style.display = 'none';
+    }
+});
+
+// Description language detection using /api/translate/ endpoint
+const addDescInput = document.getElementById('add-desc-input');
+const descHintBox = document.getElementById('desc-hint-box');
+const descHintText = document.getElementById('desc-hint-text');
+const descLangChips = document.getElementById('desc-lang-chips');
+
+let descCheckTimeout = null;
+
+async function checkDescriptionLanguage() {
+    if (!addDescInput || !descHintBox) return;
+    const text = addDescInput.value.trim();
+
+    if (!text || text.length < 3) {
+        descHintBox.style.display = 'none';
+        return;
+    }
+
+    try {
+        const resp = await fetch('/api/translate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Translate-Token': window.translateToken || ''
+            },
+            body: JSON.stringify({ q: text, target: 'en' })
+        });
+
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const translatedText = data.translatedText || '';
+
+        const detectedLang = detectLanguageFromText(text, translatedText);
+
+        if (detectedLang && detectedLang !== 'en') {
+            descHintBox.style.display = 'flex';
+            if (descHintText) {
+                descHintText.textContent = `Non-English text detected (${detectedLang.toUpperCase()}). Convert to tag?`;
+            }
+            if (descLangChips) {
+                descLangChips.innerHTML = `
+                    <button type="button" class="desc-lang-chip active-detected-chip" data-lang="${detectedLang}">
+                        + description:${detectedLang}
+                    </button>
+                `;
+
+                descLangChips.querySelector('.desc-lang-chip')?.addEventListener('click', () => {
+                    addTagOrUpdate(`description:${detectedLang}`, text);
+                    addDescInput.value = '';
+                    descHintBox.style.display = 'none';
+                });
+            }
+        } else {
+            descHintBox.style.display = 'none';
+        }
+    } catch (err) {
+        console.warn("Language detection error:", err);
+    }
+}
+
+function detectLanguageFromText(orig, translated) {
+    const origLower = orig.toLowerCase();
+    const transLower = (translated || '').toLowerCase();
+
+    // Heuristics for common languages
+    if (/\b(il|la|lo|i|gli|le|un|una|uno|del|della|di|situato|ingresso|piano|pianoforte|aperto|chiuso|tutti|gratuito|libero|stazione|piazza|strada)\b/.test(origLower)) {
+        return 'it';
+    }
+    if (/\b(le|la|les|un|une|des|du|de|dans|pour|sur|avec|gratuit|rue|gare)\b/.test(origLower)) {
+        return 'fr';
+    }
+    if (/\b(el|la|los|las|un|una|unos|unas|de|en|con|para|por|gratis|calle|estacion)\b/.test(origLower)) {
+        return 'es';
+    }
+    if (/\b(der|die|das|ein|eine|und|in|für|mit|ist|klavier|bahnhof|strasse)\b/.test(origLower)) {
+        return 'de';
+    }
+
+    if (transLower !== origLower && transLower.length > 0) {
+        return 'it';
+    }
+
+    return 'en';
+}
+
+addDescInput?.addEventListener('blur', checkDescriptionLanguage);
+addDescInput?.addEventListener('input', () => {
+    if (descCheckTimeout) clearTimeout(descCheckTimeout);
+    descCheckTimeout = setTimeout(checkDescriptionLanguage, 800);
+});
+
 // Presets Overlay Modal Handling
 const presetOverlay = document.getElementById('preset-overlay');
-const presetFab = document.getElementById('add-preset-fab');
+const addTagTriggerBtn = document.getElementById('add-tag-trigger-btn');
 const presetBackdrop = document.getElementById('preset-backdrop');
 const presetCloseBtn = document.getElementById('preset-close-btn');
 const presetBackBtn = document.getElementById('preset-back-btn');
@@ -1625,7 +1830,7 @@ function showPresetView(viewName, titleText) {
     }
 }
 
-presetFab?.addEventListener('click', openPresetOverlay);
+addTagTriggerBtn?.addEventListener('click', openPresetOverlay);
 presetBackdrop?.addEventListener('click', closePresetOverlay);
 presetCloseBtn?.addEventListener('click', closePresetOverlay);
 presetBackBtn?.addEventListener('click', () => showPresetView('main', 'Add Tag Presets'));
@@ -1672,14 +1877,54 @@ document.querySelectorAll('.preset-grid-card').forEach(card => {
     });
 });
 
-// Map Location Picker Overlay Logic
+// Location Map Embed & Map Location Picker Overlay Logic
 let pickerMap = null;
+let embedMap = null;
+let embedMarker = null;
+
 const mapPickerOverlay = document.getElementById('map-picker-overlay');
 const locationTrigger = document.getElementById('add-location-trigger');
 const locationBtn = document.getElementById('add-location-btn');
 const mapPickerCloseBtn = document.getElementById('map-picker-back-btn');
 const mapPickerConfirmBtn = document.getElementById('map-picker-confirm-btn');
 const pickerLocateBtn = document.getElementById('pickerLocateBtn');
+const embedChangeBtn = document.getElementById('add-location-embed-change-btn');
+
+function renderLocationEmbedMap(lon, lat) {
+    const triggerCard = document.getElementById('add-location-trigger');
+    const embedContainer = document.getElementById('add-location-embed-container');
+    const coordsEl = document.getElementById('add-location-embed-coords');
+
+    if (triggerCard) triggerCard.style.display = 'none';
+    if (embedContainer) embedContainer.style.display = 'block';
+    if (coordsEl) coordsEl.textContent = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+
+    if (!embedMap) {
+        embedMap = new maplibregl.Map({
+            container: 'add-location-embed-map',
+            style: window.styleJsonUrl || "/static/example/style.json",
+            center: [lon, lat],
+            zoom: 16,
+            attributionControl: false,
+            interactive: false
+        });
+
+        // Create marker with pin.svg element
+        const el = document.createElement('div');
+        el.className = 'embed-marker-pin';
+        el.style.width = '20px';
+        el.style.height = '26px';
+        el.style.cursor = 'pointer';
+        el.innerHTML = window.pinSvg || `<img src="${window.pinSvgUrl}" width="20" height="26" />`;
+        embedMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+            .setLngLat([lon, lat])
+            .addTo(embedMap);
+    } else {
+        embedMap.setCenter([lon, lat]);
+        if (embedMarker) embedMarker.setLngLat([lon, lat]);
+        setTimeout(() => embedMap.resize(), 100);
+    }
+}
 
 function openMapPicker() {
     if (mapPickerOverlay) mapPickerOverlay.style.display = 'flex';
@@ -1711,6 +1956,8 @@ locationBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
     openMapPicker();
 });
+embedChangeBtn?.addEventListener('click', openMapPicker);
+document.getElementById('add-location-embed-map')?.addEventListener('click', openMapPicker);
 mapPickerCloseBtn?.addEventListener('click', closeMapPicker);
 
 mapPickerConfirmBtn?.addEventListener('click', () => {
@@ -1718,12 +1965,7 @@ mapPickerConfirmBtn?.addEventListener('click', () => {
     const center = pickerMap.getCenter();
     selectedPinCoords = [center.lng, center.lat];
 
-    const coordsText = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
-    const titleEl = document.getElementById('add-location-title');
-    const subEl = document.getElementById('add-location-coords');
-    
-    if (titleEl) titleEl.textContent = "Location Pin Set";
-    if (subEl) subEl.textContent = coordsText;
+    renderLocationEmbedMap(center.lng, center.lat);
 
     closeMapPicker();
 });
@@ -1808,6 +2050,11 @@ pickerSearchClear?.addEventListener('click', () => {
 const addSubmitBtn = document.getElementById('add-submit-btn');
 
 addSubmitBtn?.addEventListener('click', async () => {
+    if (!selectedPinCoords) {
+        showNotification("Please set a location pin on the map first.");
+        return;
+    }
+
     const token = osmAuth.getToken();
 
     // In dev mode on localhost, simulate a successful commit without hitting the OSM API

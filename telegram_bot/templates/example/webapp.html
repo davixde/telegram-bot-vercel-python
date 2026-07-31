@@ -237,20 +237,38 @@
         <!-- Logged-in state -->
         <div class="add-logged-in" id="add-logged-in" style="display: none;">
             <div class="add-header">
-                <h2>Add</h2>
+                <h2>Submit</h2>
             </div>
             
             <div class="add-form-scroll">
                 <!-- Name input -->
                 <div class="add-form-group">
                     <label for="add-name-input">Name</label>
-                    <input type="text" id="add-name-input" placeholder="e.g. Grand Piano, Public Piano..." autocomplete="off" />
+                    <input type="text" id="add-name-input" placeholder="" />
+                    <div class="name-warning-dropdown" id="name-warning-dropdown" style="display: none;">
+                        <div class="name-warning-header">Do not use generic names</div>
+                        <div class="name-warning-examples">
+                            <span class="warning-badge-red">
+                                <span class="material-symbols-outlined warning-cross-icon">close</span>
+                                Public piano
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Description input -->
                 <div class="add-form-group">
                     <label for="add-desc-input">Description</label>
                     <textarea id="add-desc-input" rows="3" placeholder="Details about location, access, condition..."></textarea>
+                    <div class="desc-hint-box" id="desc-hint-box" style="display: none;">
+                        <span class="material-symbols-outlined desc-hint-icon">lightbulb</span>
+                        <div class="desc-hint-content">
+                            <span class="desc-hint-text" id="desc-hint-text">Non-English text detected. Convert to tag?</span>
+                            <div class="desc-lang-chips" id="desc-lang-chips">
+                                <!-- Suggested tag inserted via JS -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Location picker trigger -->
@@ -258,13 +276,22 @@
                     <label>Location</label>
                     <div class="add-location-card" id="add-location-trigger">
                         <div class="add-location-info">
-                            <span class="material-symbols-outlined add-location-icon">pin_drop</span>
                             <div class="add-location-text">
                                 <div class="add-location-title" id="add-location-title">Tap to set location on map</div>
                                 <div class="add-location-sub" id="add-location-coords">No pin selected</div>
                             </div>
                         </div>
                         <button type="button" class="add-location-btn" id="add-location-btn">Set Pin</button>
+                    </div>
+                    <div id="add-location-embed-container" class="add-location-embed-container" style="display: none;">
+                        <div id="add-location-embed-map" class="add-location-embed-map"></div>
+                        <div class="add-location-embed-bar">
+                            <div class="add-location-embed-info">
+                                <img src="{% static 'example/assets/pin.svg' %}" alt="Pin" class="embed-pin-icon" />
+                                <span id="add-location-embed-coords"></span>
+                            </div>
+                            <button type="button" class="add-location-embed-change-btn" id="add-location-embed-change-btn">Change Pin</button>
+                        </div>
                     </div>
                 </div>
 
@@ -277,21 +304,19 @@
                     <div class="add-tags-list" id="add-tags-list">
                         <!-- Rendered by JS -->
                     </div>
+                    <button type="button" class="add-tag-trigger-btn" id="add-tag-trigger-btn">
+                        <span class="material-symbols-outlined">add</span> Add
+                    </button>
                 </div>
 
                 <!-- Submit Button -->
                 <div class="add-submit-wrapper">
                     <button class="add-submit-btn" id="add-submit-btn">
                         <span class="material-symbols-outlined">cloud_upload</span>
-                        <span>Commit to OpenStreetMap</span>
+                        <span>SUBMIT</span>
                     </button>
                 </div>
             </div>
-
-            <!-- Floating (+) Preset Button -->
-            <button class="add-fab-btn" id="add-preset-fab" aria-label="Add Preset Tag">
-                <span class="material-symbols-outlined">add</span>
-            </button>
         </div>
     </div>
 
@@ -301,30 +326,44 @@
             <button class="map-picker-back-btn" id="map-picker-back-btn">
                 <span class="material-symbols-outlined">arrow_back</span>
             </button>
-            <div class="map-picker-title">Set Location Pin</div>
-            <button class="map-picker-confirm-btn" id="map-picker-confirm-btn">Confirm</button>
-        </div>
-
-        <div class="map-picker-search-bar">
-            <div class="search-bar-wrapper">
-                <svg class="search-icon" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
-                <input type="text" id="map-picker-search-input" placeholder="Search address or location..." autocomplete="off" spellcheck="false" />
-                <button id="map-picker-search-clear" style="display: none;">&times;</button>
+            <div class="map-picker-search-inline">
+                <div class="search-bar-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg>
+                    <input type="text" id="map-picker-search-input" placeholder="Search address or location..." autocomplete="off" spellcheck="false" />
+                    <button id="map-picker-search-clear" style="display: none;">&times;</button>
+                </div>
+                <div class="search-results-list" id="mapPickerSearchResults" style="display: none;"></div>
             </div>
-            <div class="search-results-list" id="mapPickerSearchResults" style="display: none;"></div>
+            <button class="map-picker-confirm-btn" id="map-picker-confirm-btn">Confirm</button>
         </div>
 
         <div class="map-picker-body">
             <div id="picker-map"></div>
             <!-- Center pin indicator -->
             <div class="picker-center-pin">
-                <span class="material-symbols-outlined">location_on</span>
+                <img src="{% static 'example/assets/pin.svg' %}" alt="Pin" class="picker-pin-img" />
             </div>
             <button class="locate-btn picker-locate-btn" id="pickerLocateBtn" aria-label="Find my location">
                 <svg viewBox="0 0 24 24">
                     <path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" />
                 </svg>
             </button>
+        </div>
+    </div>
+
+    <!-- Tag Info Modal -->
+    <div id="tag-info-modal" class="tag-info-modal" style="display: none;">
+        <div class="tag-info-backdrop" id="tag-info-backdrop"></div>
+        <div class="tag-info-card">
+            <div class="tag-info-header">
+                <h4 id="tag-info-title">tag = value</h4>
+                <button class="tag-info-close-btn" id="tag-info-close-btn">&times;</button>
+            </div>
+            <div class="tag-info-body" id="tag-info-body">
+                <div class="tag-info-spinner" id="tag-info-spinner">Loading description...</div>
+                <p id="tag-info-desc" style="display: none;"></p>
+                <a id="tag-info-link" href="#" target="_blank" rel="noopener" style="display: none;">View on OpenStreetMap Wiki &rarr;</a>
+            </div>
         </div>
     </div>
 
@@ -344,28 +383,28 @@
                 <div id="preset-view-main" class="preset-grid-3">
                     <button class="preset-grid-card" data-preset="general-info">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/general-info.png' %}" alt="General Info" />
+                            <span class="material-symbols-outlined">info</span>
                         </div>
                         <span>General Info</span>
                     </button>
 
                     <button class="preset-grid-card" data-preset="indoor-outdoor">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/indoor.png' %}" alt="Indoor / Outdoor" />
+                            <span class="material-symbols-outlined">roofing</span>
                         </div>
                         <span>Indoor / Outdoor</span>
                     </button>
 
                     <button class="preset-grid-card" data-preset="wheelchair">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/wheelchair.png' %}" alt="Wheelchair" />
+                            <span class="material-symbols-outlined">accessible</span>
                         </div>
                         <span>Wheelchair</span>
                     </button>
 
                     <button class="preset-grid-card" data-preset="access">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/access.png' %}" alt="Access" />
+                            <span class="material-symbols-outlined">key</span>
                         </div>
                         <span>Access</span>
                     </button>
@@ -382,7 +421,7 @@
                 <div id="preset-view-general-info" class="preset-grid-3" style="display: none;">
                     <button class="preset-grid-card" data-action="add-level">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/level.png' %}" alt="Level" />
+                            <span class="material-symbols-outlined">layers</span>
                         </div>
                         <span>Level</span>
                     </button>
@@ -392,19 +431,19 @@
                 <div id="preset-view-indoor-outdoor" class="preset-grid-3" style="display: none;">
                     <button class="preset-grid-card" data-action="add-indoor">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/indoor.png' %}" alt="Indoor" />
+                            <span class="material-symbols-outlined">home</span>
                         </div>
                         <span>Indoor</span>
                     </button>
                     <button class="preset-grid-card" data-action="add-covered">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/covered.png' %}" alt="Covered" />
+                            <span class="material-symbols-outlined">umbrella</span>
                         </div>
                         <span>Covered</span>
                     </button>
                     <button class="preset-grid-card" data-action="add-outdoor">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/outdoor.png' %}" alt="Outdoor" />
+                            <span class="material-symbols-outlined">wb_sunny</span>
                         </div>
                         <span>Outdoor</span>
                     </button>
@@ -414,19 +453,19 @@
                 <div id="preset-view-access" class="preset-grid-3" style="display: none;">
                     <button class="preset-grid-card" data-action="add-access">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/access.png' %}" alt="Change Access" />
+                            <span class="material-symbols-outlined">lock</span>
                         </div>
                         <span>Change Access</span>
                     </button>
                     <button class="preset-grid-card" data-action="add-airside">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/airside.png' %}" alt="Airside" />
+                            <span class="material-symbols-outlined">flight</span>
                         </div>
                         <span>Airside</span>
                     </button>
                     <button class="preset-grid-card" data-action="add-access-students">
                         <div class="preset-icon-box">
-                            <img src="{% static 'example/assets/presets/access-students.png' %}" alt="Only students" />
+                            <span class="material-symbols-outlined">school</span>
                         </div>
                         <span>Only students</span>
                     </button>
@@ -465,16 +504,8 @@
         window.studentsSvg     = `{% include "example/assets/students.svg" %}`;
         window.unknownSvg      = `{% include "example/assets/unknown.svg" %}`;
         window.stillHereSvg    = `{% include "example/assets/still_here.svg" %}`;
-
-        window.presetGeneralInfoSvg = "{% static 'example/assets/presets/general-info.svg' %}";
-        window.presetIndoorSvg      = "{% static 'example/assets/presets/indoor.svg' %}";
-        window.presetCoveredSvg     = "{% static 'example/assets/presets/covered.svg' %}";
-        window.presetOutdoorSvg     = "{% static 'example/assets/presets/outdoor.svg' %}";
-        window.presetWheelchairSvg  = "{% static 'example/assets/presets/wheelchair.svg' %}";
-        window.presetAccessSvg      = "{% static 'example/assets/presets/access.svg' %}";
-        window.presetAirsideSvg     = "{% static 'example/assets/presets/airside.svg' %}";
-        window.presetAccessStudentsSvg = "{% static 'example/assets/presets/access-students.svg' %}";
-        window.presetLevelSvg       = "{% static 'example/assets/presets/level.svg' %}";
+        window.pinSvgUrl       = "{% static 'example/assets/pin.svg' %}";
+        window.pinSvg          = `{% include "example/assets/pin.svg" %}`;
     </script>
 
     <script type="module" src="{% static 'example/webapp.js' %}"></script>
