@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 @font-face {
     font-family: 'SF Pro Rounded';
@@ -14,8 +15,9 @@
     --header-padding-top: calc(var(--tg-safe-area-top) + 36px);
     
     /* Color Palette */
-    --color-primary: #202124;
-    --color-secondary: #3C4043;
+    --color-primary: #181A1C;
+    --color-secondary: #303336;
+    --color-tertiary: #46484A;
     --color-accent: #4CB2FF;
     --color-accent-soft: rgba(76, 178, 255, 0.18);
     --color-text-primary: #E4E7EC;
@@ -181,7 +183,7 @@ html, body {
     z-index: 10;
     width: 48px;
     height: 48px;
-    background: var(--color-secondary);
+    background: #464749;
 
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 50%;
@@ -612,7 +614,7 @@ html, body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--color-primary);
+    background: var(--color-primary) !important;
     display: none;
     flex-direction: column;
     z-index: 20;
@@ -981,17 +983,23 @@ input:checked + .slider:before {
 .add-form-group input[type="text"],
 .add-form-group textarea {
   width: 100%;
-  background-color: var(--color-secondary);
+  background-color: #242729;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 4px 4px 2px 2px;
   padding: 14px;
   color: var(--color-text-primary);
-  font-size: 15px;
-  font-family: inherit;
+  font-size: 13px;
+  font-family: "Plus Jakarta Sans", sans-serif;
   outline: none;
   box-shadow: 0 0px 0 0 transparent;
   transition: box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+}
+
+.add-form-group input[type="text"]::placeholder,
+.add-form-group textarea::placeholder {
+  color: rgba(255, 255, 255, 0.38);
+  opacity: 1;
 }
 
 .add-form-group input[type="text"]:focus,
@@ -1071,7 +1079,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 10px 0px;
 }
 
 .tag-key-box {
@@ -1166,32 +1174,39 @@ input:checked + .slider:before {
 }
 
 .add-submit-btn {
-    font-family: 'Bricolage Grotesque', sans-serif ;
+    appearance: none;
+    font: inherit;
     width: 100%;
-    display: flex;
+    min-height: 44px;
+    padding: 10px 18px;
+    box-sizing: border-box;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 16px;
+    gap: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-decoration: none;
     background: #FFFFFF;
-    color: var(--color-primary);
-    font-size: 16px;
-    font-weight: 700;
+    color: #111;
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: background-color 0.2s ease, opacity 0.4s ease 0.1s;
 }
 
 .add-submit-btn:active {
-    transform: scale(0.98);
+    transition: background-color 0s, opacity 0s;
+    opacity: 0.5;
 }
 
 .add-submit-btn:disabled {
     background: #495057;
     box-shadow: none;
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.3;
 }
 
 /* Name warning dropdown */

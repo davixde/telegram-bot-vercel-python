@@ -1655,7 +1655,18 @@ async function openTagInfo(key, val) {
             }
         } else {
             if (descEl) {
-                descEl.textContent = `No detailed OSM Wiki description found for "${key}${val ? '=' + val : ''}".`;
+                const langMatch = key.match(/^description[:_-]([a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?)$/i);
+                if (langMatch) {
+                    const langCode = langMatch[1].toLowerCase();
+                    let languageName = langCode.toUpperCase();
+                    try {
+                        const displayNames = new Intl.DisplayNames(['en'], { type: 'language' });
+                        languageName = displayNames.of(langCode) || languageName;
+                    } catch (e) {}
+                    descEl.textContent = `The description of this location in ${languageName}.`;
+                } else {
+                    descEl.textContent = `No detailed OSM Wiki description found for "${key}${val ? '=' + val : ''}".`;
+                }
                 descEl.style.display = 'block';
             }
         }
