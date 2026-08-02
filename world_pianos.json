@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-07-26T02:03:18Z",
+    "timestamp_osm_base": "2026-08-02T02:01:21Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -1545,6 +1545,18 @@
 },
 {
   "type": "node",
+  "id": 9198577335,
+  "lat": 52.2195471,
+  "lon": 7.7771424,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "check_date": "2026-08-01",
+    "name": "Zur kleinen Waldmusik"
+  }
+},
+{
+  "type": "node",
   "id": 9207797211,
   "lat": 49.9491813,
   "lon": 15.2678893,
@@ -3054,7 +3066,7 @@
     "amenity": "piano",
     "description": "bis 22:00 im Sommerhalbjahr nutzbar , nach Benutzung Plane wieder befestigen um das Musikinstrument vor der Witterung zu schützen",
     "name": "Klavier",
-    "opening_hours": "until 22:00",
+    "opening_hours": "Mo-Su 07:00-22:00",
     "operator": "Leipziger Fahrradchor",
     "source": "https://www.lvz.de/lokales/leipzig/in-leipzig-steht-ein-klavier-mitten-im-clara-zetkin-park-was-soll-das-YF2WW3IL6RCEJFC2MWMEYVAD2I.html"
   }
@@ -3423,6 +3435,19 @@
     "access": "yes",
     "amenity": "piano",
     "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 13338029201,
+  "lat": 48.4007103,
+  "lon": -4.5010447,
+  "tags": {
+    "access": "students",
+    "amenity": "piano",
+    "level": "0",
+    "musical_instrument": "piano",
+    "operator": "UBO"
   }
 },
 {
@@ -3906,7 +3931,7 @@
     "amenity": "piano",
     "image": "https://www.city.sakado.lg.jp/uploaded/image/11553.JPG",
     "location": "坂戸駅南北自由通路",
-    "musical": "instrument=piano",
+    "musical_instrument": "piano",
     "opening_hours": "10:00-20:00",
     "website": "https://www.city.sakado.lg.jp/soshiki/15/33648.html"
   }
@@ -3918,7 +3943,7 @@
   "lon": 121.3549943,
   "tags": {
     "amenity": "piano",
-    "building:levels": "1",
+    "level": "1",
     "name": "鶯歌車站藝文鋼琴區"
   }
 },
@@ -3955,6 +3980,21 @@
     "access": "yes",
     "amenity": "piano",
     "level": "0"
+  }
+},
+{
+  "type": "node",
+  "id": 14011243080,
+  "lat": 45.8294106,
+  "lon": 6.9496504,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "indoor": "yes",
+    "level": "1",
+    "musical_instrument": "grand_piano",
+    "operator": "Skyway Monte Bianco",
+    "survey:date": "2022-12-11"
   }
 },
 {
@@ -3998,6 +4038,42 @@
     "access": "yes",
     "amenity": "piano",
     "musical_instrument": "grand_piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14052334272,
+  "lat": 45.6661063,
+  "lon": 9.6987015,
+  "tags": {
+    "access": "customers",
+    "airside": "yes",
+    "amenity": "piano",
+    "musical_instrument": "grand_piano",
+    "survey:date": "2023-02-18"
+  }
+},
+{
+  "type": "node",
+  "id": 14061783561,
+  "lat": 38.8978135,
+  "lon": -121.3299439,
+  "tags": {
+    "access": "yes",
+    "amenity": "piano",
+    "mapillary": "1787774752356276",
+    "musical_instrument": "piano",
+    "operator": "Tamraloo_Studios"
+  }
+},
+{
+  "type": "node",
+  "id": 14064376480,
+  "lat": 55.9565809,
+  "lon": 37.9439881,
+  "tags": {
+    "amenity": "piano",
+    "check_date": "2026-07-31"
   }
 },
 {
