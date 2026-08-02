@@ -12,7 +12,7 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --safe-top: env(safe-area-inset-top, 45px);
     --tg-safe-area-top: var(--tg-content-safe-area-inset-top, env(safe-area-inset-top, 20px));
-    --header-padding-top: calc(var(--tg-safe-area-top) + 36px);
+    --page-header-top: calc(65px + var(--tg-safe-area-top));
     
     /* Color Palette */
     --color-primary: #181A1C;
@@ -619,7 +619,7 @@ html, body {
     flex-direction: column;
     z-index: 20;
     padding: 20px;
-    padding-top: calc(65px + var(--tg-safe-area-top));
+    padding-top: var(--page-header-top);
     padding-bottom: calc(var(--tab-bar-clearance) + 20px);
     overflow-y: auto;
 }
@@ -944,7 +944,7 @@ input:checked + .slider:before {
 }
 
 .add-header {
-    padding: calc(20px + var(--tg-safe-area-top)) 20px 16px 20px;
+    padding: var(--page-header-top) 20px 16px 20px;
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1422,7 +1422,7 @@ input:checked + .slider:before {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding-top: calc(14px + var(--tg-safe-area-top));
+    padding-top: var(--page-header-top);
     padding-bottom: 12px;
     padding-left: 14px;
     padding-right: 14px;
