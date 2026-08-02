@@ -69,51 +69,54 @@ def translate_text(request):
         target_lang = data.get('target', 'en')
 
         if not text:
-            return JsonResponse({'translatedText': ''})
+            return JsonResponse({'translatedText': '', 'detectedLanguage': None})
 
-        libretranslate_url = getenv("LIBRETRANSLATE_URL", "")
+        # 1) Google Translate free endpoint – no key, also returns detected language
+        try:
+            google_url = "https://translate.googleapis.com/translate_a/single?" + urllib.parse.urlencode({
+                'client': 'gtx',
+                'sl': 'auto',
+                'tl': target_lang,
+                'dt': 't',
+                'q': text
+            })
+            req = urllib.request.Request(google_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
 
-        urls_to_try = []
-        if libretranslate_url:
-            urls_to_try.append(libretranslate_url)
-        else:
-            urls_to_try = [
-                "http://localhost:5000/translate",
-                "https://translate.fedilab.app/translate"
-            ]
+            translated_text = ''.join(seg[0] for seg in res_data[0] if seg and seg[0])
+            detected_lang = res_data[2] if len(res_data) > 2 and isinstance(res_data[2], str) and res_data[2] else None
+            if translated_text:
+                return JsonResponse({'translatedText': translated_text, 'detectedLanguage': detected_lang})
+        except Exception as exc:
+            print(f"Google Translate failed: {exc}")
 
-        for url in urls_to_try:
-            try:
-                payload = json.dumps({
-                    'q': text,
-                    'source': 'auto',
-                    'target': target_lang,
-                    'format': 'text'
-                }).encode('utf-8')
+        # 2) MyMemory free fallback – no key, limited quota (also returns detected language)
+        try:
+            mm_url = "https://api.mymemory.translated.net/get?" + urllib.parse.urlencode({
+                'q': text,
+                'langpair': f'autodetect|{target_lang}'
+            })
+            req = urllib.request.Request(mm_url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
 
-                req = urllib.request.Request(
-                    url,
-                    data=payload,
-                    headers={
-                        'Content-Type': 'application/json',
-                        'User-Agent': 'TelegramBot/1.0'
-                    }
-                )
+            translated_text = res_data.get('responseData', {}).get('translatedText')
+            if (res_data.get('responseStatus') == 200
+                    and not res_data.get('quotaFinished')
+                    and translated_text):
+                detected_lang = res_data.get('responseData', {}).get('detectedLanguage')
+                return JsonResponse({'translatedText': translated_text, 'detectedLanguage': detected_lang})
+        except Exception as exc:
+            print(f"MyMemory failed: {exc}")
 
-                with urllib.request.urlopen(req, timeout=4) as response:
-                    res_data = json.loads(response.read().decode('utf-8'))
-                    translated_text = res_data.get('translatedText')
-                    if translated_text:
-                        return JsonResponse({'translatedText': translated_text})
-            except Exception as exc:
-                print(f"Translation failed for {url}: {exc}")
-
-        return JsonResponse({'translatedText': text})
+        # All providers failed – return the text untranslated
+        return JsonResponse({'translatedText': text, 'detectedLanguage': None})
 
     except Exception as exc:
         print("Translation handler error:", exc)
 
-    return JsonResponse({'translatedText': text})
+    return JsonResponse({'translatedText': text, 'detectedLanguage': None})
 
 
 # ---------------------------------------------------------------------------

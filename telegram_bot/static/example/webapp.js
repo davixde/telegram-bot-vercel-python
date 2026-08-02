@@ -1716,7 +1716,7 @@ addNameInput?.addEventListener('input', (e) => {
     }
 });
 
-// Description language detection using /api/translate/ endpoint
+// Description language detection via /api/translate/ endpoint (returns detectedLanguage)
 const addDescInput = document.getElementById('add-desc-input');
 const descHintBox = document.getElementById('desc-hint-box');
 const descHintText = document.getElementById('desc-hint-text');
@@ -1745,9 +1745,7 @@ async function checkDescriptionLanguage() {
 
         if (!resp.ok) return;
         const data = await resp.json();
-        const translatedText = data.translatedText || '';
-
-        const detectedLang = detectLanguageFromText(text, translatedText);
+        const detectedLang = data.detectedLanguage;
 
         if (detectedLang && detectedLang !== 'en') {
             descHintBox.style.display = 'flex';
@@ -1773,31 +1771,6 @@ async function checkDescriptionLanguage() {
     } catch (err) {
         console.warn("Language detection error:", err);
     }
-}
-
-function detectLanguageFromText(orig, translated) {
-    const origLower = orig.toLowerCase();
-    const transLower = (translated || '').toLowerCase();
-
-    // Heuristics for common languages
-    if (/\b(il|la|lo|i|gli|le|un|una|uno|del|della|di|situato|ingresso|piano|pianoforte|aperto|chiuso|tutti|gratuito|libero|stazione|piazza|strada)\b/.test(origLower)) {
-        return 'it';
-    }
-    if (/\b(le|la|les|un|une|des|du|de|dans|pour|sur|avec|gratuit|rue|gare)\b/.test(origLower)) {
-        return 'fr';
-    }
-    if (/\b(el|la|los|las|un|una|unos|unas|de|en|con|para|por|gratis|calle|estacion)\b/.test(origLower)) {
-        return 'es';
-    }
-    if (/\b(der|die|das|ein|eine|und|in|für|mit|ist|klavier|bahnhof|strasse)\b/.test(origLower)) {
-        return 'de';
-    }
-
-    if (transLower !== origLower && transLower.length > 0) {
-        return 'it';
-    }
-
-    return 'en';
 }
 
 addDescInput?.addEventListener('blur', checkDescriptionLanguage);
