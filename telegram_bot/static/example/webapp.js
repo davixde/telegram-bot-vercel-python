@@ -75,6 +75,14 @@ const map = new maplibregl.Map({
 
 map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
+// It stays closed: _updateCompact won't re-add
+// maplibregl-compact-show once the maplibregl-compact class is present.
+const attribEl = document.querySelector('#map .maplibregl-ctrl-attrib');
+if (attribEl) {
+    attribEl.classList.remove('maplibregl-compact-show');
+    attribEl.removeAttribute('open');
+}
+
 function updateMapLanguage(lang) {
     if (!map) return;
 
