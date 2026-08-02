@@ -27,8 +27,14 @@
   }
  },
  "sprite": [
-  "/static/example/sprite",
-  "https://tiles.openfreemap.org/sprites/ofm_f384/ofm"
+  {
+   "id": "default",
+   "url": "/static/example/sprite"
+  },
+  {
+   "id": "ofm",
+   "url": "https://tiles.openfreemap.org/sprites/ofm_f384/ofm"
+  }
  ],
  "layers": [
   {
@@ -426,9 +432,9 @@
       "zoom"
      ],
      10,
-     "#3D6B60",
+     "#213647",
      16,
-     "#396355"
+     "#1E3242"
     ],
     "fill-opacity": [
      "interpolate",
@@ -1061,9 +1067,9 @@
       "zoom"
      ],
      14,
-     "#455873",
+     "#3F629C",
      18,
-     "#526685"
+     "#5076B4"
     ],
     "line-width": [
      "interpolate",
@@ -1130,9 +1136,9 @@
       "zoom"
      ],
      14,
-     "#455873",
+     "#3F629C",
      18,
-     "#526685"
+     "#5076B4"
     ]
    }
   },
@@ -5624,7 +5630,7 @@
     ]
    ],
    "layout": {
-    "icon-image": "oneway",
+    "icon-image": "ofm:oneway",
     "icon-padding": 2,
     "icon-rotate": 90,
     "icon-rotation-alignment": "map",
@@ -5690,7 +5696,7 @@
     ]
    ],
    "layout": {
-    "icon-image": "oneway",
+    "icon-image": "ofm:oneway",
     "icon-padding": 2,
     "icon-rotate": -90,
     "icon-rotation-alignment": "map",
@@ -5979,7 +5985,7 @@
      ],
      [
       "image",
-      "dot"
+      "fallback_dot"
      ]
     ],
     "icon-size": [
@@ -6754,10 +6760,268 @@
      1
     ],
     "icon-halo-blur": 0,
-    "text-color": "rgba(156, 155, 160, 1)",
+    "text-color": [
+     "match",
+     [
+      "coalesce",
+      [
+       "get",
+       "subclass"
+      ],
+      [
+       "get",
+       "class"
+      ]
+     ],
+     [
+      "bus_stop",
+      "ferry_terminal",
+      "aerialway",
+      "subway",
+      "subway_entrance",
+      "tram_stop",
+      "tramway",
+      "rail",
+      "bus",
+      "station",
+      "halt",
+      "terminal_rail"
+     ],
+     "hsl(208, 100%, 70%)",
+     [
+      "dentist",
+      "doctor",
+      "doctors"
+     ],
+     "hsl(5, 90%, 70%)",
+     [
+      "newsagent",
+      "bicycle_rental",
+      "crossing",
+      "dot"
+     ],
+     "hsl(0, 0%, 70%)",
+     [
+      "antiques",
+      "books",
+      "clothes",
+      "convenience",
+      "cosmetics",
+      "electronics",
+      "florist",
+      "furniture",
+      "garden_centre",
+      "gift",
+      "hardware",
+      "jewelry",
+      "laundry",
+      "malls",
+      "mobile_phone",
+      "musical_instrument",
+      "optician",
+      "paint",
+      "perfumery",
+      "photo",
+      "shoes",
+      "stationery",
+      "supermarket",
+      "tobacco",
+      "toys",
+      "watches",
+      "copyshop",
+      "doityourself",
+      "interior_decoration",
+      "dry_cleaning",
+      "farm",
+      "beauty",
+      "massage",
+      "locksmith",
+      "tailor",
+      "book_store",
+      "clothing_store",
+      "jewelry_store",
+      "shopping_mall"
+     ],
+     "hsl(12, 0%, 85%)",
+     [
+      "chemist",
+      "pharmacy",
+      "veterinary"
+     ],
+     "hsl(140, 60%, 45%)",
+     [
+      "college",
+      "dancing_school",
+      "kindergarten",
+      "music_school",
+      "school",
+      "university",
+      "childcare"
+     ],
+     "hsl(203, 64%, 77%)",
+     [
+      "airport",
+      "terminal",
+      "aerodrome",
+      "aeroway"
+     ],
+     "hsl(206, 100%, 69%)",
+     [
+      "bicycle_parking",
+      "bicycle_repair_station",
+      "car_pooling",
+      "car_rental",
+      "car_repair",
+      "car_sharing",
+      "car_wash",
+      "charging_station",
+      "compressed_air",
+      "fuel",
+      "motorcycle_parking",
+      "motorcycle_rental",
+      "parking_entrance",
+      "taxi",
+      "vehicle_inspection",
+      "car",
+      "car_parts",
+      "railway",
+      "parking"
+     ],
+     "hsl(215, 90%, 65%)",
+     [
+      "bar",
+      "bbq",
+      "cafe",
+      "fast_food",
+      "ice_cream",
+      "kebab",
+      "asian",
+      "sushi",
+      "hot_dog",
+      "wine",
+      "coffee",
+      "chocolate",
+      "confectionery",
+      "deli",
+      "greengrocer",
+      "beverages",
+      "alcohol",
+      "restaurant",
+      "pub",
+      "biergarten",
+      "canteen",
+      "food_court",
+      "beer"
+     ],
+     "hsl(28, 57%, 72%)",
+     [
+      "attraction",
+      "castle",
+      "ruins",
+      "theme_park",
+      "viewpoint",
+      "zoo",
+      "information",
+      "lighthouse",
+      "memorial"
+     ],
+     "hsl(283, 55%, 80%)",
+     [
+      "bed_and_breakfast",
+      "camp_site",
+      "caravan_site",
+      "chalet",
+      "guest_house",
+      "hostel",
+      "hotel",
+      "motel",
+      "lodging",
+      "outdoor",
+      "tents",
+      "alpine_hut",
+      "cabin"
+     ],
+     "hsl(283, 73%, 78%)",
+     [
+      "music",
+      "arts_centre",
+      "artwork",
+      "cinema",
+      "gallery",
+      "library",
+      "monument",
+      "museum",
+      "theatre",
+      "statue",
+      "art",
+      "art_gallery",
+      "planetarium",
+      "monastery",
+      "archaeological_site"
+     ],
+     "hsl(315, 46%, 81%)",
+     [
+      "hearing_aids",
+      "wheelchair",
+      "hospital",
+      "clinic"
+     ],
+     "hsl(5, 90%, 70%)",
+     [
+      "cemetery",
+      "place_of_worship",
+      "christian",
+      "place_of_mourning"
+     ],
+     "hsl(51, 16%, 66%)",
+     [
+      "atm",
+      "bank",
+      "bureau_de_change",
+      "courthouse",
+      "fire_station",
+      "post",
+      "post_box",
+      "post_office",
+      "smoking_area",
+      "social_facility",
+      "charity",
+      "diplomatic",
+      "town_hall",
+      "community_centre",
+      "prison",
+      "drinking_water",
+      "fountain",
+      "recycling",
+      "shower",
+      "telephone",
+      "toilets",
+      "clock"
+     ],
+     "hsl(52, 10%, 70%)",
+     [
+      "park",
+      "garden",
+      "pitch",
+      "playground",
+      "golf",
+      "stadium",
+      "sports",
+      "sports_centre",
+      "soccer",
+      "american_football",
+      "horse_riding",
+      "swimming",
+      "swimming_pool",
+      "fitness_centre",
+      "fitness"
+     ],
+     "hsl(82, 75%, 46%)",
+     "rgba(156, 155, 160, 1)"
+    ],
     "text-halo-blur": 0.5,
-    "text-halo-color": "rgba(51, 54, 59, 1)",
-    "text-halo-width": 0.6
+    "text-halo-color": "hsl(0, 0%, 0%)",
+    "text-halo-width": 1
    }
   },
   {
@@ -6816,7 +7080,7 @@
      ],
      [
       "image",
-      "dot"
+      "fallback_dot"
      ]
     ],
     "icon-size": [
@@ -7591,10 +7855,268 @@
      1
     ],
     "icon-halo-blur": 0,
-    "text-color": "rgba(156, 155, 160, 1)",
+    "text-color": [
+     "match",
+     [
+      "coalesce",
+      [
+       "get",
+       "subclass"
+      ],
+      [
+       "get",
+       "class"
+      ]
+     ],
+     [
+      "bus_stop",
+      "ferry_terminal",
+      "aerialway",
+      "subway",
+      "subway_entrance",
+      "tram_stop",
+      "tramway",
+      "rail",
+      "bus",
+      "station",
+      "halt",
+      "terminal_rail"
+     ],
+     "hsl(208, 100%, 70%)",
+     [
+      "dentist",
+      "doctor",
+      "doctors"
+     ],
+     "hsl(5, 90%, 70%)",
+     [
+      "newsagent",
+      "bicycle_rental",
+      "crossing",
+      "dot"
+     ],
+     "hsl(0, 0%, 70%)",
+     [
+      "antiques",
+      "books",
+      "clothes",
+      "convenience",
+      "cosmetics",
+      "electronics",
+      "florist",
+      "furniture",
+      "garden_centre",
+      "gift",
+      "hardware",
+      "jewelry",
+      "laundry",
+      "malls",
+      "mobile_phone",
+      "musical_instrument",
+      "optician",
+      "paint",
+      "perfumery",
+      "photo",
+      "shoes",
+      "stationery",
+      "supermarket",
+      "tobacco",
+      "toys",
+      "watches",
+      "copyshop",
+      "doityourself",
+      "interior_decoration",
+      "dry_cleaning",
+      "farm",
+      "beauty",
+      "massage",
+      "locksmith",
+      "tailor",
+      "book_store",
+      "clothing_store",
+      "jewelry_store",
+      "shopping_mall"
+     ],
+     "hsl(12, 0%, 85%)",
+     [
+      "chemist",
+      "pharmacy",
+      "veterinary"
+     ],
+     "hsl(140, 60%, 45%)",
+     [
+      "college",
+      "dancing_school",
+      "kindergarten",
+      "music_school",
+      "school",
+      "university",
+      "childcare"
+     ],
+     "hsl(203, 64%, 77%)",
+     [
+      "airport",
+      "terminal",
+      "aerodrome",
+      "aeroway"
+     ],
+     "hsl(206, 100%, 69%)",
+     [
+      "bicycle_parking",
+      "bicycle_repair_station",
+      "car_pooling",
+      "car_rental",
+      "car_repair",
+      "car_sharing",
+      "car_wash",
+      "charging_station",
+      "compressed_air",
+      "fuel",
+      "motorcycle_parking",
+      "motorcycle_rental",
+      "parking_entrance",
+      "taxi",
+      "vehicle_inspection",
+      "car",
+      "car_parts",
+      "railway",
+      "parking"
+     ],
+     "hsl(215, 90%, 65%)",
+     [
+      "bar",
+      "bbq",
+      "cafe",
+      "fast_food",
+      "ice_cream",
+      "kebab",
+      "asian",
+      "sushi",
+      "hot_dog",
+      "wine",
+      "coffee",
+      "chocolate",
+      "confectionery",
+      "deli",
+      "greengrocer",
+      "beverages",
+      "alcohol",
+      "restaurant",
+      "pub",
+      "biergarten",
+      "canteen",
+      "food_court",
+      "beer"
+     ],
+     "hsl(28, 57%, 72%)",
+     [
+      "attraction",
+      "castle",
+      "ruins",
+      "theme_park",
+      "viewpoint",
+      "zoo",
+      "information",
+      "lighthouse",
+      "memorial"
+     ],
+     "hsl(283, 55%, 80%)",
+     [
+      "bed_and_breakfast",
+      "camp_site",
+      "caravan_site",
+      "chalet",
+      "guest_house",
+      "hostel",
+      "hotel",
+      "motel",
+      "lodging",
+      "outdoor",
+      "tents",
+      "alpine_hut",
+      "cabin"
+     ],
+     "hsl(283, 73%, 78%)",
+     [
+      "music",
+      "arts_centre",
+      "artwork",
+      "cinema",
+      "gallery",
+      "library",
+      "monument",
+      "museum",
+      "theatre",
+      "statue",
+      "art",
+      "art_gallery",
+      "planetarium",
+      "monastery",
+      "archaeological_site"
+     ],
+     "hsl(315, 46%, 81%)",
+     [
+      "hearing_aids",
+      "wheelchair",
+      "hospital",
+      "clinic"
+     ],
+     "hsl(5, 90%, 70%)",
+     [
+      "cemetery",
+      "place_of_worship",
+      "christian",
+      "place_of_mourning"
+     ],
+     "hsl(51, 16%, 66%)",
+     [
+      "atm",
+      "bank",
+      "bureau_de_change",
+      "courthouse",
+      "fire_station",
+      "post",
+      "post_box",
+      "post_office",
+      "smoking_area",
+      "social_facility",
+      "charity",
+      "diplomatic",
+      "town_hall",
+      "community_centre",
+      "prison",
+      "drinking_water",
+      "fountain",
+      "recycling",
+      "shower",
+      "telephone",
+      "toilets",
+      "clock"
+     ],
+     "hsl(52, 10%, 70%)",
+     [
+      "park",
+      "garden",
+      "pitch",
+      "playground",
+      "golf",
+      "stadium",
+      "sports",
+      "sports_centre",
+      "soccer",
+      "american_football",
+      "horse_riding",
+      "swimming",
+      "swimming_pool",
+      "fitness_centre",
+      "fitness"
+     ],
+     "hsl(82, 75%, 46%)",
+     "rgba(156, 155, 160, 1)"
+    ],
     "text-halo-blur": 0.5,
-    "text-halo-color": "rgba(51, 54, 59, 1)",
-    "text-halo-width": 0.6
+    "text-halo-color": "hsl(0, 0%, 0%)",
+    "text-halo-width": 1
    }
   },
   {
@@ -7653,7 +8175,7 @@
      ],
      [
       "image",
-      "dot"
+      "fallback_dot"
      ]
     ],
     "icon-size": [
@@ -8428,10 +8950,268 @@
      1
     ],
     "icon-halo-blur": 0,
-    "text-color": "rgba(156, 155, 160, 1)",
+    "text-color": [
+     "match",
+     [
+      "coalesce",
+      [
+       "get",
+       "subclass"
+      ],
+      [
+       "get",
+       "class"
+      ]
+     ],
+     [
+      "bus_stop",
+      "ferry_terminal",
+      "aerialway",
+      "subway",
+      "subway_entrance",
+      "tram_stop",
+      "tramway",
+      "rail",
+      "bus",
+      "station",
+      "halt",
+      "terminal_rail"
+     ],
+     "hsl(208, 100%, 70%)",
+     [
+      "dentist",
+      "doctor",
+      "doctors"
+     ],
+     "hsl(5, 90%, 70%)",
+     [
+      "newsagent",
+      "bicycle_rental",
+      "crossing",
+      "dot"
+     ],
+     "hsl(0, 0%, 70%)",
+     [
+      "antiques",
+      "books",
+      "clothes",
+      "convenience",
+      "cosmetics",
+      "electronics",
+      "florist",
+      "furniture",
+      "garden_centre",
+      "gift",
+      "hardware",
+      "jewelry",
+      "laundry",
+      "malls",
+      "mobile_phone",
+      "musical_instrument",
+      "optician",
+      "paint",
+      "perfumery",
+      "photo",
+      "shoes",
+      "stationery",
+      "supermarket",
+      "tobacco",
+      "toys",
+      "watches",
+      "copyshop",
+      "doityourself",
+      "interior_decoration",
+      "dry_cleaning",
+      "farm",
+      "beauty",
+      "massage",
+      "locksmith",
+      "tailor",
+      "book_store",
+      "clothing_store",
+      "jewelry_store",
+      "shopping_mall"
+     ],
+     "hsl(12, 0%, 85%)",
+     [
+      "chemist",
+      "pharmacy",
+      "veterinary"
+     ],
+     "hsl(140, 60%, 45%)",
+     [
+      "college",
+      "dancing_school",
+      "kindergarten",
+      "music_school",
+      "school",
+      "university",
+      "childcare"
+     ],
+     "hsl(203, 64%, 77%)",
+     [
+      "airport",
+      "terminal",
+      "aerodrome",
+      "aeroway"
+     ],
+     "hsl(206, 100%, 69%)",
+     [
+      "bicycle_parking",
+      "bicycle_repair_station",
+      "car_pooling",
+      "car_rental",
+      "car_repair",
+      "car_sharing",
+      "car_wash",
+      "charging_station",
+      "compressed_air",
+      "fuel",
+      "motorcycle_parking",
+      "motorcycle_rental",
+      "parking_entrance",
+      "taxi",
+      "vehicle_inspection",
+      "car",
+      "car_parts",
+      "railway",
+      "parking"
+     ],
+     "hsl(215, 90%, 65%)",
+     [
+      "bar",
+      "bbq",
+      "cafe",
+      "fast_food",
+      "ice_cream",
+      "kebab",
+      "asian",
+      "sushi",
+      "hot_dog",
+      "wine",
+      "coffee",
+      "chocolate",
+      "confectionery",
+      "deli",
+      "greengrocer",
+      "beverages",
+      "alcohol",
+      "restaurant",
+      "pub",
+      "biergarten",
+      "canteen",
+      "food_court",
+      "beer"
+     ],
+     "hsl(28, 57%, 72%)",
+     [
+      "attraction",
+      "castle",
+      "ruins",
+      "theme_park",
+      "viewpoint",
+      "zoo",
+      "information",
+      "lighthouse",
+      "memorial"
+     ],
+     "hsl(283, 55%, 80%)",
+     [
+      "bed_and_breakfast",
+      "camp_site",
+      "caravan_site",
+      "chalet",
+      "guest_house",
+      "hostel",
+      "hotel",
+      "motel",
+      "lodging",
+      "outdoor",
+      "tents",
+      "alpine_hut",
+      "cabin"
+     ],
+     "hsl(283, 73%, 78%)",
+     [
+      "music",
+      "arts_centre",
+      "artwork",
+      "cinema",
+      "gallery",
+      "library",
+      "monument",
+      "museum",
+      "theatre",
+      "statue",
+      "art",
+      "art_gallery",
+      "planetarium",
+      "monastery",
+      "archaeological_site"
+     ],
+     "hsl(315, 46%, 81%)",
+     [
+      "hearing_aids",
+      "wheelchair",
+      "hospital",
+      "clinic"
+     ],
+     "hsl(5, 90%, 70%)",
+     [
+      "cemetery",
+      "place_of_worship",
+      "christian",
+      "place_of_mourning"
+     ],
+     "hsl(51, 16%, 66%)",
+     [
+      "atm",
+      "bank",
+      "bureau_de_change",
+      "courthouse",
+      "fire_station",
+      "post",
+      "post_box",
+      "post_office",
+      "smoking_area",
+      "social_facility",
+      "charity",
+      "diplomatic",
+      "town_hall",
+      "community_centre",
+      "prison",
+      "drinking_water",
+      "fountain",
+      "recycling",
+      "shower",
+      "telephone",
+      "toilets",
+      "clock"
+     ],
+     "hsl(52, 10%, 70%)",
+     [
+      "park",
+      "garden",
+      "pitch",
+      "playground",
+      "golf",
+      "stadium",
+      "sports",
+      "sports_centre",
+      "soccer",
+      "american_football",
+      "horse_riding",
+      "swimming",
+      "swimming_pool",
+      "fitness_centre",
+      "fitness"
+     ],
+     "hsl(82, 75%, 46%)",
+     "rgba(156, 155, 160, 1)"
+    ],
     "text-halo-blur": 0.5,
-    "text-halo-color": "rgba(51, 54, 59, 1)",
-    "text-halo-width": 0.6
+    "text-halo-color": "hsl(0, 0%, 0%)",
+    "text-halo-width": 1
    }
   },
   {
@@ -8468,7 +9248,7 @@
      ],
      [
       "image",
-      "dot"
+      "fallback_dot"
      ]
     ],
     "icon-size": [
@@ -8559,10 +9339,10 @@
      2
     ],
     "icon-halo-blur": 1,
-    "text-color": "rgba(61, 144, 228, 1)",
-    "text-halo-color": "rgba(49, 69, 86, 1)",
+    "text-color": "hsl(208, 100%, 70%)",
+    "text-halo-color": "hsl(0, 0%, 0%)",
     "text-halo-blur": 0,
-    "text-halo-width": 0.7,
+    "text-halo-width": 1,
     "text-opacity": 0
    }
   },
@@ -9070,7 +9850,7 @@
     ]
    ],
    "layout": {
-    "icon-image": "airport_11",
+    "icon-image": "ofm:airport_11",
     "icon-size": 1,
     "text-anchor": "top",
     "text-field": [
@@ -9227,7 +10007,7 @@
      [
       "zoom"
      ],
-     "circle_11_black",
+     "ofm:circle_11_black",
      10,
      ""
     ],
@@ -9311,7 +10091,7 @@
      [
       "zoom"
      ],
-     "circle_11_black",
+     "ofm:circle_11_black",
      10,
      ""
     ],
@@ -9559,7 +10339,7 @@
         "get",
         "name:nonlatin"
        ],
-       "\n\u2299"
+       "\n⊙"
       ],
       [
        "concat",
@@ -9574,7 +10354,7 @@
          "name"
         ]
        ],
-       "\n\u2299"
+       "\n⊙"
       ]
      ],
      10,
@@ -9711,7 +10491,7 @@
         "get",
         "name:nonlatin"
        ],
-       "\n\u29bf"
+       "\n⦿"
       ],
       [
        "concat",
@@ -9726,7 +10506,7 @@
          "name"
         ]
        ],
-       "\n\u29bf"
+       "\n⦿"
       ]
      ],
      10,

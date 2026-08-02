@@ -62,9 +62,207 @@ try {
     });
 } catch (e) {
 }
+
+// MapLibre GL requires absolute sprite URLs. The style spec uses relative
+// paths (e.g. "/static/example/sprite") so it works from any deployment;
+// here we resolve them against the current origin at runtime. This keeps the
+// same style.json working on localhost, Vercel, or any other host.
+//
+// NOTE: MapLibre calls transformStyle(previousStyle, nextStyle) — the style
+// being loaded is the SECOND argument, so we must transform that one.
+// IMPORTANT: MapLibre v6 does NOT forward the constructor's `transformStyle`
+// option to setStyle(), so the style must be applied via map.setStyle(url,
+// { transformStyle }) AFTER construction (see below).
+function resolveRelativeSpriteUrls(previousStyle, nextStyle) {
+    const style = nextStyle;
+    if (!style || !style.sprite) return style;
+    const origin = window.location.origin;
+    const sprites = Array.isArray(style.sprite) ? style.sprite : [style.sprite];
+    style.sprite = sprites.map(s => {
+        if (typeof s === 'string' && !/^https?:\/\//.test(s)) {
+            return new URL(s, origin).toString();
+        }
+        if (s && typeof s === 'object' && typeof s.url === 'string' && !/^https?:\/\//.test(s.url)) {
+            return { ...s, url: new URL(s.url, origin).toString() };
+        }
+        return s;
+    });
+    return style;
+}
+
+function applyStyleWithAbsoluteSprites(map) {
+    map.setStyle(window.styleJsonUrl || "/static/example/style.json", {
+        transformStyle: resolveRelativeSpriteUrls
+    });
+}
+
+// MapLibre v6 registers sprite images as "{spriteId}:{name}" for every sprite
+// whose id is not "default". The style uses "default" for the local sprite, so
+// hotel/school/park/... resolve under their plain names. A few POI icons only
+// exist in the OpenFreeMap sprite (e.g. restaurant, parking); when MapLibre
+// asks for one of those we lazily crop it out of the OFM sprite and register
+// it on the fly. Works identically on localhost and Vercel.
+let ofmSpriteDataPromise = null;
+
+function loadImageFromBlob(blob) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+        img.src = url;
+    });
+}
+
+function getOfmSpriteData() {
+    if (!ofmSpriteDataPromise) {
+        ofmSpriteDataPromise = (async () => {
+            try {
+                const scale = window.devicePixelRatio > 1 ? '@2x' : '';
+                const base = 'https://tiles.openfreemap.org/sprites/ofm_f384/ofm';
+                const [jsonResp, pngResp] = await Promise.all([
+                    fetch(base + scale + '.json'),
+                    fetch(base + scale + '.png')
+                ]);
+                const spriteJson = await jsonResp.json();
+                const blob = await pngResp.blob();
+                // createImageBitmap is the fastest path; older WebViews fall back to <img>.
+                const image = (typeof createImageBitmap === 'function')
+                    ? await createImageBitmap(blob)
+                    : await loadImageFromBlob(blob);
+                return { spriteJson, image };
+            } catch (err) {
+                // Allow a later call to retry instead of caching a rejected promise.
+                ofmSpriteDataPromise = null;
+                throw err;
+            }
+        })();
+    }
+    return ofmSpriteDataPromise;
+}
+
+// The OpenFreeMap sprite draws every POI on a solid white circle. On the dark
+// map that reads as a bright blob, so we make the white background transparent
+// while keeping the colored glyph. The fade is gradual so anti-aliased edges
+// stay clean and glyph colors (e.g. the orange fork & knife) are untouched.
+function stripWhiteBackground(imageData) {
+    const d = imageData.data;
+    for (let i = 0; i < d.length; i += 4) {
+        const a = d[i + 3];
+        if (a === 0) continue;
+        const m = Math.min(d[i], d[i + 1], d[i + 2]);
+        if (m > 180) {
+            d[i + 3] = Math.round(a * Math.max(0, (255 - m) / 75));
+        }
+    }
+    return imageData;
+}
+
+// Small gray fallback dot for POIs that have no icon at all. The style's
+// icon-image falls back to "fallback_dot"; we draw it at runtime (13 CSS px,
+// like MapTiler's small dot) so the sprite sheet doesn't have to change.
+function makeFallbackDot() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const css = 13;
+    const canvas = document.createElement('canvas');
+    canvas.width = css * dpr;
+    canvas.height = css * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const c = css / 2;
+    ctx.beginPath();
+    ctx.arc(c, c, css / 2 - 1, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(176, 178, 184, 0.9)';
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.stroke();
+    return { canvas, pixelRatio: dpr };
+}
+
+// Kebab shops use temaki's "food" icon (fork & spoon bowl). temaki ships raw
+// SVGs (no sprite JSON), so we fetch the SVG, rasterize it and tint it with
+// the food color used by the style's icon-color match (hsl(28, 57%, 72%)).
+const TEMAKI_FOOD_COLOR = [224, 181, 143];
+let temakiFoodPromise = null;
+
+function getTemakiFoodImage() {
+    if (!temakiFoodPromise) {
+        temakiFoodPromise = (async () => {
+            const resp = await fetch('https://raw.githubusercontent.com/ideditor/temaki/main/icons/food.svg');
+            const svgText = await resp.text();
+            const blob = new Blob([svgText], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = url;
+            });
+            URL.revokeObjectURL(url);
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const css = 21;
+            const canvas = document.createElement('canvas');
+            canvas.width = css * dpr;
+            canvas.height = css * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            ctx.drawImage(img, 0, 0, css, css);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = imageData.data;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] > 0) {
+                    d[i] = TEMAKI_FOOD_COLOR[0];
+                    d[i + 1] = TEMAKI_FOOD_COLOR[1];
+                    d[i + 2] = TEMAKI_FOOD_COLOR[2];
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            return { canvas, pixelRatio: dpr };
+        })().catch(err => {
+            temakiFoodPromise = null; // allow a later retry
+            throw err;
+        });
+    }
+    return temakiFoodPromise;
+}
+
+function setupMissingIconResolver(m) {
+    m.setMissingStyleImageResolver(async (id) => {
+        if (!id || id.includes(':')) return;
+        try {
+            // Small fallback dot for POIs without an icon.
+            if (id === 'fallback_dot') {
+                if (m.hasImage(id)) return;
+                const { canvas, pixelRatio } = makeFallbackDot();
+                m.addImage(id, canvas, { pixelRatio });
+                return;
+            }
+            // Kebab shops use temaki's "food" icon.
+            if (id === 'kebab') {
+                if (m.hasImage(id)) return;
+                const { canvas, pixelRatio } = await getTemakiFoodImage();
+                m.addImage(id, canvas, { pixelRatio });
+                return;
+            }
+            const { spriteJson, image } = await getOfmSpriteData();
+            const entry = spriteJson[id];
+            if (!entry || m.hasImage(id)) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = entry.width;
+            canvas.height = entry.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, entry.x, entry.y, entry.width, entry.height, 0, 0, entry.width, entry.height);
+            const imageData = stripWhiteBackground(ctx.getImageData(0, 0, entry.width, entry.height));
+            m.addImage(id, imageData, { pixelRatio: entry.pixelRatio || 1, sdf: !!entry.sdf });
+        } catch (err) {
+            console.warn('Could not resolve missing sprite icon:', id, err);
+        }
+    });
+}
+
 const map = new maplibregl.Map({
     container: 'map',
-    style: window.styleJsonUrl || "/static/example/style.json",
     center: [12.4964, 41.9028],
     zoom: 12,
     pitchWithRotate: true,
@@ -72,6 +270,8 @@ const map = new maplibregl.Map({
     touchZoomRotate: true,
     attributionControl: false
 });
+applyStyleWithAbsoluteSprites(map);
+setupMissingIconResolver(map);
 
 map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
 
@@ -1914,12 +2114,13 @@ function renderLocationEmbedMap(lon, lat) {
     if (!embedMap) {
         embedMap = new maplibregl.Map({
             container: 'add-location-embed-map',
-            style: window.styleJsonUrl || "/static/example/style.json",
             center: [lon, lat],
             zoom: 16,
             attributionControl: false,
             interactive: false
         });
+        applyStyleWithAbsoluteSprites(embedMap);
+        setupMissingIconResolver(embedMap);
 
         // Create marker with pin.svg element
         const el = document.createElement('div');
@@ -1944,11 +2145,12 @@ function openMapPicker() {
     if (!pickerMap) {
         pickerMap = new maplibregl.Map({
             container: 'picker-map',
-            style: window.styleJsonUrl || "/static/example/style.json",
             center: selectedPinCoords || (userCoords ? userCoords : [12.4964, 41.9028]),
             zoom: 15,
             attributionControl: false
         });
+        applyStyleWithAbsoluteSprites(pickerMap);
+        setupMissingIconResolver(pickerMap);
     } else {
         if (selectedPinCoords) {
             pickerMap.setCenter(selectedPinCoords);
