@@ -1703,17 +1703,37 @@ function addTagOrUpdate(key, defaultVal) {
     renderAddTagsList();
 }
 
-// Name input warning logic ("Public", "Street", "Piano")
+// Name input warning logic: generic names in many languages (README: avoid generic names)
 const addNameInput = document.getElementById('add-name-input');
 const nameWarningDropdown = document.getElementById('name-warning-dropdown');
 
+// Generic/redundant words for "piano" across languages.
+// "piano" (substring) already covers en/it/es/fr/nl/sv/pt/... plus "pianoforte".
+const GENERIC_NAME_WORDS = [
+    // Latin script: languages where the word for piano isn't "piano"
+    'klavier',    // de
+    'klaver',     // da / no / sv
+    'fortepian',  // pl
+    'zongora',    // hu
+    'piyano',     // tr
+    // Cyrillic
+    'фортепиано', // ru
+    'пианино',    // ru
+    'піаніно',    // uk
+    // CJK and other scripts
+    'ピアノ',      // ja
+    '钢琴', '鋼琴', // zh (semplice / tradizionale)
+    '피아노',      // ko
+    'πιάνο',       // el
+    'פסנתר',      // he
+    'بيانو'        // ar
+];
+
 addNameInput?.addEventListener('input', (e) => {
     const text = (e.target.value || '').toLowerCase();
-    if (text.includes('public') || text.includes('street') || text.includes('piano')) {
-        if (nameWarningDropdown) nameWarningDropdown.style.display = 'block';
-    } else {
-        if (nameWarningDropdown) nameWarningDropdown.style.display = 'none';
-    }
+    const isGeneric = text.includes('public') || text.includes('street') || text.includes('piano')
+        || GENERIC_NAME_WORDS.some(w => text.includes(w));
+    if (nameWarningDropdown) nameWarningDropdown.style.display = isGeneric ? 'block' : 'none';
 });
 
 // Description language detection via /api/translate/ endpoint (returns detectedLanguage)
