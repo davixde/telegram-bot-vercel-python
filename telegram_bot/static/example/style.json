@@ -432,9 +432,9 @@
       "zoom"
      ],
      10,
-     "#213647",
+     "#3D6B60",
      16,
-     "#1E3242"
+     "#396355"
     ],
     "fill-opacity": [
      "interpolate",
@@ -1633,6 +1633,9 @@
      4
     ],
     "line-gap-width": 1
+   },
+   "layout": {
+    "visibility": "none"
    }
   },
   {
@@ -1672,11 +1675,7 @@
     ]
    ],
    "paint": {
-    "line-color": "rgba(121, 118, 117, 1)",
-    "line-dasharray": [
-     1.5,
-     0.75
-    ],
+    "line-color": "hsla(213, 24%, 20%, 0.6)",
     "line-width": [
      "interpolate",
      [
@@ -1686,10 +1685,14 @@
      [
       "zoom"
      ],
-     15,
-     1.2,
+     14,
+     0.5,
      20,
-     4
+     6
+    ],
+    "line-dasharray": [
+     1,
+     0.75
     ]
    }
   },
@@ -3085,11 +3088,10 @@
    ],
    "layout": {
     "visibility": "visible",
-    "line-cap": "round",
     "line-join": "round"
    },
    "paint": {
-    "line-color": "rgba(83, 87, 121, 1)",
+    "line-color": "hsla(213, 24%, 20%, 0.6)",
     "line-width": [
      "interpolate",
      [
@@ -3099,26 +3101,17 @@
      [
       "zoom"
      ],
-     15,
-     1.2,
+     16,
+     2,
      20,
-     4
+     7.5
     ],
-    "line-opacity": [
-     "interpolate",
-     [
-      "exponential",
-      1.8
-     ],
-     [
-      "zoom"
-     ],
-     14,
-     0,
-     19,
+    "line-dasharray": [
+     1,
      1
     ]
-   }
+   },
+   "minzoom": 12
   },
   {
    "id": "highway-motorway-link",
@@ -4604,10 +4597,11 @@
     ]
    ],
    "layout": {
-    "visibility": "visible"
+    "visibility": "visible",
+    "line-join": "miter"
    },
    "paint": {
-    "line-color": "rgba(43, 43, 61, 1)",
+    "line-color": "hsl(213, 24%, 15%)",
     "line-width": [
      "interpolate",
      [
@@ -4617,10 +4611,14 @@
      [
       "zoom"
      ],
-     15,
-     1.2,
+     14,
+     1.5,
      20,
      18
+    ],
+    "line-dasharray": [
+     1,
+     0
     ]
    }
   },
@@ -4661,11 +4659,7 @@
     ]
    ],
    "paint": {
-    "line-color": "rgba(85, 85, 92, 1)",
-    "line-dasharray": [
-     1.5,
-     0.75
-    ],
+    "line-color": "hsl(213, 24%, 24%)",
     "line-width": [
      "interpolate",
      [
@@ -4675,10 +4669,14 @@
      [
       "zoom"
      ],
-     15,
-     1.2,
+     14,
+     0.5,
      20,
-     4
+     10
+    ],
+    "line-dasharray": [
+     1,
+     0.3
     ]
    }
   },
@@ -5968,24 +5966,48 @@
    ],
    "layout": {
     "icon-image": [
-     "coalesce",
+     "case",
      [
-      "image",
+      "match",
       [
-       "get",
-       "subclass"
-      ]
-     ],
-     [
-      "image",
+       "coalesce",
+       [
+        "get",
+        "subclass"
+       ],
+       [
+        "get",
+        "class"
+       ]
+      ],
       [
-       "get",
-       "class"
-      ]
+       "swimming",
+       "swimming_pool"
+      ],
+      true,
+      false
      ],
+     "",
      [
-      "image",
-      "fallback_dot"
+      "coalesce",
+      [
+       "image",
+       [
+        "get",
+        "subclass"
+       ]
+      ],
+      [
+       "image",
+       [
+        "get",
+        "class"
+       ]
+      ],
+      [
+       "image",
+       "fallback_dot"
+      ]
      ]
     ],
     "icon-size": [
@@ -7063,24 +7085,48 @@
    ],
    "layout": {
     "icon-image": [
-     "coalesce",
+     "case",
      [
-      "image",
+      "match",
       [
-       "get",
-       "subclass"
-      ]
-     ],
-     [
-      "image",
+       "coalesce",
+       [
+        "get",
+        "subclass"
+       ],
+       [
+        "get",
+        "class"
+       ]
+      ],
       [
-       "get",
-       "class"
-      ]
+       "swimming",
+       "swimming_pool"
+      ],
+      true,
+      false
      ],
+     "",
      [
-      "image",
-      "fallback_dot"
+      "coalesce",
+      [
+       "image",
+       [
+        "get",
+        "subclass"
+       ]
+      ],
+      [
+       "image",
+       [
+        "get",
+        "class"
+       ]
+      ],
+      [
+       "image",
+       "fallback_dot"
+      ]
      ]
     ],
     "icon-size": [
@@ -8158,24 +8204,48 @@
    ],
    "layout": {
     "icon-image": [
-     "coalesce",
+     "case",
      [
-      "image",
+      "match",
       [
-       "get",
-       "subclass"
-      ]
-     ],
-     [
-      "image",
+       "coalesce",
+       [
+        "get",
+        "subclass"
+       ],
+       [
+        "get",
+        "class"
+       ]
+      ],
       [
-       "get",
-       "class"
-      ]
+       "swimming",
+       "swimming_pool"
+      ],
+      true,
+      false
      ],
+     "",
      [
-      "image",
-      "fallback_dot"
+      "coalesce",
+      [
+       "image",
+       [
+        "get",
+        "subclass"
+       ]
+      ],
+      [
+       "image",
+       [
+        "get",
+        "class"
+       ]
+      ],
+      [
+       "image",
+       "fallback_dot"
+      ]
      ]
     ],
     "icon-size": [
