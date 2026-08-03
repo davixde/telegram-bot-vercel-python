@@ -745,6 +745,299 @@ function setupDescriptionToggle(translatedText, originalText) {
     }
 }
 
+/* ==========================================================================
+   Piano Photos module
+   Resolves and renders photos attached to a piano via OSM tags, all without
+   API keys:
+     - panoramax=<uuid>               → Panoramax STAC API (assets.thumb/sd/hd)
+     - image=<any url>                → direct image if the URL ends with an
+                                        image extension, otherwise a link card
+     - wikimedia_commons=File:...     → resolved via Wikimedia Commons API
+     - wikimedia_commons=Category:... → first files of the category, via API
+     - mapillary=<key>                → link to mapillary.com (their API
+                                        requires a client token)
+   ========================================================================== */
+
+const PANORAMAX_STAC = 'https://api.panoramax.xyz/api/pictures/';
+const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
+const DIRECT_IMAGE_RE = /\.(jpe?g|png|webp|gif|avif|bmp|svg|tiff?)(\?.*)?$/i;
+
+let photoRenderToken = 0;
+const photoLightboxEl = document.getElementById('photo-lightbox');
+
+function isDirectImageUrl(url) {
+    try {
+        const u = new URL(url);
+        return DIRECT_IMAGE_RE.test(u.pathname);
+    } catch (e) {
+        return false;
+    }
+}
+
+async function fetchJson(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+}
+
+function commonsFileToTitle(value) {
+    const m = String(value).match(/(?:wiki\/)?(File:[^?#]+)/i);
+    return m ? m[1] : null;
+}
+
+async function resolveCommonsFile(title, width = 900) {
+    const url = `${COMMONS_API}?action=query&titles=${encodeURIComponent(title)}&prop=imageinfo&iiprop=url&iiurlwidth=${width}&format=json&origin=*`;
+    const data = await fetchJson(url);
+    const pages = data && data.query && data.query.pages;
+    if (!pages) return null;
+    const page = Object.values(pages)[0];
+    if (!page || !page.imageinfo || !page.imageinfo[0]) return null;
+    const info = page.imageinfo[0];
+    return { thumb: info.thumburl || info.url, full: info.url, page: info.descriptionurl };
+}
+
+async function resolveCommonsCategory(category, limit = 6) {
+    const url = `${COMMONS_API}?action=query&list=categorymembers&cmtitle=${encodeURIComponent(category)}&cmtype=file&cmlimit=${limit}&format=json&origin=*`;
+    const data = await fetchJson(url);
+    const members = data && data.query && data.query.categorymembers;
+    if (!members || !members.length) return null;
+    return members.map(m => m.title).filter(t => /^File:/i.test(t));
+}
+
+async function resolvePanoramax(uuid) {
+    const data = await fetchJson(PANORAMAX_STAC + uuid);
+    const assets = data && data.assets;
+    if (!assets) return null;
+    const thumb = (assets.thumb || assets.sd || assets.hd || {}).href;
+    const full = (assets.hd || assets.sd || assets.thumb || {}).href;
+    if (!thumb) return null;
+    return { thumb, full, uuid };
+}
+
+function collectPhotoSources(tags) {
+    const sources = [];
+    if (!tags) return sources;
+
+    // panoramax=<uuid>
+    if (tags.panoramax) {
+        sources.push({ kind: 'panoramax', uuid: tags.panoramax, label: 'Panoramax' });
+    }
+
+    // image, image:0, image:1, image:panorama, ... – any URL or Commons ref
+    for (const key of Object.keys(tags)) {
+        if (!/^image(:[0-9a-z]+)?$/i.test(key)) continue;
+        const val = String(tags[key] || '').trim();
+        if (!val) continue;
+        if (/^File:/i.test(val)) {
+            sources.push({ kind: 'commons-file', value: val, label: 'Wikimedia Commons' });
+        } else if (/^Category:/i.test(val)) {
+            sources.push({ kind: 'commons-category', value: val, label: 'Wikimedia Commons' });
+        } else if (/^https?:\/\//i.test(val)) {
+            if (/wikimedia\.org\/wiki\/(File|Category):/i.test(val)) {
+                sources.push({
+                    kind: /Category:/i.test(val) ? 'commons-category' : 'commons-file',
+                    value: val,
+                    label: 'Wikimedia Commons'
+                });
+            } else if (isDirectImageUrl(val)) {
+                sources.push({ kind: 'direct', value: val, label: 'Image' });
+            } else {
+                sources.push({ kind: 'link', value: val, label: 'Image' });
+            }
+        }
+    }
+
+    // wikimedia_commons=File:... | wikimedia_commons=Category:...
+    if (tags.wikimedia_commons) {
+        const val = String(tags.wikimedia_commons).trim();
+        if (/^Category:/i.test(val)) {
+            sources.push({ kind: 'commons-category', value: val, label: 'Wikimedia Commons' });
+        } else if (/^File:/i.test(val) || /wikimedia\.org\/wiki\/File:/i.test(val)) {
+            sources.push({ kind: 'commons-file', value: val, label: 'Wikimedia Commons' });
+        }
+    }
+
+    // mapillary / mapillary:SE / mapillary:SW – view-only link
+    for (const k of ['mapillary', 'mapillary:SE', 'mapillary:SW']) {
+        if (tags[k]) {
+            sources.push({ kind: 'mapillary', value: tags[k], label: 'Mapillary' });
+        }
+    }
+
+    return sources;
+}
+
+function createBadge(label) {
+    const badge = document.createElement('span');
+    badge.className = 'photo-badge';
+    badge.textContent = label || '';
+    return badge;
+}
+
+function createLinkCard(label, href, text) {
+    const card = document.createElement('a');
+    card.className = 'photo-card photo-card--link';
+    card.href = href;
+    card.target = '_blank';
+    card.rel = 'noopener noreferrer';
+    card.innerHTML = `
+        <svg class="photo-link-icon" viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42L17.59 5H14V3zM5 5h6v2H5v12h12v-6h2v8H3V5h2z"/></svg>
+        <span class="photo-link-text"></span>
+    `;
+    card.querySelector('.photo-link-text').textContent = text;
+    card.appendChild(createBadge(label));
+    return card;
+}
+
+function openPhotoLightbox({ thumb, full, label, sourcePage }) {
+    if (!photoLightboxEl) return;
+    const img = document.getElementById('photo-lightbox-img');
+    const loading = document.getElementById('photo-lightbox-loading');
+    const source = document.getElementById('photo-lightbox-source');
+    const link = document.getElementById('photo-lightbox-link');
+
+    if (loading) loading.style.display = 'block';
+    if (source) source.textContent = label || '';
+    if (link) {
+        if (sourcePage) {
+            link.style.display = '';
+            link.href = sourcePage;
+        } else {
+            link.style.display = 'none';
+        }
+    }
+    img.onload = () => { if (loading) loading.style.display = 'none'; };
+    img.onerror = () => { if (loading) loading.style.display = 'none'; };
+    img.src = full || thumb;
+    photoLightboxEl.style.display = 'flex';
+}
+
+function closePhotoLightbox() {
+    if (!photoLightboxEl) return;
+    photoLightboxEl.style.display = 'none';
+    const img = document.getElementById('photo-lightbox-img');
+    if (img) img.src = '';
+}
+
+function createImageCard(label, thumb, full, sourcePage) {
+    const card = document.createElement('div');
+    card.className = 'photo-card photo-card--image';
+
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = label || 'Piano photo';
+    img.src = thumb || full;
+
+    img.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPhotoLightbox({ thumb, full, label, sourcePage });
+    });
+
+    img.addEventListener('error', () => {
+        card.replaceWith(createLinkCard(label, sourcePage || full, 'Open photo'));
+    });
+
+    card.appendChild(img);
+    card.appendChild(createBadge(label));
+    return card;
+}
+
+async function createCategoryCard(source, token) {
+    const title = commonsFileToTitle(source.value) || source.value;
+    const files = await resolveCommonsCategory(title);
+    if (token !== photoRenderToken || !files || !files.length) return null;
+
+    const infos = await Promise.all(files.slice(0, 6).map(f => resolveCommonsFile(f, 300)));
+    if (token !== photoRenderToken) return null;
+    const valid = infos.filter(Boolean);
+    if (!valid.length) return null;
+
+    const card = document.createElement('div');
+    card.className = 'photo-card photo-card--category';
+    const grid = document.createElement('div');
+    grid.className = 'photo-cat-grid';
+
+    valid.forEach(info => {
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = info.page || source.label;
+        img.src = info.thumb;
+        img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openPhotoLightbox({ thumb: info.thumb, full: info.full, label: info.page, sourcePage: info.page });
+        });
+        grid.appendChild(img);
+    });
+
+    card.appendChild(grid);
+    card.appendChild(createBadge(source.label));
+    return card;
+}
+
+async function buildPhotoCard(source, token) {
+    try {
+        if (source.kind === 'panoramax') {
+            const p = await resolvePanoramax(source.uuid);
+            if (token !== photoRenderToken || !p) return null;
+            return createImageCard(source.label, p.thumb, p.full, `https://explore.panoramax.fr/#/?focus=${source.uuid}`);
+        }
+        if (source.kind === 'direct') {
+            return createImageCard(source.label, source.value, source.value, source.value);
+        }
+        if (source.kind === 'commons-file') {
+            const title = commonsFileToTitle(source.value);
+            if (!title) return null;
+            const info = await resolveCommonsFile(title);
+            if (token !== photoRenderToken || !info) return null;
+            return createImageCard(source.label, info.thumb, info.full, info.page);
+        }
+        if (source.kind === 'commons-category') {
+            return await createCategoryCard(source, token);
+        }
+        if (source.kind === 'mapillary') {
+            const url = `https://www.mapillary.com/app/?pKey=${encodeURIComponent(source.value)}`;
+            return createLinkCard(source.label, url, 'Open Mapillary');
+        }
+        if (source.kind === 'link') {
+            return createLinkCard(source.label, source.value, 'Open link');
+        }
+    } catch (e) {
+        console.warn('Photo source failed:', source, e);
+    }
+    return null;
+}
+
+async function renderPhotos(props) {
+    const container = document.getElementById('sheet-photos');
+    const strip = document.getElementById('photos-strip');
+    if (!container || !strip) return;
+
+    const sources = collectPhotoSources(props.tags);
+    if (!sources.length) {
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'block';
+
+    const token = ++photoRenderToken;
+    strip.innerHTML = '<div class="photo-card photo-card--loading"></div><div class="photo-card photo-card--loading"></div>';
+
+    const cards = [];
+    for (const src of sources) {
+        if (token !== photoRenderToken) return;
+        const card = await buildPhotoCard(src, token);
+        if (card) cards.push(card);
+    }
+    if (token !== photoRenderToken) return;
+    strip.innerHTML = '';
+    cards.forEach(c => strip.appendChild(c));
+}
+
+if (photoLightboxEl) {
+    document.getElementById('photo-lightbox-backdrop')?.addEventListener('click', closePhotoLightbox);
+    document.getElementById('photo-lightbox-close')?.addEventListener('click', closePhotoLightbox);
+}
+
 function showBottomSheet(props, coords) {
     activePianoCoords = coords; 
 
@@ -814,6 +1107,8 @@ function showBottomSheet(props, coords) {
     if (lastSeenEl) {
         lastSeenEl.innerText = props.last_seen || 'Unknown';
     }
+
+    renderPhotos(props);
 
     snapTo('peek'); 
 }

@@ -74,6 +74,11 @@
         </div>
         
         <div class="sheet-content" id="sheet-content">
+            <div class="sheet-photos" id="sheet-photos" style="display: none;">
+                <div class="info-label">Photos</div>
+                <div class="photos-strip" id="photos-strip"></div>
+            </div>
+
             <div class="info-item">
                 <div class="info-item-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-icon lucide-check"><path d="M20 6 9 17l-5-5"/></svg>
@@ -363,6 +368,22 @@
                 <div class="tag-info-spinner" id="tag-info-spinner">Loading description...</div>
                 <p id="tag-info-desc" style="display: none;"></p>
                 <a id="tag-info-link" href="#" target="_blank" rel="noopener" style="display: none;">View on OpenStreetMap Wiki &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Lightbox Modal -->
+    <div id="photo-lightbox" class="photo-lightbox" style="display: none;">
+        <div class="photo-lightbox-backdrop" id="photo-lightbox-backdrop"></div>
+        <div class="photo-lightbox-card">
+            <button class="photo-lightbox-close" id="photo-lightbox-close" aria-label="Close">&times;</button>
+            <div class="photo-lightbox-image-wrap">
+                <img id="photo-lightbox-img" alt="Piano photo" />
+                <div class="photo-lightbox-loading" id="photo-lightbox-loading"></div>
+            </div>
+            <div class="photo-lightbox-footer">
+                <span class="photo-lightbox-source" id="photo-lightbox-source"></span>
+                <a class="photo-lightbox-link" id="photo-lightbox-link" href="#" target="_blank" rel="noopener noreferrer">View original</a>
             </div>
         </div>
     </div>
