@@ -57,8 +57,11 @@ if (tgWebApp) {
 
 document.fonts.load("24px 'Inter'");
 document.fonts.load("24px 'Open Sans'");
+// MapLibre v6 renders labels locally (TinySDF) using the family name from
+// text-font and derives the weight from the name – "SF Pro Rounded" is
+// requested at weight 400, so warm THAT face up (not 700) for country labels.
 try {
-    document.fonts.load('700 24px "SF Pro Rounded"').catch(() => {
+    document.fonts.load('400 24px "SF Pro Rounded"').catch(() => {
     });
 } catch (e) {
 }
@@ -1253,13 +1256,28 @@ function renderPlaceResults(results) {
         .sort((a, b) => a.nearest.distance - b.nearest.distance)
         .slice(0, 10);
 
-    if (!ranked.length) {
+    // Deduplicate: several Nominatim hits for one query (the centre, the
+    // street, the bus stop…) usually point at the SAME piano. For each
+    // distinct nearest piano keep only the closest place, so "Whitgift
+    // centre" doesn't list 8 entries for the same piano.
+    const byPiano = new Map();
+    for (const item of ranked) {
+        const pianoId = item.nearest.feature.properties.id;
+        if (!byPiano.has(pianoId) || item.nearest.distance < byPiano.get(pianoId).nearest.distance) {
+            byPiano.set(pianoId, item);
+        }
+    }
+    const unique = [...byPiano.values()]
+        .sort((a, b) => a.nearest.distance - b.nearest.distance)
+        .slice(0, 10);
+
+    if (!unique.length) {
         searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No places with a piano nearby found</div>`;
         searchResultsList.style.display = 'block';
         return;
     }
 
-    searchResultsList.innerHTML = ranked.map(({ res, lat, lon, nearest }) => {
+    searchResultsList.innerHTML = unique.map(({ res, lat, lon, nearest }) => {
         const parts = (res.display_name || '').split(',').map(s => s.trim());
         const badge = `<span class="piano-distance-badge">↗ ${Math.round(nearest.distance)} m</span>`;
         return `
