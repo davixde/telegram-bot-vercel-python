@@ -182,6 +182,20 @@ html, body {
     margin-top: 2px;
 }
 
+/* Badge showing the distance to the nearest piano on place search results */
+.piano-distance-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: rgba(88, 181, 53, 0.16);
+    color: #58b535;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
 /* Place search results in the map picker — type icon on the left */
 .search-result-item.place-item {
     flex-direction: row;

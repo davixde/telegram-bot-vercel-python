@@ -536,6 +536,8 @@ map.on('load', () => {
     map.on('moveend', updateMarkers);
     
     map.on('click', () => {
+        placeSearchToken++; // discard any in-flight place search
+        if (placeSearchTimeout) clearTimeout(placeSearchTimeout);
         snapTo('closed');
         searchResultsList.style.display = 'none';
     });
@@ -1118,8 +1120,170 @@ const searchInput = document.getElementById('search-input');
 const searchResultsList = document.getElementById('searchResultsList');
 const searchClearBtn = document.getElementById('search-clear-btn');
 
+// ── Place search fallback (Nominatim) ───────────────────────────────────────
+// When no piano matches locally, we query Nominatim ONCE per search (debounced)
+// and rank the results by distance to the nearest piano. The nearest-piano
+// lookup is computed client-side over the already-loaded `allFeatures` (via
+// calculateDistance), so no extra API calls are needed.
+const NOMINATIM_SEARCH_URL = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&q=';
+const NEAREST_PIANO_MAX_M = 500; // meters – places farther from any piano are dropped
+const PLACE_SEARCH_DEBOUNCE_MS = 300;
+
+// these tokens are stripped ONLY as a fallback when the raw query yields no
+// results.
+const PIANO_NOISE_WORDS = new Set([
+    'piano', 'pianos', 'pianoforte', 'pianoforti', 'pianino', 'pianini',
+    'klavier', 'klaviere', 'flügel', 'flugel', 'piyano',
+    'фортепиано', 'пианино', '피아노', 'ピアノ', '钢琴', '鋼琴'
+]);
+
+let placeSearchTimeout = null;
+let placeSearchToken = 0;
+
+function stripPianoNoise(query) {
+    const tokens = query.split(/\s+/);
+    const cleaned = tokens
+        .map(t => t.toLowerCase().replace(/[.,;:!?'"()]/g, ''))
+        .filter(t => t && !PIANO_NOISE_WORDS.has(t));
+    const hadNoise = cleaned.length < tokens.filter(t => t.trim()).length;
+    return { query: cleaned.join(' ').trim(), hadNoise };
+}
+
+const nominatimCache = new Map();
+const NOMINATIM_CACHE_MAX = 100;
+
+async function fetchNominatim(query) {
+    // Cache by query string: repeat searches (e.g. "piano roma" then "roma")
+    // reuse the same response instead of re-hitting Nominatim's 1 req/s limit.
+    if (nominatimCache.has(query)) return nominatimCache.get(query);
+    const request = (async () => {
+        const resp = await fetch(NOMINATIM_SEARCH_URL + encodeURIComponent(query));
+        return resp.ok ? resp.json() : [];
+    })();
+    // Don't cache failures or empty responses: a transient 429 (or a query
+    // with no results) would otherwise poison the cache for the session.
+    request.then(results => {
+        if (!results || results.length === 0) nominatimCache.delete(query);
+    }).catch(() => nominatimCache.delete(query));
+    nominatimCache.set(query, request);
+    if (nominatimCache.size > NOMINATIM_CACHE_MAX) {
+        nominatimCache.delete(nominatimCache.keys().next().value);
+    }
+    return request;
+}
+
+// A Nominatim result is only useful to us if it has a piano within the
+// threshold (the search bar only shows places WITH a piano nearby).
+function resultHasNearPiano(res) {
+    const nearest = findNearestPiano(parseFloat(res.lat), parseFloat(res.lon));
+    return !!(nearest && nearest.distance <= NEAREST_PIANO_MAX_M);
+}
+
+async function searchPlaces(query) {
+    // Try the raw query first: real names like "Piano di Sorrento" win.
+    let results = await fetchNominatim(query);
+    const { query: cleaned, hadNoise } = stripPianoNoise(query);
+    if (hadNoise && cleaned && !results.some(resultHasNearPiano)) {
+        // Raw results are useless (no piano within 500 m) — e.g. "piano roma"
+        // on Nominatim only matches literal "Piano" names (Colle Piano, …).
+        // Retry with the cleaned query ("roma"), which finds the real place.
+        // The second call only fires in this case, keeping requests to a
+        // minimum (and the cache dedupes repeated identical queries).
+        const cleanedResults = await fetchNominatim(cleaned);
+        if (cleanedResults.length > 0) results = cleanedResults;
+    }
+    return results;
+}
+
+function findNearestPiano(lat, lon) {
+    let nearest = null;
+    for (const f of allFeatures) {
+        const dist = calculateDistance([lon, lat], f.geometry.coordinates);
+        if (!nearest || dist < nearest.distance) {
+            nearest = { feature: f, distance: dist };
+        }
+    }
+    return nearest;
+}
+
+function renderPlaceResults(results) {
+    if (!results.length) {
+        searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No places found</div>`;
+        searchResultsList.style.display = 'block';
+        return;
+    }
+
+    // Keep ONLY places with a piano within the threshold, sorted by the
+    // nearest piano's distance (closest first). Nominatim results without a
+    // nearby piano are dropped entirely.
+    const ranked = results
+        .map(res => {
+            const lat = parseFloat(res.lat);
+            const lon = parseFloat(res.lon);
+            return { res, lat, lon, nearest: findNearestPiano(lat, lon) };
+        })
+        .filter(({ nearest }) => nearest && nearest.distance <= NEAREST_PIANO_MAX_M)
+        .sort((a, b) => a.nearest.distance - b.nearest.distance)
+        .slice(0, 10);
+
+    if (!ranked.length) {
+        searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No places with a piano nearby found</div>`;
+        searchResultsList.style.display = 'block';
+        return;
+    }
+
+    searchResultsList.innerHTML = ranked.map(({ res, lat, lon, nearest }) => {
+        const parts = (res.display_name || '').split(',').map(s => s.trim());
+        const badge = `<span class="piano-distance-badge">↗ ${Math.round(nearest.distance)} m</span>`;
+        return `
+            <div class="search-result-item place-search-item" data-lat="${lat}" data-lon="${lon}">
+                <span class="search-result-name">${escapeHtml(res.name || parts[0] || '')}</span>
+                <span class="search-result-details">${escapeHtml(parts.slice(1).join(', '))}${badge}</span>
+            </div>
+        `;
+    }).join('');
+
+    searchResultsList.querySelectorAll('.place-search-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectPlaceResult(parseFloat(item.dataset.lat), parseFloat(item.dataset.lon));
+        });
+    });
+    searchResultsList.style.display = 'block';
+}
+
+function selectPlaceResult(lat, lon) {
+    // Only places with a nearby piano are rendered, so `nearest` is always set.
+    const nearest = findNearestPiano(lat, lon);
+    if (!nearest) return;
+
+    searchInput.blur();
+    searchResultsList.style.display = 'none';
+
+    map.flyTo({ center: [lon, lat], zoom: 16, essential: true });
+    showBottomSheet(nearest.feature.properties, nearest.feature.geometry.coordinates);
+}
+
+async function runPlaceSearch(val) {
+    placeSearchToken++;
+    if (placeSearchTimeout) clearTimeout(placeSearchTimeout);
+    const token = placeSearchToken;
+    try {
+        const results = await searchPlaces(val);
+        if (token === placeSearchToken) renderPlaceResults(results);
+    } catch (err) {
+        console.warn("Place search error:", err);
+    }
+}
+
 function performSearch(queryValue) {
-    const val = queryValue.toLowerCase().trim();
+    // Always cancel any pending/in-flight place search first, even when the
+    // input is cleared — otherwise a stale Nominatim response could re-show
+    // the results list over an empty field.
+    placeSearchToken++;
+    if (placeSearchTimeout) clearTimeout(placeSearchTimeout);
+
+    const val = queryValue.trim();
     if (!val) {
         searchResultsList.style.display = 'none';
         searchClearBtn.style.display = 'none';
@@ -1128,19 +1292,18 @@ function performSearch(queryValue) {
 
     searchClearBtn.style.display = 'block';
 
+    const needle = val.toLowerCase();
     const filtered = allFeatures.filter(f => {
         const name = (f.properties.name || '').toLowerCase();
         const desc = (f.properties.description || '').toLowerCase();
-        return name.includes(val) || desc.includes(val);
+        return name.includes(needle) || desc.includes(needle);
     }).slice(0, 10);
 
-    if (filtered.length === 0) {
-        searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No pianos found</div>`;
-    } else {
+    if (filtered.length > 0) {
         searchResultsList.innerHTML = filtered.map(f => {
             return `
                 <div class="search-result-item" data-id="${f.properties.id}">
-                    <span class="search-result-name">${f.properties.name || 'Piano'}</span>
+                    <span class="search-result-name">${escapeHtml(f.properties.name || 'Piano')}</span>
                     <span class="search-result-details">${getInstrumentLabel(f.properties.musical_instrument)} • ${getAccessLabel(f.properties.access)}</span>
                 </div>
             `;
@@ -1152,9 +1315,24 @@ function performSearch(queryValue) {
                 selectPianoById(item.dataset.id);
             });
         });
+        searchResultsList.style.display = 'block';
+        return;
     }
 
+    // A query made ONLY of instrument words ("piano", "pianoforte"…) is not a
+    // place query: there is nothing meaningful to look up on Nominatim, so
+    // skip the place search entirely.
+    const { query: cleaned, hadNoise } = stripPianoNoise(val);
+    if (hadNoise && !cleaned) {
+        searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No pianos found</div>`;
+        searchResultsList.style.display = 'block';
+        return;
+    }
+
+    // No local piano match → debounced Nominatim place search
+    searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">Searching places…</div>`;
     searchResultsList.style.display = 'block';
+    placeSearchTimeout = setTimeout(() => runPlaceSearch(val), PLACE_SEARCH_DEBOUNCE_MS);
 }
 
 function selectPianoById(id) {
@@ -1194,21 +1372,31 @@ searchInput.addEventListener('input', (e) => {
 
 searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
-        const val = searchInput.value.toLowerCase().trim();
-        if (val) {
-            const matched = allFeatures.find(f => {
-                const name = (f.properties.name || '').toLowerCase();
-                const desc = (f.properties.description || '').toLowerCase();
-                return name.includes(val) || desc.includes(val);
-            });
-            if (matched) {
-                selectPianoById(matched.properties.id);
-            }
+        const val = searchInput.value.trim();
+        if (!val) return;
+        const needle = val.toLowerCase();
+        const matched = allFeatures.find(f => {
+            const name = (f.properties.name || '').toLowerCase();
+            const desc = (f.properties.description || '').toLowerCase();
+            return name.includes(needle) || desc.includes(needle);
+        });
+        const { query: cleaned, hadNoise } = stripPianoNoise(val);
+        if (matched) {
+            selectPianoById(matched.properties.id);
+        } else if (hadNoise && !cleaned) {
+            // Query is only instrument words ("piano") → same message as typing.
+            searchResultsList.innerHTML = `<div class="search-result-item" style="color: #8e8e93; font-style: italic;">No pianos found</div>`;
+            searchResultsList.style.display = 'block';
+        } else {
+            // Explicit Enter → query Nominatim immediately (no debounce wait)
+            runPlaceSearch(val);
         }
     }
 });
 
 searchClearBtn.addEventListener('click', () => {
+    placeSearchToken++; // discard any in-flight/pending place search
+    if (placeSearchTimeout) clearTimeout(placeSearchTimeout);
     searchInput.value = '';
     searchResultsList.style.display = 'none';
     searchClearBtn.style.display = 'none';
