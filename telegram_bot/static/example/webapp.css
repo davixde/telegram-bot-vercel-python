@@ -990,16 +990,36 @@ input:checked + .slider:before {
     flex: 1;
 }
 
-.osm-avatar-icon {
-    font-size: 36px;
-    color: var(--color-accent);
+.osm-avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
-    /* Filled variant */
-    font-variation-settings:
-        'FILL' 1,
-        'wght' 400,
-        'GRAD' 0,
-        'opsz' 36;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Real OSM profile photo, layered over the fallback icon. The `hidden`
+   attribute keeps it invisible until JS provides a URL. */
+.osm-avatar-img {
+    position: absolute;
+    inset: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.15);
+    background: var(--color-secondary);
+}
+
+/* Fallback avatar placeholder (raw Telegram-style SVG) shown while loading
+   or when the OSM user has no profile photo. */
+.osm-avatar-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: block;
 }
 
 .osm-account-info {

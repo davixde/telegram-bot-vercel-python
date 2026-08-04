@@ -22,6 +22,48 @@ OSM_AUTH_URL      = "https://www.openstreetmap.org/oauth2/authorize"
 OSM_TOKEN_URL     = "https://www.openstreetmap.org/oauth2/token"
 # Cookie name used to carry the PKCE code_verifier across the redirect
 _OSM_VERIFIER_COOKIE = "osm_pkce_verifier"
+# The callback relay page inlines the OSM access token – it must never be
+# cached by the browser or by an intermediary (CDN / proxy), otherwise a
+# stale page (old token, or an error from a previous attempt) could be
+# served on a later callback.
+_NOCACHE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma":        "no-cache",
+    "Expires":       "0",
+}
+# How many parallel OAuth flows we keep in the verifier cookie.
+_MAX_PENDING_FLOWS = 5
+
+
+def _read_pending_flows(cookie_value):
+    """Parse the signed PKCE cookie into a list of pending OAuth flows.
+
+    Returns a list of dicts with keys {state, verifier, user_id}. Empty list
+    when the cookie is missing, expired, tampered with, or holds no usable
+    flows. For backwards compatibility a legacy single-flow payload (a dict)
+    is wrapped into a one-element list.
+    """
+    if not cookie_value:
+        return []
+    signer = TimestampSigner()
+    try:
+        unsigned = signer.unsign(cookie_value, max_age=600)
+        data = json.loads(unsigned)
+    except (BadSignature, SignatureExpired, json.JSONDecodeError):
+        return []
+    if isinstance(data, list):
+        return [f for f in data if isinstance(f, dict) and f.get("state")]
+    if isinstance(data, dict) and data.get("state"):
+        return [data]
+    return []
+
+
+def _render_callback(request, context):
+    """Render the OSM callback relay page with cache-busting headers."""
+    response = render(request, "example/osm_callback.html", context)
+    for header, value in _NOCACHE_HEADERS.items():
+        response[header] = value
+    return response
 
 
 def index(request):
@@ -171,23 +213,35 @@ def osm_oauth_start(request):
 
     response = redirect(auth_url)
 
-    # Persist state, verifier and user_id in a JSON payload inside a signed
-    # HttpOnly cookie.  SameSite=None + Secure is required so the browser
-    # sends the cookie back when OSM redirects to our callback (cross-site).
+    # Persist state, verifier and user_id in a signed HttpOnly cookie.
+    # SameSite=None + Secure is required so the browser sends the cookie
+    # back when OSM redirects to our callback (cross-site).
+    #
+    # The cookie holds a LIST of in-flight flows (instead of a single
+    # object) so starting a second login while one is still pending – a
+    # retry, or the same account from a different browser/device – does not
+    # clobber the first flow's verifier (which would fail its callback with
+    # a state mismatch). Each callback consumes only its own state entry.
     signer = TimestampSigner()
-    cookie_payload = json.dumps({
+    flows = _read_pending_flows(request.COOKIES.get(_OSM_VERIFIER_COOKIE))
+    flows.append({
         "state":    state,
         "verifier": verifier,
         "user_id":  tg_user_id,
     })
+    # Keep only the most recent flows so the cookie stays small.
+    flows = flows[-_MAX_PENDING_FLOWS:]
     response.set_cookie(
         _OSM_VERIFIER_COOKIE,
-        signer.sign(cookie_payload),
+        signer.sign(json.dumps(flows)),
         max_age=600,      # 10 minutes – enough time for the user to log in
         httponly=True,
         secure=True,
         samesite="None",
     )
+    # Never cache the redirect chain: the eventual relay page embeds a token.
+    for header, value in _NOCACHE_HEADERS.items():
+        response[header] = value
     return response
 
 
@@ -215,32 +269,32 @@ def osm_oauth_callback(request):
     # Surface OSM-side authorization errors to the relay page
     if error or not code or not state:
         reason = error or "missing_code_or_state"
-        return render(request, "example/osm_callback.html", {"error": reason})
+        return _render_callback(request, {"error": reason})
 
-    # Retrieve and verify the signed PKCE cookie
+    # Retrieve and verify the signed PKCE cookie (holds a list of flows)
     cookie_value = request.COOKIES.get(_OSM_VERIFIER_COOKIE)
     if not cookie_value:
-        return render(request, "example/osm_callback.html",
-                      {"error": "missing_verifier_cookie"})
+        return _render_callback(request, {"error": "missing_verifier_cookie"})
 
-    signer = TimestampSigner()
-    try:
-        unsigned = signer.unsign(cookie_value, max_age=600)
-        # Cookie payload is a JSON object {state, verifier, user_id}
-        cookie_data = json.loads(unsigned)
-        stored_state = cookie_data["state"]
-        verifier     = cookie_data["verifier"]
-        tg_user_id   = cookie_data.get("user_id", "")
-    except (BadSignature, SignatureExpired):
-        return render(request, "example/osm_callback.html",
-                      {"error": "invalid_or_expired_cookie"})
-    except (json.JSONDecodeError, KeyError):
-        return render(request, "example/osm_callback.html",
-                      {"error": "malformed_cookie"})
+    flows = _read_pending_flows(cookie_value)
+    if not flows:
+        return _render_callback(request, {"error": "invalid_or_expired_cookie"})
 
-    if stored_state != state:
-        return render(request, "example/osm_callback.html",
-                      {"error": "state_mismatch"})
+    # Find the flow that matches THIS callback's state. Other in-flight flows
+    # (from parallel/retried logins) are left untouched in the cookie.
+    matching = [f for f in flows if f.get("state") == state]
+    if not matching:
+        return _render_callback(request, {"error": "state_mismatch"})
+
+    flow = matching[0]
+    verifier   = flow.get("verifier")
+    tg_user_id = flow.get("user_id", "")
+
+    if not verifier:
+        return _render_callback(request, {"error": "malformed_cookie"})
+
+    # Consume this flow: its code_verifier must not be reusable.
+    flows = [f for f in flows if f.get("state") != state]
 
     # Exchange the authorization code for an access token
     try:
@@ -272,13 +326,11 @@ def osm_oauth_callback(request):
             token_data = json.loads(resp.read().decode())
     except Exception as exc:
         print("OSM token exchange error:", exc)
-        return render(request, "example/osm_callback.html",
-                      {"error": "token_exchange_failed"})
+        return _render_callback(request, {"error": "token_exchange_failed"})
 
     access_token = token_data.get("access_token")
     if not access_token:
-        return render(request, "example/osm_callback.html",
-                      {"error": "no_access_token"})
+        return _render_callback(request, {"error": "no_access_token"})
 
     # Build the Mini App return URL – the token travels as a query param.
     # The Mini App reads it, saves it to localStorage, then immediately strips
@@ -378,6 +430,18 @@ def osm_oauth_callback(request):
         "bot_message_sent": bot_message_sent,
         "osm_return_url":  osm_return_url,
     }
-    response = render(request, "example/osm_callback.html", context)
-    response.delete_cookie(_OSM_VERIFIER_COOKIE)
+    response = _render_callback(request, context)
+    signer = TimestampSigner()
+    if flows:
+        # Other flows are still pending – keep them in the cookie.
+        response.set_cookie(
+            _OSM_VERIFIER_COOKIE,
+            signer.sign(json.dumps(flows)),
+            max_age=600,
+            httponly=True,
+            secure=True,
+            samesite="None",
+        )
+    else:
+        response.delete_cookie(_OSM_VERIFIER_COOKIE)
     return response

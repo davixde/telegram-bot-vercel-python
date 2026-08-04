@@ -2036,6 +2036,7 @@ const osmAuth = (() => {
     // ── Storage keys ──────────────────────────────────────────────────────
     const TOKEN_KEY    = 'osm_access_token';
     const USERNAME_KEY = 'osm_username';
+    const AVATAR_KEY   = 'osm_avatar';
     const PENDING_KEY  = 'osm_pending_token';
     const PENDING_TS   = 'osm_pending_timestamp';
     const PENDING_TTL  = 5 * 60 * 1000; // 5 minutes max validity for pending token
@@ -2044,6 +2045,7 @@ const osmAuth = (() => {
     const elLoggedIn      = document.getElementById('osm-logged-in');
     const elLoggedOut     = document.getElementById('osm-logged-out');
     const elUsername      = document.getElementById('osm-username');
+    const elAvatarImg     = document.getElementById('osm-avatar-img');
     const elConnectBtn    = document.getElementById('osm-connect-btn');
     const elDisconnectBtn = document.getElementById('osm-disconnect-btn');
 
@@ -2054,6 +2056,20 @@ const osmAuth = (() => {
     function clearToken() {
         try { localStorage.removeItem(TOKEN_KEY);    } catch (e) {}
         try { localStorage.removeItem(USERNAME_KEY); } catch (e) {}
+        try { localStorage.removeItem(AVATAR_KEY);   } catch (e) {}
+    }
+
+    /**
+     * Drop any pending token left behind by the relay page of an earlier
+     * flow. Called whenever a token is applied or the user disconnects, so
+     * a stale (but still unexpired) pending token can never be re-consumed
+     * later by the visibility/storage listeners and overwrite a fresh login
+     * – e.g. the bot-message path stores a new token while an old pending
+     * token from a previous attempt still sits in localStorage.
+     */
+    function clearPendingToken() {
+        try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
+        try { localStorage.removeItem(PENDING_TS);  } catch (e) {}
     }
 
     /**
@@ -2063,8 +2079,7 @@ const osmAuth = (() => {
     function consumePendingToken() {
         const token = safeGetStorage(PENDING_KEY, null);
         const ts    = parseInt(safeGetStorage(PENDING_TS, '0'), 10);
-        try { localStorage.removeItem(PENDING_KEY); } catch (e) {}
-        try { localStorage.removeItem(PENDING_TS);  } catch (e) {}
+        clearPendingToken();
         if (!token) return null;
         if (Date.now() - ts > PENDING_TTL) return null; // expired
         return token;
@@ -2079,23 +2094,45 @@ const osmAuth = (() => {
         );
         if (!resp.ok) throw new Error(`OSM API ${resp.status}`);
         const data = await resp.json();
-        return data?.user?.display_name || null;
+        const user = data?.user;
+        if (!user) return null;
+        return {
+            name: user.display_name || null,
+            img:  user.img?.href || null,
+        };
     }
 
     // ── UI helpers ────────────────────────────────────────────────────────
 
-    function showLoggedIn(username) {
+    function setAvatar(url) {
+        if (!elAvatarImg) return;
+        if (url) {
+            // If the photo is gone (e.g. the user deleted it on OSM), fall
+            // back to the icon instead of showing a broken image.
+            elAvatarImg.onerror = () => setAvatar(null);
+            elAvatarImg.src = url;
+            elAvatarImg.hidden = false;
+        } else {
+            elAvatarImg.onerror = null;
+            elAvatarImg.removeAttribute('src');
+            elAvatarImg.hidden = true;
+        }
+    }
+
+    function showLoggedIn(username, avatarUrl) {
         if (elLoggedIn)  elLoggedIn.style.display  = 'flex';
         if (elLoggedOut) elLoggedOut.style.display = 'none';
         if (elUsername) {
             elUsername.classList.remove('loading');
             elUsername.textContent = username || 'OSM User';
         }
+        setAvatar(avatarUrl);
     }
 
     function showLoggedOut() {
         if (elLoggedIn)  elLoggedIn.style.display  = 'none';
         if (elLoggedOut) elLoggedOut.style.display = 'flex';
+        setAvatar(null);
     }
 
     function showLoadingUsername() {
@@ -2105,18 +2142,24 @@ const osmAuth = (() => {
             elUsername.textContent = 'Loading\u2026';
             elUsername.classList.add('loading');
         }
+        // Hide any previous avatar while the fresh user info loads.
+        setAvatar(null);
     }
 
     // ── Core: save token, update UI, fetch username ───────────────────────
 
     async function applyToken(token) {
         setToken(token);
+        // The token is now in localStorage – make sure a stale pending token
+        // from an earlier flow can't be picked up later (see clearPendingToken).
+        clearPendingToken();
         showLoadingUsername();
         try {
-            const name = await fetchOsmUser(token);
-            if (name) {
-                safeSetStorage(USERNAME_KEY, name);
-                showLoggedIn(name);
+            const info = await fetchOsmUser(token);
+            if (info && info.name) {
+                safeSetStorage(USERNAME_KEY, info.name);
+                if (info.img) safeSetStorage(AVATAR_KEY, info.img);
+                showLoggedIn(info.name, info.img);
             } else {
                 // Token invalid or revoked – clear it
                 clearToken();
@@ -2125,7 +2168,7 @@ const osmAuth = (() => {
         } catch (err) {
             console.warn('OSM user fetch failed:', err);
             // Network error: keep the token and show a generic label
-            showLoggedIn(safeGetStorage(USERNAME_KEY, null));
+            showLoggedIn(safeGetStorage(USERNAME_KEY, null), safeGetStorage(AVATAR_KEY, null));
         }
     }
 
@@ -2167,18 +2210,20 @@ const osmAuth = (() => {
         const token = getToken();
         if (!token) { showLoggedOut(); return; }
 
-        const cachedName = safeGetStorage(USERNAME_KEY, null);
+        const cachedName   = safeGetStorage(USERNAME_KEY, null);
+        const cachedAvatar = safeGetStorage(AVATAR_KEY, null);
         if (cachedName) {
-            showLoggedIn(cachedName); // instant display while API refreshes
+            showLoggedIn(cachedName, cachedAvatar); // instant display while API refreshes
         } else {
             showLoadingUsername();
         }
 
         try {
-            const name = await fetchOsmUser(token);
-            if (name) {
-                safeSetStorage(USERNAME_KEY, name);
-                showLoggedIn(name);
+            const info = await fetchOsmUser(token);
+            if (info && info.name) {
+                safeSetStorage(USERNAME_KEY, info.name);
+                if (info.img) safeSetStorage(AVATAR_KEY, info.img);
+                showLoggedIn(info.name, info.img);
             } else {
                 // Token revoked or expired
                 clearToken();
@@ -2276,7 +2321,13 @@ const osmAuth = (() => {
 
     // ── Disconnect ────────────────────────────────────────────────────────
 
-    function disconnect() { clearToken(); showLoggedOut(); }
+    function disconnect() {
+        clearToken();
+        // Also drop any pending token from a half-finished flow, otherwise a
+        // later visibilitychange could silently log the user back in.
+        clearPendingToken();
+        showLoggedOut();
+    }
 
     // ── Wire up buttons and listeners ─────────────────────────────────────
 

@@ -141,7 +141,16 @@
                 <!-- Logged-in state (hidden until JS confirms a stored token) -->
                 <div class="settings-item osm-logged-in" id="osm-logged-in" style="display:none;">
                     <div class="osm-account-row">
-                        <span class="material-symbols-outlined osm-avatar-icon">account_circle</span>
+                        <div class="osm-avatar" id="osm-avatar">
+                            <!-- Real OSM profile photo, filled in by JS when available -->
+                            <img id="osm-avatar-img" class="osm-avatar-img" alt="" hidden />
+                            <!-- Fallback shown while loading or when the user has no avatar -->
+                            <svg class="osm-avatar-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <rect width="48" height="48" rx="24" fill="#EBFBFE"/>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M16.5 18C16.5 13.8579 19.8579 10.5 24 10.5C28.1421 10.5 31.5 13.8579 31.5 18C31.5 22.1421 28.1421 25.5 24 25.5C19.8579 25.5 16.5 22.1421 16.5 18Z" fill="#0B87AC"/>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M10.2521 41.5089C10.381 34.0259 16.4866 28 24 28C31.5135 28 37.6193 34.0262 37.7479 41.5094C37.7565 42.0057 37.4706 42.46 37.0194 42.667C33.0545 44.4863 28.6442 45.5 24.0005 45.5C19.3564 45.5 14.9457 44.4861 10.9805 42.6665C10.5294 42.4595 10.2435 42.0052 10.2521 41.5089Z" fill="#0B87AC"/>
+                            </svg>
+                        </div>
                         <div class="osm-account-info">
                             <span class="settings-title" id="osm-username">Loading…</span>
                             <span class="settings-desc">Connected to OpenStreetMap</span>
