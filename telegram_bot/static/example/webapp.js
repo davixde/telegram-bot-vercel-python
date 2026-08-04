@@ -122,11 +122,30 @@ if (attribEl) {
     attribEl.removeAttribute('open');
 }
 
+const originalTextFields = new Map();
+let langUpdateQueued = false;
+let pendingLang = null;
+
+// If the style is ever re-applied, drop the cached originals so they are
+// re-captured from the fresh style instead of going stale.
+map.on('style.load', () => originalTextFields.clear());
+
 function updateMapLanguage(lang) {
     if (!map) return;
 
     if (!map.isStyleLoaded()) {
-        map.once('styledata', () => updateMapLanguage(lang));
+        // Defer until the style is ready, but never stack duplicate handlers
+        // when the language is changed several times in a row.
+        pendingLang = lang;
+        if (!langUpdateQueued) {
+            langUpdateQueued = true;
+            map.once('styledata', () => {
+                langUpdateQueued = false;
+                const pending = pendingLang;
+                pendingLang = null;
+                if (pending) updateMapLanguage(pending);
+            });
+        }
         return;
     }
 
@@ -175,10 +194,18 @@ function updateMapLanguage(lang) {
     layers.forEach(layer => {
         if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
             const currentTextField = layer.layout['text-field'];
-            const textFieldStr = JSON.stringify(currentTextField);
+
+            // Remember the pristine expression on first sight; afterwards always
+            // inject from it so repeated language switches never compound.
+            if (!originalTextFields.has(layer.id)) {
+                originalTextFields.set(layer.id, currentTextField);
+            }
+
+            const pristineTextField = originalTextFields.get(layer.id);
+            const textFieldStr = JSON.stringify(pristineTextField);
 
             if (textFieldStr.includes('name')) {
-                const updatedTextField = injectLanguage(currentTextField, lang);
+                const updatedTextField = injectLanguage(pristineTextField, lang);
                 map.setLayoutProperty(layer.id, 'text-field', updatedTextField);
             }
         }
