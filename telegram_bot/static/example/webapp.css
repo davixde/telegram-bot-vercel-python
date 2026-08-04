@@ -114,6 +114,31 @@ html, body {
     font-size: 18px;
     cursor: pointer;
     padding: 0 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Map picker clear button — same look as #search-clear-btn, but with a
+   fixed height matching the input so the search bar never grows (and the
+   field never shifts down) when the × appears while typing. */
+#map-picker-search-clear {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 18px;
 }
 
 .search-results-list {
@@ -155,6 +180,46 @@ html, body {
     font-size: 12px;
     color: var(--color-text-secondary);
     margin-top: 2px;
+}
+
+/* Place search results in the map picker — type icon on the left */
+.search-result-item.place-item {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Apple Maps–style: colored circle + white glyph. The circle color is set
+   inline (PLACE_COLORS in webapp.js), glyphs are filled Material Symbols. */
+.place-result-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.place-result-icon .material-symbols-outlined {
+    font-size: 15px;
+    font-variation-settings: 'FILL' 1, 'wght' 600;
+}
+
+.place-result-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.place-result-body .search-result-name,
+.place-result-body .search-result-details {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #loading-indicator {
@@ -677,16 +742,150 @@ html, body {
     line-height: 1.3;
 }
 
-.settings-item-control select {
+/* -----------------------------------------------------------------------
+   Custom language dropdown (flag + label, no native <select>, no emoji)
+----------------------------------------------------------------------- */
+.lang-dropdown {
+    position: relative;
+    min-width: 148px;
+    max-width: 168px;
+}
+
+.lang-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
     background: var(--color-primary);
     color: var(--color-text-primary);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 7px 10px;
+    font-family: inherit;
     font-size: 14px;
     outline: none;
     cursor: pointer;
-    max-width: 140px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.lang-dropdown-trigger:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.lang-dropdown.open .lang-dropdown-trigger {
+    border-color: var(--color-accent);
+}
+
+.lang-flag,
+.lang-flag-fallback {
+    width: 20px;
+    height: 15px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.lang-flag-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-secondary);
+    color: var(--color-text-secondary);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.lang-flag-fallback .material-symbols-outlined {
+    font-size: 13px;
+}
+
+.lang-dropdown-label {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lang-dropdown-chevron {
+    font-size: 18px;
+    color: var(--color-text-secondary);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.lang-dropdown.open .lang-dropdown-chevron {
+    transform: rotate(180deg);
+}
+
+.lang-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    min-width: 100%;
+    display: none;
+    background: var(--color-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 4px;
+    z-index: 40;
+    max-height: 264px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.lang-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 10px;
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.lang-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.lang-dropdown-item:active {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.lang-dropdown-item-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lang-dropdown-item-check {
+    display: flex;
+    align-items: center;
+    color: var(--color-accent);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    flex-shrink: 0;
+}
+
+.lang-dropdown-item-check .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.lang-dropdown-item.active {
+    color: var(--color-accent);
+}
+
+.lang-dropdown-item.active .lang-dropdown-item-check {
+    opacity: 1;
 }
 
 /* iOS-like Switch Toggle */
@@ -1128,6 +1327,48 @@ input:checked + .slider:before {
     color: var(--color-text-primary);
     font-size: 13px;
     outline: none;
+}
+
+/* Inline Yes / No segmented selector for boolean tags.
+   Matches the height (47px) and pill rounding of the tag fields. */
+.tag-val-yesno {
+    display: flex;
+    gap: 4px;
+    align-items: stretch;
+    width: 100%;
+    height: 47px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    padding: 4px;
+}
+
+.tag-val-yesno-btn {
+    appearance: none;
+    font: inherit;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tag-val-yesno-btn:active {
+    transform: scale(0.97);
+}
+
+.tag-val-yesno-btn.active {
+    background: var(--color-accent);
+    color: #0b0f14;
 }
 
 .tag-remove-btn {

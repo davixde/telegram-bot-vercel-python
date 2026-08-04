@@ -177,33 +177,14 @@
                         <span class="settings-desc">Choose language for piano descriptions</span>
                     </div>
                     <div class="settings-item-control">
-                        <select id="settings-lang-select">
-                            <option value="en">🇬🇧 English</option>
-                            <option value="it">🇮🇹 Italiano</option>
-                            <option value="es">🇪🇸 Español</option>
-                            <option value="fr">🇫🇷 Français</option>
-                            <option value="de">🇩🇪 Deutsch</option>
-                            <option value="pt">🇵🇹 Português</option>
-                            <option value="ru">🇷🇺 Русский</option>
-                            <option value="zh">🇨🇳 中文</option>
-                            <option value="ja">🇯🇵 日本語</option>
-                            <option value="ar">🇸🇦 العربية</option>
-                            <option value="nl">🇳🇱 Nederlands</option>
-                            <option value="pl">🇵🇱 Polski</option>
-                            <option value="tr">🇹🇷 Türkçe</option>
-                            <option value="uk">🇺🇦 Українська</option>
-                            <option value="sv">🇸🇪 Svenska</option>
-                            <option value="ko">🇰🇷 한국어</option>
-                            <option value="cs">🇨🇿 Čeština</option>
-                            <option value="da">🇩🇰 Dansk</option>
-                            <option value="fi">🇫🇮 Suomi</option>
-                            <option value="el">🇬🇷 Ελληνικά</option>
-                            <option value="hu">🇭🇺 Magyar</option>
-                            <option value="id">🇮🇩 Bahasa Indonesia</option>
-                            <option value="no">🇳🇴 Norsk</option>
-                            <option value="hi">🇮🇳 हिन्दी</option>
-                            <option value="vi">🇻🇳 Tiếng Việt</option>
-                        </select>
+                        <div class="lang-dropdown" id="lang-dropdown">
+                            <button type="button" class="lang-dropdown-trigger" id="lang-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="App language">
+                                <span class="lang-flag-slot" id="lang-trigger-flag"></span>
+                                <span class="lang-dropdown-label" id="lang-trigger-label">English</span>
+                                <span class="material-symbols-outlined lang-dropdown-chevron">expand_more</span>
+                            </button>
+                            <div class="lang-dropdown-menu" id="lang-dropdown-menu" role="listbox" aria-labelledby="lang-dropdown-trigger"></div>
+                        </div>
                     </div>
                 </div>
 

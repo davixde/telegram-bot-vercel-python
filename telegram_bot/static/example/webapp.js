@@ -1216,20 +1216,385 @@ searchInput.focus();
 });
 
 /* Settings */
-const langSelect = document.getElementById('settings-lang-select');
 const translateToggle = document.getElementById('settings-translate-toggle');
 const mapContainer = document.getElementById('map-container');
 const searchContainer = document.querySelector('.search-container');
 const settingsContainer = document.getElementById('settings-container');
 const addContainer = document.getElementById('add-container');
 
-if (langSelect) {
-    langSelect.value = safeGetStorage('appLang', 'en');
-    langSelect.addEventListener('change', (e) => {
-        safeSetStorage('appLang', e.target.value);
-        updateMapLanguage(e.target.value);
-    });
+// ── Custom language dropdown ──────────────
+// (ISO standard names / RFC3066).
+// Flags are tiny per-language PNGs served by flagcdn.com – nothing bundled
+// in the repo. `flag: null` entries get a neutral globe icon.
+const LANGUAGES = [
+    // ── Popular tier (kept as-is, native names) ──
+    { code: 'en', flag: 'gb', label: 'English' },
+    { code: 'it', flag: 'it', label: 'Italiano' },
+    { code: 'es', flag: 'es', label: 'Español' },
+    { code: 'fr', flag: 'fr', label: 'Français' },
+    { code: 'de', flag: 'de', label: 'Deutsch' },
+    { code: 'pt', flag: 'pt', label: 'Português' },
+    { code: 'ru', flag: 'ru', label: 'Русский' },
+    { code: 'zh-CN', flag: 'cn', label: '中文' },
+    { code: 'ja', flag: 'jp', label: '日本語' },
+    { code: 'ar', flag: 'sa', label: 'العربية' },
+    { code: 'nl', flag: 'nl', label: 'Nederlands' },
+    { code: 'pl', flag: 'pl', label: 'Polski' },
+    { code: 'tr', flag: 'tr', label: 'Türkçe' },
+    { code: 'uk', flag: 'ua', label: 'Українська' },
+    { code: 'sv', flag: 'se', label: 'Svenska' },
+    { code: 'ko', flag: 'kr', label: '한국어' },
+    { code: 'cs', flag: 'cz', label: 'Čeština' },
+    { code: 'da', flag: 'dk', label: 'Dansk' },
+    { code: 'fi', flag: 'fi', label: 'Suomi' },
+    { code: 'el', flag: 'gr', label: 'Ελληνικά' },
+    { code: 'hu', flag: 'hu', label: 'Magyar' },
+    { code: 'id', flag: 'id', label: 'Bahasa Indonesia' },
+    { code: 'no', flag: 'no', label: 'Norsk' },
+    { code: 'hi', flag: 'in', label: 'हिन्दी' },
+    { code: 'vi', flag: 'vn', label: 'Tiếng Việt' },
+    // ── Full Google Translate list (English names) ──
+    { code: 'ab', flag: 'ge', label: 'Abkhaz' },
+    { code: 'ace', flag: 'id', label: 'Acehnese' },
+    { code: 'ach', flag: 'ug', label: 'Acholi' },
+    { code: 'aa', flag: 'er', label: 'Afar' },
+    { code: 'af', flag: 'za', label: 'Afrikaans' },
+    { code: 'sq', flag: 'al', label: 'Albanian' },
+    { code: 'alz', flag: 'ug', label: 'Alur' },
+    { code: 'am', flag: 'et', label: 'Amharic' },
+    { code: 'hy', flag: 'am', label: 'Armenian' },
+    { code: 'as', flag: 'in', label: 'Assamese' },
+    { code: 'av', flag: 'ru', label: 'Avar' },
+    { code: 'awa', flag: 'in', label: 'Awadhi' },
+    { code: 'ay', flag: 'bo', label: 'Aymara' },
+    { code: 'az', flag: 'az', label: 'Azerbaijani' },
+    { code: 'ban', flag: 'id', label: 'Balinese' },
+    { code: 'bal', flag: 'pk', label: 'Baluchi' },
+    { code: 'bm', flag: 'ml', label: 'Bambara' },
+    { code: 'bci', flag: 'ci', label: 'Baoulé' },
+    { code: 'ba', flag: 'ru', label: 'Bashkir' },
+    { code: 'eu', flag: 'es', label: 'Basque' },
+    { code: 'btx', flag: 'id', label: 'Batak Karo' },
+    { code: 'bts', flag: 'id', label: 'Batak Simalungun' },
+    { code: 'bbc', flag: 'id', label: 'Batak Toba' },
+    { code: 'be', flag: 'by', label: 'Belarusian' },
+    { code: 'bem', flag: 'zm', label: 'Bemba' },
+    { code: 'bn', flag: 'bd', label: 'Bengali' },
+    { code: 'bew', flag: 'id', label: 'Betawi' },
+    { code: 'bho', flag: 'in', label: 'Bhojpuri' },
+    { code: 'bik', flag: 'ph', label: 'Bikol' },
+    { code: 'bs', flag: 'ba', label: 'Bosnian' },
+    { code: 'br', flag: 'fr', label: 'Breton' },
+    { code: 'bg', flag: 'bg', label: 'Bulgarian' },
+    { code: 'bua', flag: 'ru', label: 'Buryat' },
+    { code: 'yue', flag: 'hk', label: 'Cantonese' },
+    { code: 'ca', flag: 'es', label: 'Catalan' },
+    { code: 'ceb', flag: 'ph', label: 'Cebuano' },
+    { code: 'ch', flag: 'gu', label: 'Chamorro' },
+    { code: 'ce', flag: 'ru', label: 'Chechen' },
+    { code: 'ny', flag: 'mw', label: 'Chichewa' },
+    { code: 'zh-TW', flag: 'tw', label: 'Chinese (Traditional)' },
+    { code: 'chk', flag: 'fm', label: 'Chuukese' },
+    { code: 'cv', flag: 'ru', label: 'Chuvash' },
+    { code: 'co', flag: 'fr', label: 'Corsican' },
+    { code: 'crh', flag: 'ua', label: 'Crimean Tatar' },
+    { code: 'hr', flag: 'hr', label: 'Croatian' },
+    { code: 'fa-AF', flag: 'af', label: 'Dari' },
+    { code: 'dv', flag: 'mv', label: 'Dhivehi' },
+    { code: 'din', flag: 'ss', label: 'Dinka' },
+    { code: 'doi', flag: 'in', label: 'Dogri' },
+    { code: 'dov', flag: 'zw', label: 'Dombe' },
+    { code: 'dyu', flag: 'bf', label: 'Dyula' },
+    { code: 'dz', flag: 'bt', label: 'Dzongkha' },
+    { code: 'eo', flag: null, label: 'Esperanto' },
+    { code: 'et', flag: 'ee', label: 'Estonian' },
+    { code: 'ee', flag: 'gh', label: 'Ewe' },
+    { code: 'fo', flag: 'fo', label: 'Faroese' },
+    { code: 'fj', flag: 'fj', label: 'Fijian' },
+    { code: 'tl', flag: 'ph', label: 'Filipino' },
+    { code: 'fon', flag: 'bj', label: 'Fon' },
+    { code: 'fr-CA', flag: 'ca', label: 'French (Canada)' },
+    { code: 'fy', flag: 'nl', label: 'Frisian' },
+    { code: 'fur', flag: 'it', label: 'Friulian' },
+    { code: 'ff', flag: 'sn', label: 'Fulani' },
+    { code: 'gaa', flag: 'gh', label: 'Ga' },
+    { code: 'gl', flag: 'es', label: 'Galician' },
+    { code: 'ka', flag: 'ge', label: 'Georgian' },
+    { code: 'gn', flag: 'py', label: 'Guarani' },
+    { code: 'gu', flag: 'in', label: 'Gujarati' },
+    { code: 'ht', flag: 'ht', label: 'Haitian Creole' },
+    { code: 'cnh', flag: 'mm', label: 'Hakha Chin' },
+    { code: 'ha', flag: 'ng', label: 'Hausa' },
+    { code: 'haw', flag: 'us', label: 'Hawaiian' },
+    { code: 'iw', flag: 'il', label: 'Hebrew' },
+    { code: 'hil', flag: 'ph', label: 'Hiligaynon' },
+    { code: 'hmn', flag: null, label: 'Hmong' },
+    { code: 'hrx', flag: 'br', label: 'Hunsrik' },
+    { code: 'iba', flag: 'my', label: 'Iban' },
+    { code: 'is', flag: 'is', label: 'Icelandic' },
+    { code: 'ig', flag: 'ng', label: 'Igbo' },
+    { code: 'ilo', flag: 'ph', label: 'Ilocano' },
+    { code: 'iu', flag: 'ca', label: 'Inuktut' },
+    { code: 'ga', flag: 'ie', label: 'Irish' },
+    { code: 'jam', flag: 'jm', label: 'Jamaican Patois' },
+    { code: 'jw', flag: 'id', label: 'Javanese' },
+    { code: 'kac', flag: 'mm', label: 'Jingpo' },
+    { code: 'kl', flag: 'gl', label: 'Kalaallisut' },
+    { code: 'kn', flag: 'in', label: 'Kannada' },
+    { code: 'kr', flag: 'ng', label: 'Kanuri' },
+    { code: 'pam', flag: 'ph', label: 'Kapampangan' },
+    { code: 'kk', flag: 'kz', label: 'Kazakh' },
+    { code: 'kha', flag: 'in', label: 'Khasi' },
+    { code: 'km', flag: 'kh', label: 'Khmer' },
+    { code: 'cgg', flag: 'ug', label: 'Kiga' },
+    { code: 'kg', flag: 'cg', label: 'Kikongo' },
+    { code: 'rw', flag: 'rw', label: 'Kinyarwanda' },
+    { code: 'ktu', flag: 'cd', label: 'Kituba' },
+    { code: 'trp', flag: 'in', label: 'Kokborok' },
+    { code: 'kv', flag: 'ru', label: 'Komi' },
+    { code: 'gom', flag: 'in', label: 'Konkani' },
+    { code: 'kri', flag: 'sl', label: 'Krio' },
+    { code: 'ku', flag: null, label: 'Kurdish (Kurmanji)' },
+    { code: 'ckb', flag: 'iq', label: 'Kurdish (Sorani)' },
+    { code: 'ky', flag: 'kg', label: 'Kyrgyz' },
+    { code: 'lo', flag: 'la', label: 'Lao' },
+    { code: 'ltg', flag: 'lv', label: 'Latgalian' },
+    { code: 'la', flag: null, label: 'Latin' },
+    { code: 'lv', flag: 'lv', label: 'Latvian' },
+    { code: 'lij', flag: 'it', label: 'Ligurian' },
+    { code: 'li', flag: 'nl', label: 'Limburgish' },
+    { code: 'ln', flag: 'cd', label: 'Lingala' },
+    { code: 'lt', flag: 'lt', label: 'Lithuanian' },
+    { code: 'lmo', flag: 'it', label: 'Lombard' },
+    { code: 'lg', flag: 'ug', label: 'Luganda' },
+    { code: 'luo', flag: 'ke', label: 'Luo' },
+    { code: 'lb', flag: 'lu', label: 'Luxembourgish' },
+    { code: 'mk', flag: 'mk', label: 'Macedonian' },
+    { code: 'mad', flag: 'id', label: 'Madurese' },
+    { code: 'mai', flag: 'in', label: 'Maithili' },
+    { code: 'mak', flag: 'id', label: 'Makassar' },
+    { code: 'mg', flag: 'mg', label: 'Malagasy' },
+    { code: 'ms', flag: 'my', label: 'Malay' },
+    { code: 'ml', flag: 'in', label: 'Malayalam' },
+    { code: 'mt', flag: 'mt', label: 'Maltese' },
+    { code: 'mam', flag: 'gt', label: 'Mam' },
+    { code: 'gv', flag: 'im', label: 'Manx' },
+    { code: 'mi', flag: 'nz', label: 'Maori' },
+    { code: 'mr', flag: 'in', label: 'Marathi' },
+    { code: 'mh', flag: 'mh', label: 'Marshallese' },
+    { code: 'mwr', flag: 'in', label: 'Marwadi' },
+    { code: 'mfe', flag: 'mu', label: 'Mauritian Creole' },
+    { code: 'chm', flag: 'ru', label: 'Meadow Mari' },
+    { code: 'min', flag: 'id', label: 'Minang' },
+    { code: 'lus', flag: 'in', label: 'Mizo' },
+    { code: 'mn', flag: 'mn', label: 'Mongolian' },
+    { code: 'my', flag: 'mm', label: 'Myanmar (Burmese)' },
+    { code: 'nhe', flag: 'mx', label: 'Nahuatl (Eastern Huasteca)' },
+    { code: 'ndc-ZW', flag: 'zw', label: 'Ndau' },
+    { code: 'nr', flag: 'za', label: 'Ndebele (South)' },
+    { code: 'new', flag: 'np', label: 'Nepalbhasa (Newari)' },
+    { code: 'ne', flag: 'np', label: 'Nepali' },
+    { code: 'nus', flag: 'ss', label: 'Nuer' },
+    { code: 'oc', flag: 'fr', label: 'Occitan' },
+    { code: 'or', flag: 'in', label: 'Odia (Oriya)' },
+    { code: 'om', flag: 'et', label: 'Oromo' },
+    { code: 'os', flag: 'ge', label: 'Ossetian' },
+    { code: 'pag', flag: 'ph', label: 'Pangasinan' },
+    { code: 'pap', flag: 'cw', label: 'Papiamento' },
+    { code: 'ps', flag: 'af', label: 'Pashto' },
+    { code: 'fa', flag: 'ir', label: 'Persian' },
+    { code: 'pt-PT', flag: 'pt', label: 'Portuguese (Portugal)' },
+    { code: 'pa', flag: 'in', label: 'Punjabi (Gurmukhi)' },
+    { code: 'qu', flag: 'pe', label: 'Quechua' },
+    { code: 'kek', flag: 'gt', label: 'Qʼeqchiʼ' },
+    { code: 'rom', flag: null, label: 'Romani' },
+    { code: 'ro', flag: 'ro', label: 'Romanian' },
+    { code: 'rn', flag: 'bi', label: 'Rundi' },
+    { code: 'se', flag: 'no', label: 'Sami (North)' },
+    { code: 'sm', flag: 'ws', label: 'Samoan' },
+    { code: 'sg', flag: 'cf', label: 'Sango' },
+    { code: 'sa', flag: 'in', label: 'Sanskrit' },
+    { code: 'sat', flag: 'in', label: 'Santali' },
+    { code: 'gd', flag: 'gb', label: 'Scots Gaelic' },
+    { code: 'nso', flag: 'za', label: 'Sepedi' },
+    { code: 'sr', flag: 'rs', label: 'Serbian' },
+    { code: 'st', flag: 'ls', label: 'Sesotho' },
+    { code: 'crs', flag: 'sc', label: 'Seychellois Creole' },
+    { code: 'shn', flag: 'mm', label: 'Shan' },
+    { code: 'sn', flag: 'zw', label: 'Shona' },
+    { code: 'scn', flag: 'it', label: 'Sicilian' },
+    { code: 'szl', flag: 'pl', label: 'Silesian' },
+    { code: 'sd', flag: 'pk', label: 'Sindhi' },
+    { code: 'si', flag: 'lk', label: 'Sinhala' },
+    { code: 'sk', flag: 'sk', label: 'Slovak' },
+    { code: 'sl', flag: 'si', label: 'Slovenian' },
+    { code: 'so', flag: 'so', label: 'Somali' },
+    { code: 'su', flag: 'id', label: 'Sundanese' },
+    { code: 'sus', flag: 'gn', label: 'Susu' },
+    { code: 'sw', flag: 'ke', label: 'Swahili' },
+    { code: 'ss', flag: 'sz', label: 'Swati' },
+    { code: 'ty', flag: 'pf', label: 'Tahitian' },
+    { code: 'tg', flag: 'tj', label: 'Tajik' },
+    { code: 'ta', flag: 'in', label: 'Tamil' },
+    { code: 'tt', flag: 'ru', label: 'Tatar' },
+    { code: 'te', flag: 'in', label: 'Telugu' },
+    { code: 'tet', flag: 'tl', label: 'Tetum' },
+    { code: 'th', flag: 'th', label: 'Thai' },
+    { code: 'bo', flag: 'cn', label: 'Tibetan' },
+    { code: 'ti', flag: 'er', label: 'Tigrinya' },
+    { code: 'tiv', flag: 'ng', label: 'Tiv' },
+    { code: 'tpi', flag: 'pg', label: 'Tok Pisin' },
+    { code: 'to', flag: 'to', label: 'Tongan' },
+    { code: 'lua', flag: 'cd', label: 'Tshiluba' },
+    { code: 'ts', flag: 'za', label: 'Tsonga' },
+    { code: 'tn', flag: 'bw', label: 'Tswana' },
+    { code: 'tcy', flag: 'in', label: 'Tulu' },
+    { code: 'tum', flag: 'mw', label: 'Tumbuka' },
+    { code: 'tk', flag: 'tm', label: 'Turkmen' },
+    { code: 'tyv', flag: 'ru', label: 'Tuvan' },
+    { code: 'ak', flag: 'gh', label: 'Twi' },
+    { code: 'udm', flag: 'ru', label: 'Udmurt' },
+    { code: 'ur', flag: 'pk', label: 'Urdu' },
+    { code: 'ug', flag: 'cn', label: 'Uyghur' },
+    { code: 'uz', flag: 'uz', label: 'Uzbek' },
+    { code: 've', flag: 'za', label: 'Venda' },
+    { code: 'vec', flag: 'it', label: 'Venetian' },
+    { code: 'war', flag: 'ph', label: 'Waray' },
+    { code: 'cy', flag: 'gb', label: 'Welsh' },
+    { code: 'wo', flag: 'sn', label: 'Wolof' },
+    { code: 'xh', flag: 'za', label: 'Xhosa' },
+    { code: 'sah', flag: 'ru', label: 'Yakut' },
+    { code: 'yi', flag: 'il', label: 'Yiddish' },
+    { code: 'yo', flag: 'ng', label: 'Yoruba' },
+    { code: 'yua', flag: 'mx', label: 'Yucatec Maya' },
+    { code: 'zap', flag: 'mx', label: 'Zapotec' },
+    { code: 'zu', flag: 'za', label: 'Zulu' }
+];
+
+// Per-flag PNGs from flagcdn.com (w80 = 80px wide: ~1-2KB each, sharp on
+// retina/3x displays since flags render at 20×15 CSS px). Nothing bundled
+// in the repo, only the visible flags are fetched (lazy loading).
+const flagUrl = cc => `https://flagcdn.com/w80/${cc}.png`;
+
+// OSM map labels use base ISO 639-1 codes (name:xx); Google uses a few aliases
+const mapLangCode = code => ({ iw: 'he' })[String(code).split('-')[0]] || String(code).split('-')[0];
+
+const langDropdown = document.getElementById('lang-dropdown');
+const langTrigger = document.getElementById('lang-dropdown-trigger');
+const langTriggerFlag = document.getElementById('lang-trigger-flag');
+const langTriggerLabel = document.getElementById('lang-trigger-label');
+const langMenu = document.getElementById('lang-dropdown-menu');
+
+function flagEl(entry) {
+    if (entry.flag) {
+        const img = document.createElement('img');
+        img.className = 'lang-flag';
+        img.loading = 'lazy';
+        img.width = 20;
+        img.height = 15;
+        img.alt = '';
+        img.src = flagUrl(entry.flag);
+        return img;
+    }
+    const fallback = document.createElement('span');
+    fallback.className = 'lang-flag-fallback';
+    fallback.innerHTML = '<span class="material-symbols-outlined">language</span>';
+    return fallback;
 }
+
+// Legacy codes stored by older app versions
+const LANG_ALIASES = { zh: 'zh-CN', he: 'iw' };
+
+function getLangEntry(code) {
+    return LANGUAGES.find(l => l.code === code)
+        || LANGUAGES.find(l => l.code === LANG_ALIASES[code])
+        || LANGUAGES[0];
+}
+
+function setLangTrigger(code) {
+    const entry = getLangEntry(code);
+    if (langTriggerFlag) langTriggerFlag.replaceChildren(flagEl(entry));
+    if (langTriggerLabel) langTriggerLabel.textContent = entry.label;
+}
+
+function openLangMenu() {
+    if (!langMenu) return;
+    langMenu.style.display = 'block';
+    langTrigger.setAttribute('aria-expanded', 'true');
+    langDropdown.classList.add('open');
+}
+
+function closeLangMenu() {
+    if (!langMenu) return;
+    langMenu.style.display = 'none';
+    langTrigger.setAttribute('aria-expanded', 'false');
+    langDropdown.classList.remove('open');
+}
+
+function setAppLang(code) {
+    safeSetStorage('appLang', code);
+    setLangTrigger(code);
+    updateMapLanguage(mapLangCode(code));
+    if (langMenu) {
+        langMenu.querySelectorAll('.lang-dropdown-item').forEach(item => {
+            const isActive = item.dataset.code === code;
+            item.classList.toggle('active', isActive);
+            item.setAttribute('aria-selected', String(isActive));
+        });
+    }
+    closeLangMenu();
+}
+
+function initLangDropdown() {
+    if (!langTrigger || !langMenu) return;
+
+    const currentLang = safeGetStorage('appLang', 'en');
+    setLangTrigger(currentLang);
+
+    LANGUAGES.forEach(lang => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'lang-dropdown-item' + (lang.code === currentLang ? ' active' : '');
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', String(lang.code === currentLang));
+        item.dataset.code = lang.code;
+
+        const label = document.createElement('span');
+        label.className = 'lang-dropdown-item-label';
+        label.textContent = lang.label;
+
+        const check = document.createElement('span');
+        check.className = 'lang-dropdown-item-check';
+        check.innerHTML = '<span class="material-symbols-outlined">check</span>';
+
+        item.appendChild(flagEl(lang));
+        item.appendChild(label);
+        item.appendChild(check);
+        item.addEventListener('click', () => setAppLang(lang.code));
+        langMenu.appendChild(item);
+    });
+
+    langTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (langMenu.style.display === 'block') {
+            closeLangMenu();
+        } else {
+            openLangMenu();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (langDropdown && !langDropdown.contains(e.target)) closeLangMenu();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLangMenu();
+    });
+
+    closeLangMenu(); // ensure the menu starts hidden
+}
+
+initLangDropdown();
 
 if (translateToggle) {
     translateToggle.checked = safeGetStorage('translateEnabled', 'true') !== 'false';
@@ -1789,6 +2154,37 @@ let addFormTags = [
 ];
 let selectedPinCoords = null; // [lng, lat]
 
+// Inline Yes/No segmented selector for boolean tags
+function createYesNoToggle(isYes, onChange) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tag-val-yesno';
+
+    [
+        { label: 'Yes', value: 'yes' },
+        { label: 'No', value: 'no' }
+    ].forEach(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const active = (opt.value === 'yes') ? !!isYes : !isYes;
+        btn.className = 'tag-val-yesno-btn' + (active ? ' active' : '');
+        btn.setAttribute('aria-pressed', String(active));
+        btn.textContent = opt.label;
+        btn.addEventListener('click', () => {
+            if (btn.classList.contains('active')) return;
+            wrapper.querySelectorAll('.tag-val-yesno-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
+            onChange(opt.value);
+        });
+        wrapper.appendChild(btn);
+    });
+
+    return wrapper;
+}
+
 // Render Tag Editor List
 function renderAddTagsList() {
     const container = document.getElementById('add-tags-list');
@@ -1843,37 +2239,18 @@ function renderAddTagsList() {
             valInput.disabled = true;
             valBox.appendChild(valInput);
         } else if (keyLower === 'indoor' || keyLower === 'covered') {
-            // True / False selector (or yes / no)
-            const select = document.createElement('select');
-            select.className = 'tag-val-select';
-            
+            // Inline Yes / No selector — OSM uses yes/no for both indoor and covered
             const isTrue = (tag.value === 'true' || tag.value === 'yes' || tag.value === true);
-            
-            select.innerHTML = `
-                <option value="true" ${isTrue ? 'selected' : ''}>True (yes)</option>
-                <option value="false" ${!isTrue ? 'selected' : ''}>False (no)</option>
-            `;
-            select.addEventListener('change', (e) => {
-                if (keyLower === 'covered') {
-                    tag.value = e.target.value === 'true' ? 'yes' : 'no';
-                } else {
-                    tag.value = e.target.value; // 'true' or 'false'
-                }
-            });
-            valBox.appendChild(select);
+            valBox.appendChild(createYesNoToggle(isTrue, (v) => {
+                tag.value = v; // 'yes' or 'no' (OSM convention)
+            }));
         } else if (keyLower === 'wheelchair') {
-            // True / False selector (default true)
-            const select = document.createElement('select');
-            select.className = 'tag-val-select';
-            const isTrue = (tag.value !== 'false' && tag.value !== 'no');
-            select.innerHTML = `
-                <option value="true" ${isTrue ? 'selected' : ''}>True (yes)</option>
-                <option value="false" ${!isTrue ? 'selected' : ''}>False (no)</option>
-            `;
-            select.addEventListener('change', (e) => {
-                tag.value = e.target.value;
-            });
-            valBox.appendChild(select);
+            // Inline Yes / No selector (default yes) — OSM uses wheelchair=yes/no.
+            // Note: values like wheelchair=limited/designated are not offered (yes/no only).
+            const isTrue = (tag.value === 'true' || tag.value === 'yes' || tag.value === true || !tag.value);
+            valBox.appendChild(createYesNoToggle(isTrue, (v) => {
+                tag.value = v; // 'yes' or 'no' (OSM convention)
+            }));
         } else if (keyLower === 'access') {
             // Multiple values selector (public, permissive, clients, students - default public)
             const select = document.createElement('select');
@@ -1888,18 +2265,11 @@ function renderAddTagsList() {
             });
             valBox.appendChild(select);
         } else if (keyLower === 'airside') {
-            // Selector yes / no
-            const select = document.createElement('select');
-            select.className = 'tag-val-select';
+            // Inline Yes / No selector (yes / no)
             const isYes = (tag.value === 'yes' || tag.value === 'true');
-            select.innerHTML = `
-                <option value="yes" ${isYes ? 'selected' : ''}>Yes</option>
-                <option value="no" ${!isYes ? 'selected' : ''}>No</option>
-            `;
-            select.addEventListener('change', (e) => {
-                tag.value = e.target.value;
-            });
-            valBox.appendChild(select);
+            valBox.appendChild(createYesNoToggle(isYes, (v) => {
+                tag.value = v;
+            }));
         } else {
             // Standard text input
             const input = document.createElement('input');
@@ -2193,7 +2563,7 @@ document.querySelectorAll('.preset-grid-card').forEach(card => {
             } else if (preset === 'indoor-outdoor') {
                 showPresetView('indoor-outdoor', 'Indoor / Outdoor');
             } else if (preset === 'wheelchair') {
-                addTagOrUpdate('wheelchair', 'true');
+                addTagOrUpdate('wheelchair', 'yes');
                 closePresetOverlay();
             } else if (preset === 'access') {
                 showPresetView('access', 'Access');
@@ -2206,11 +2576,11 @@ document.querySelectorAll('.preset-grid-card').forEach(card => {
             if (action === 'add-level') {
                 addTagOrUpdate('level', '0');
             } else if (action === 'add-indoor') {
-                addTagOrUpdate('indoor', 'true');
+                addTagOrUpdate('indoor', 'yes');
             } else if (action === 'add-covered') {
                 addTagOrUpdate('covered', 'yes');
             } else if (action === 'add-outdoor') {
-                addTagOrUpdate('indoor', 'false');
+                addTagOrUpdate('indoor', 'no');
             } else if (action === 'add-access') {
                 addTagOrUpdate('access', 'public');
             } else if (action === 'add-airside') {
@@ -2339,6 +2709,188 @@ const pickerSearchClear = document.getElementById('map-picker-search-clear');
 
 let pickerSearchTimeout = null;
 
+// Nominatim returns `type` (OSM type: city, town, state, residential, building, ...)
+// plus `addresstype`/`class`; each entry maps one to a Material Symbol
+// (SF Symbols can't be extracted from Apple, these are close equivalents)
+// and a palette color. Colors follow Apple Maps' standard categories.
+const PLACE_COLORS = {
+    red:    '#EB5B57',   // pins, places, health
+    orange: '#F0953F',   // food & drink, shopping
+    green:  '#58B535',   // parks, nature, water
+    blue:   '#4988E6',   // transit, transport
+    indigo: '#7079F2',   // attractions, points of interest
+    purple: '#AF52DE',   // hotels (bed)
+    pink:   '#FF66AA',   // cinema
+    brown:  '#A66F22',   // schools
+    amber:  '#FFB300',   // shopping
+    gray:   '#8E8E93'    // civic, buildings, settlements, roads
+};
+
+const PLACE_TYPE_META = {
+    // ── Generic placemarks  ──
+    place:          { icon: 'location_on', color: 'red' },
+    amenity:        { icon: 'location_on', color: 'red' },
+
+    // ── Settlements  ──
+    country:        { icon: 'location_city', color: 'gray' },
+    state:          { icon: 'location_city', color: 'gray' },
+    region:         { icon: 'location_city', color: 'gray' },
+    province:       { icon: 'location_city', color: 'gray' },
+    county:         { icon: 'location_city', color: 'gray' },
+    district:       { icon: 'location_city', color: 'gray' },
+    municipality:   { icon: 'location_city', color: 'gray' },
+    administrative: { icon: 'location_city', color: 'gray' },
+    city:           { icon: 'location_city', color: 'gray' },
+    town:           { icon: 'location_city', color: 'gray' },
+    village:        { icon: 'location_city', color: 'gray' },
+    hamlet:         { icon: 'location_city', color: 'gray' },
+    borough:        { icon: 'location_city', color: 'gray' },
+    suburb:         { icon: 'location_city', color: 'gray' },
+    quarter:        { icon: 'location_city', color: 'gray' },
+    neighbourhood:  { icon: 'location_city', color: 'gray' },
+    city_block:     { icon: 'location_city', color: 'gray' },
+    postcode:       { icon: 'location_city', color: 'gray' },
+
+    // ── Health (red circle + white plus) ──
+    hospital:       { icon: 'add',            color: 'red' },
+    healthcare:     { icon: 'add',            color: 'red' },
+    clinic:         { icon: 'add',            color: 'red' },
+    doctors:        { icon: 'add',            color: 'red' },
+    pharmacy:       { icon: 'add',            color: 'red' },
+
+    // ── Nature & water (green) ──
+    park:           { icon: 'park',           color: 'green' },
+    forest:         { icon: 'forest',         color: 'green' },
+    wood:           { icon: 'forest',         color: 'green' },
+    meadow:         { icon: 'grass',          color: 'green' },
+    nature_reserve: { icon: 'forest',         color: 'green' },
+    garden:         { icon: 'local_florist',  color: 'green' },
+    beach:          { icon: 'beach_access',   color: 'green' },
+    water:          { icon: 'water',          color: 'green' },
+    river:          { icon: 'water',          color: 'green' },
+    stream:         { icon: 'water',          color: 'green' },
+    lake:           { icon: 'water',          color: 'green' },
+    reservoir:      { icon: 'water',          color: 'green' },
+    bay:            { icon: 'water',          color: 'green' },
+    sea:            { icon: 'water',          color: 'green' },
+    waterway:       { icon: 'water',          color: 'green' },
+    mountain:       { icon: 'landscape',      color: 'green' },
+    peak:           { icon: 'landscape',      color: 'green' },
+    hill:           { icon: 'landscape',      color: 'green' },
+    volcano:        { icon: 'landscape',      color: 'green' },
+    island:         { icon: 'landscape',      color: 'green' },
+    islet:          { icon: 'landscape',      color: 'green' },
+    zoo:            { icon: 'pets',           color: 'green' },
+    golf_course:    { icon: 'golf_course',    color: 'green' },
+    leisure:        { icon: 'park',           color: 'green' },
+
+    // ── Attractions / POI (periwinkle star) ──
+    attraction:     { icon: 'star',           color: 'indigo' },
+    tourist:        { icon: 'star',           color: 'indigo' },
+    viewpoint:      { icon: 'visibility',     color: 'indigo' },
+    monument:       { icon: 'monument',       color: 'indigo' },
+    castle:         { icon: 'castle',         color: 'indigo' },
+    tower:          { icon: 'account_balance_tower', color: 'indigo' },
+    museum:         { icon: 'museum',         color: 'indigo' },
+    gallery:        { icon: 'museum',         color: 'indigo' },
+    cinema:         { icon: 'movie',          color: 'pink' },
+    theatre:        { icon: 'theater_comedy', color: 'indigo' },
+    stadium:        { icon: 'stadium',        color: 'indigo' },
+    sports_centre:  { icon: 'sports_soccer',  color: 'indigo' },
+    pitch:          { icon: 'sports_soccer',  color: 'indigo' },
+    square:         { icon: 'crop_square',    color: 'indigo' },
+    historic:       { icon: 'history',        color: 'indigo' },
+
+    // ── Food & drink / shopping (orange) ──
+    restaurant:     { icon: 'restaurant',     color: 'orange' },
+    cafe:           { icon: 'local_cafe',     color: 'orange' },
+    bar:            { icon: 'local_bar',      color: 'orange' },
+    pub:            { icon: 'local_bar',      color: 'orange' },
+    fast_food:      { icon: 'fastfood',       color: 'orange' },
+    food:           { icon: 'restaurant',     color: 'orange' },
+    ice_cream:      { icon: 'icecream',       color: 'orange' },
+    shop:           { icon: 'shopping_cart',  color: 'amber' },
+    supermarket:    { icon: 'shopping_cart',  color: 'amber' },
+    mall:           { icon: 'shopping_cart',  color: 'amber' },
+    market:         { icon: 'shopping_cart',  color: 'amber' },
+
+    // ── Transit (blue) ──
+    station:        { icon: 'train',          color: 'blue' },
+    railway:        { icon: 'train',          color: 'blue' },
+    train_station:  { icon: 'train',          color: 'blue' },
+    tram_stop:      { icon: 'tram',           color: 'blue' },
+    metro:          { icon: 'subway',         color: 'blue' },
+    subway:         { icon: 'subway',         color: 'blue' },
+    bus_stop:       { icon: 'directions_bus', color: 'blue' },
+    bus_station:    { icon: 'directions_bus', color: 'blue' },
+    ferry_terminal: { icon: 'directions_boat', color: 'blue' },
+    harbour:        { icon: 'directions_boat', color: 'blue' },
+    marina:         { icon: 'sailing',        color: 'blue' },
+    port:           { icon: 'directions_boat', color: 'blue' },
+    airport:        { icon: 'flight',         color: 'blue' },
+    aerodrome:      { icon: 'flight',         color: 'blue' },
+    helipad:        { icon: 'flight',         color: 'blue' },
+
+    // ── Civic / buildings / landmarks (gray) ──
+    building:       { icon: 'apartment',      color: 'gray' },
+    house:          { icon: 'home',           color: 'gray' },
+    houseboat:      { icon: 'sailing',        color: 'gray' },
+    isolated_dwelling: { icon: 'cottage',     color: 'gray' },
+    farm:           { icon: 'agriculture',    color: 'gray' },
+    farmyard:       { icon: 'agriculture',    color: 'gray' },
+    allotments:     { icon: 'yard',           color: 'gray' },
+    school:         { icon: 'school',         color: 'brown' },
+    university:     { icon: 'school',         color: 'brown' },
+    college:        { icon: 'school',         color: 'brown' },
+    church:         { icon: 'church',         color: 'gray' },
+    cathedral:      { icon: 'church',         color: 'gray' },
+    chapel:         { icon: 'church',         color: 'gray' },
+    temple:         { icon: 'temple',         color: 'gray' },
+    mosque:         { icon: 'mosque',         color: 'gray' },
+    hotel:          { icon: 'bed',            color: 'purple' },
+    motel:          { icon: 'bed',            color: 'purple' },
+    hostel:         { icon: 'bed',            color: 'purple' },
+    guest_house:    { icon: 'bed',            color: 'purple' },
+    office:         { icon: 'business_center', color: 'gray' },
+    government:     { icon: 'account_balance', color: 'gray' },
+    townhall:       { icon: 'account_balance', color: 'gray' },
+    civic:          { icon: 'account_balance', color: 'gray' },
+    bank:           { icon: 'account_balance', color: 'gray' },
+    post_office:    { icon: 'local_post_office', color: 'gray' },
+    library:        { icon: 'local_library',  color: 'gray' },
+    police:         { icon: 'local_police',   color: 'gray' },
+    fire_station:   { icon: 'local_fire_department', color: 'gray' },
+    craft:          { icon: 'handyman',       color: 'gray' },
+    power:          { icon: 'bolt',           color: 'gray' },
+    telecom:        { icon: 'cell_tower',     color: 'gray' },
+    landuse:        { icon: 'terrain',        color: 'gray' },
+
+    // ── Roads & paths (gray) ──
+    road:           { icon: 'signpost',       color: 'gray' },
+    street:         { icon: 'signpost',       color: 'gray' },
+    residential:    { icon: 'signpost',       color: 'gray' },
+    pedestrian:     { icon: 'signpost',       color: 'gray' },
+    highway:        { icon: 'signpost',       color: 'gray' },
+    motorway:       { icon: 'signpost',       color: 'gray' },
+    unclassified:   { icon: 'signpost',       color: 'gray' },
+    tertiary:       { icon: 'signpost',       color: 'gray' },
+    secondary:      { icon: 'signpost',       color: 'gray' },
+    primary:        { icon: 'signpost',       color: 'gray' },
+    trunk:          { icon: 'signpost',       color: 'gray' },
+    footway:        { icon: 'directions_walk', color: 'gray' },
+    path:           { icon: 'directions_walk', color: 'gray' },
+    cycleway:       { icon: 'directions_bike', color: 'gray' },
+    bridleway:      { icon: 'directions_walk', color: 'gray' }
+};
+
+function placeTypeMeta(res) {
+    // addresstype is the address level Nominatim returns (city, country,
+    // state, road, building, ...); type/class are more generic (e.g.
+    // 'administrative'), so addresstype takes priority.
+    const key = String(res.addresstype || res.type || res.class || '').toLowerCase();
+    return PLACE_TYPE_META[key] || { icon: 'location_on', color: 'red' };
+}
+
 pickerSearchInput?.addEventListener('input', (e) => {
     const q = e.target.value.trim();
     if (pickerSearchClear) pickerSearchClear.style.display = q ? 'block' : 'none';
@@ -2351,9 +2903,19 @@ pickerSearchInput?.addEventListener('input', (e) => {
 
     pickerSearchTimeout = setTimeout(async () => {
         try {
-            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`);
+            const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&q=${encodeURIComponent(q)}`);
             if (!resp.ok) return;
             const results = await resp.json();
+
+            // If the user allowed GPS, order the results by distance from
+            // their position (closest first). Distance is only used to sort,
+            // never displayed.
+            if (userCoords) {
+                results.sort((a, b) =>
+                    calculateDistance(userCoords, [parseFloat(a.lon), parseFloat(a.lat)]) -
+                    calculateDistance(userCoords, [parseFloat(b.lon), parseFloat(b.lat)])
+                );
+            }
             
             if (!pickerSearchResults) return;
             pickerSearchResults.innerHTML = '';
@@ -2363,19 +2925,24 @@ pickerSearchInput?.addEventListener('input', (e) => {
                 return;
             }
 
-            results.slice(0, 5).forEach(res => {
+            results.slice(0, 10).forEach(res => {
+                const parts = (res.display_name || '').split(',').map(s => s.trim());
+                const meta = placeTypeMeta(res);
                 const item = document.createElement('div');
-                item.className = 'search-result-item';
+                item.className = 'search-result-item place-item';
                 item.innerHTML = `
-                    <div class="search-result-name">${escapeHtml(res.display_name.split(',')[0])}</div>
-                    <div class="search-result-details">${escapeHtml(res.display_name)}</div>
+                    <span class="place-result-icon" style="background:${PLACE_COLORS[meta.color]}"><span class="material-symbols-outlined">${meta.icon}</span></span>
+                    <div class="place-result-body">
+                        <div class="search-result-name">${escapeHtml(res.name || parts[0] || '')}</div>
+                        <div class="search-result-details">${escapeHtml(parts.slice(1).join(', '))}</div>
+                    </div>
                 `;
                 item.addEventListener('click', () => {
                     const lat = parseFloat(res.lat);
                     const lon = parseFloat(res.lon);
                     if (pickerMap) pickerMap.flyTo({ center: [lon, lat], zoom: 16 });
                     pickerSearchResults.style.display = 'none';
-                    pickerSearchInput.value = res.display_name.split(',')[0];
+                    pickerSearchInput.value = res.name || parts[0] || '';
                 });
                 pickerSearchResults.appendChild(item);
             });
