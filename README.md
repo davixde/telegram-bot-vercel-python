@@ -103,6 +103,19 @@ If you want a custom URL, set:
 WEBAPP_URL=https://telegram-bot-vercel-python.vercel.app/webapp/
 ```
 
+### "Still here" confirmations (survey date)
+The **Still here** button in the piano bottom sheet updates the piano's `survey:date` tag on OpenStreetMap. The edit is performed **server-side with the bot's own OSM account**, so users don't need to log in:
+```
+OSM_BOT_ACCESS_TOKEN = <OSM OAuth2 access token of the bot account>
+```
+To get one, open the [OSM OAuth 2 client](https://www.openstreetmap.org/oauth2/applications) for the bot account and use a token from a flow with the `write_api` scope (e.g. a personal access token / client-credentials token with write permissions). The `TOKEN` env var above is the Telegram bot token and is unrelated to this.
+
+The changeset opened by the server is tagged `bot=yes` (`created_by=Public Piano map`, with a `comment`) to comply with the [OSM automated edits code of conduct](https://wiki.openstreetmap.org/wiki/Automated_edits_code_of_conduct).
+
+The endpoint is **authenticated with Telegram's `initData`**: the Mini App sends `X-Telegram-Init-Data` (its `tg.initData`), which Telegram signs with the bot token, and the server verifies the HMAC signature and `auth_date` freshness before touching OSM. This means only real Mini App users can trigger updates — random internet callers are rejected with 403 (the page token embedded in the HTML is not enough on its own, since it is public). Only elements tagged `amenity=piano` can be updated (anything else is refused with 403) and the written date is always today. The 150 m proximity check is enforced server-side, updates are throttled per Telegram user (best-effort rate limit), and the Telegram user id is logged on each confirmation. The `TOKEN` env var must be set for the validation to be active; without it (e.g. local dev) the check is skipped.
+
+**Outside Telegram** the server endpoint cannot be used (there is no valid `initData`), so the button falls back to editing with the **user's own OpenStreetMap account** directly against the OSM API: the user must be logged in (Settings → Connect OSM), the edit is attributed to their account (no `bot=yes` tag), the 150 m proximity check still applies, and a per-day quota is enforced client-side.
+
 ### Web App page
 The Web App page is rendered by Django at `/webapp/` and can be extended with HTML, JS, or Telegram Web App interactions.
 

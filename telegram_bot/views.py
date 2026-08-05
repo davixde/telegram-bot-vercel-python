@@ -1,10 +1,14 @@
 import asyncio
+import datetime
 import hashlib
+import hmac
 import json
 import os
 import secrets
+import time
 import urllib.request
 import urllib.parse
+import xml.etree.ElementTree as ET
 from os import getenv
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
@@ -85,7 +89,11 @@ def index(request):
 def webapp(request):
     signer = TimestampSigner()
     translate_token = signer.sign("translate_access")
-    return render(request, "example/webapp.html", {"translate_token": translate_token})
+    still_here_token = signer.sign("still_here_access")
+    return render(request, "example/webapp.html", {
+        "translate_token": translate_token,
+        "still_here_token": still_here_token,
+    })
 
 
 @csrf_exempt
@@ -445,3 +453,303 @@ def osm_oauth_callback(request):
     else:
         response.delete_cookie(_OSM_VERIFIER_COOKIE)
     return response
+
+
+# ---------------------------------------------------------------------------
+# Still here – survey:date confirmation
+# ---------------------------------------------------------------------------
+# The "Still here" button confirms a piano is still present. Instead of making
+# the user log in with their own OSM account, the update is performed here on
+# the server using the bot's OWN OpenStreetMap account, whose OAuth2 access
+# token is read from the OSM_BOT_ACCESS_TOKEN environment variable.
+_OSM_API_BASE = "https://api.openstreetmap.org/api/0.6"
+
+
+# ---------------------------------------------------------------------------
+# Telegram WebApp initData validation
+# ---------------------------------------------------------------------------
+# The Mini App calls /api/still-here/ straight from the client, so any secret
+# embedded in the page would be public (this is why the signed page token is
+# NOT enough on its own). Instead we authenticate the caller via Telegram's
+# initData: Telegram signs it with the bot token, so only a real user who
+# opened the Mini App can produce a valid value.
+_INIT_DATA_MAX_AGE = 86400  # seconds – how old initData may be (same as the
+                             # signed page-token lifetime, so a user who keeps
+                             # the app open all day is not locked out)
+
+
+def _init_data_secret_key(bot_token):
+    """Telegram: secret_key = HMAC_SHA256(message=bot_token, key="WebAppData")."""
+    return hmac.new(b"WebAppData", bot_token.encode("utf-8"), hashlib.sha256).digest()
+
+
+def _valid_init_data(init_data, bot_token):
+    """Return True when initData carries a valid Telegram signature and a fresh
+    auth_date. Returns False for any missing, malformed, forged or expired
+    value, and also when the bot token is not configured."""
+    if not init_data or not bot_token:
+        return False
+    try:
+        params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+    except ValueError:
+        return False
+
+    received_hash = params.pop("hash", None)
+    if not received_hash:
+        return False
+
+    # data_check_string: all fields except hash, sorted by key, k=v joined by \n
+    # (values URL-decoded by parse_qsl, mirroring Telegram's official JS example)
+    data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(params.items()))
+    expected_hash = hmac.new(
+        _init_data_secret_key(bot_token),
+        data_check_string.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected_hash, received_hash):
+        return False
+
+    try:
+        auth_date = int(params.get("auth_date", ""))
+    except (TypeError, ValueError):
+        return False
+    # Reject both stale AND (clock-skewed) future auth dates.
+    return 0 <= (time.time() - auth_date) <= _INIT_DATA_MAX_AGE
+
+
+def _init_data_user_id(init_data):
+    """Best-effort extraction of the Telegram user id from initData's `user`
+    JSON field (used for rate limiting + audit). Returns None when absent."""
+    if not init_data:
+        return None
+    try:
+        params = dict(urllib.parse.parse_qsl(init_data, keep_blank_values=True))
+        return json.loads(params.get("user", "")).get("id")
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Best-effort per-user rate limit for OSM writes
+# ---------------------------------------------------------------------------
+# The still-here endpoint writes to OSM with bot=yes, so it should not be
+# spammable. On serverless (Vercel) memory is per warm instance and ephemeral,
+# so this only counts requests hitting the same instance – imperfect but free,
+# and it never blocks legitimate users (different instances can't collide on a
+# user's bucket).
+_RATE_LIMIT_MAX = 10      # still-here confirmations per user
+_RATE_LIMIT_WINDOW = 3600 # per rolling hour
+_rate_limit_buckets = {}  # tg user id -> [timestamps]
+
+
+def _rate_limited(tg_user_id):
+    """Return True when the user already used up their quota in the window."""
+    if tg_user_id is None:
+        return False
+    now = time.time()
+    cutoff = now - _RATE_LIMIT_WINDOW
+    stamps = [t for t in _rate_limit_buckets.get(tg_user_id, []) if t > cutoff]
+    if len(stamps) >= _RATE_LIMIT_MAX:
+        _rate_limit_buckets[tg_user_id] = stamps
+        return True
+    stamps.append(now)
+    _rate_limit_buckets[tg_user_id] = stamps
+    return False
+
+
+def _osm_api_request(path, method="GET", body=None, token=None):
+    headers = {"User-Agent": "osm-public-pianos-bot"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if body is not None:
+        headers["Content-Type"] = "application/xml"
+    req = urllib.request.Request(
+        f"{_OSM_API_BASE}{path}",
+        data=body,
+        headers=headers,
+        method=method,
+    )
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return resp.read().decode("utf-8")
+
+
+def _haversine_m(lat1, lon1, lat2, lon2):
+    import math
+    R = 6371000.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlam = math.radians(lon2 - lon1)
+    a = (math.sin(dphi / 2) ** 2
+         + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2)
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _update_survey_date(elem_type, elem_id, bot_token, user_lat=None, user_lon=None):
+    """Set the survey:date tag of an OSM element to today, preserving every
+    other tag (and node refs for ways). Returns the new element version."""
+    today = datetime.date.today().isoformat()
+
+    # 1) Fetch the current element – the update must carry its version and
+    #    keep all tags the confirmation does not touch.
+    xml_text = _osm_api_request(f"/{elem_type}/{elem_id}", token=bot_token)
+    root = ET.fromstring(xml_text)
+    el = root.find(elem_type)
+    if el is None:
+        raise RuntimeError(f"Could not parse {elem_type} {elem_id} from OSM")
+    if not el.get("version"):
+        raise RuntimeError("Element has no version")
+
+    # Only pianos may be confirmed: refuse to touch survey:date on an element
+    # that is not tagged amenity=piano.
+    el_tags = {t.get("k"): t.get("v") for t in el.findall("tag")}
+    if el_tags.get("amenity") != "piano":
+        raise PermissionError("This element is not a piano (amenity=piano).")
+
+    # Defense in depth: the client already checks proximity, but the signed
+    # token is effectively public, so enforce the 150 m rule server-side too
+    # (nodes expose their coordinates; ways have none).
+    if elem_type == "node" and user_lat is not None and user_lon is not None:
+        try:
+            nlat = float(el.get("lat"))
+            nlon = float(el.get("lon"))
+        except (TypeError, ValueError):
+            nlat = nlon = None
+        if nlat is not None and _haversine_m(user_lat, user_lon, nlat, nlon) > 150:
+            raise PermissionError(
+                "You are too far away from this piano to confirm its presence."
+            )
+
+    # 2) Open a changeset. bot=yes marks this as an automated edit (OSM
+    #    automated edits code of conduct), created_by names the tool.
+    cs_body = (
+        "<osm><changeset>"
+        '<tag k="created_by" v="Public Piano map"/>'
+        '<tag k="bot" v="yes"/>'
+        '<tag k="comment" v="Survey date update (Still here)"/>'
+        "</changeset></osm>"
+    )
+    changeset_id = _osm_api_request(
+        "/changeset/create", method="PUT", body=cs_body.encode(), token=bot_token
+    ).strip()
+
+    try:
+        # 3) Update / add survey:date. Every other tag (including check_date,
+        #    which StreetComplete may have set) is left untouched.
+        found = None
+        for tag in list(el):
+            if tag.tag != "tag":
+                continue
+            if tag.get("k") == "survey:date":
+                tag.set("v", today)
+                found = tag
+        if found is None:
+            ET.SubElement(el, "tag", {"k": "survey:date", "v": today})
+
+        el.set("changeset", changeset_id)
+        # Strip metadata attributes the API ignores on write
+        for attr in ("visible", "timestamp", "user", "uid"):
+            el.attrib.pop(attr, None)
+
+        payload = ("<osm>" + ET.tostring(el, encoding="unicode") + "</osm>").encode()
+
+        # 4) PUT the updated element
+        return _osm_api_request(
+            f"/{elem_type}/{elem_id}", method="PUT", body=payload, token=bot_token
+        ).strip()
+    finally:
+        # 5) Always close the changeset (even when the PUT failed)
+        try:
+            _osm_api_request(
+                f"/changeset/{changeset_id}/close", method="PUT", token=bot_token
+            )
+        except Exception:
+            pass
+
+
+@csrf_exempt
+def still_here(request):
+    """POST /api/still-here/ with {node_id, osm_type} – updates the element's
+    survey:date to today using the bot's own OSM account."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
+
+    # The page token alone is public (it is embedded in the webapp HTML), so
+    # the real gate is Telegram initData, which only a genuine Mini App user
+    # can produce. The signed token stays as a cheap second layer.
+    # The initData check is skipped when the bot token is not configured
+    # (e.g. local dev without env vars) to keep local testing working.
+    bot_token = getenv("TOKEN", "")
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    if bot_token and not _valid_init_data(init_data, bot_token):
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    # Throttle writes per Telegram user (only possible once initData is valid,
+    # so the user id cannot be forged).
+    tg_user_id = _init_data_user_id(init_data)
+    if _rate_limited(tg_user_id):
+        return JsonResponse(
+            {'error': 'Too many confirmations. Please try again later.'},
+            status=429,
+        )
+
+    # Guarded by the signed-token pattern so
+    # unauthenticated callers cannot spam OSM writes.
+    token = request.headers.get('X-Still-Here-Token')
+    if not token:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+    signer = TimestampSigner()
+    try:
+        unsigned = signer.unsign(token, max_age=86400)
+        if unsigned != "still_here_access":
+            return JsonResponse({'error': 'Invalid token'}, status=403)
+    except (BadSignature, SignatureExpired):
+        return JsonResponse({'error': 'Token expired or invalid'}, status=403)
+
+    bot_osm_token = getenv("OSM_BOT_ACCESS_TOKEN", "")
+    if not bot_osm_token:
+        return JsonResponse(
+            {'error': 'Still-here updates are not configured (set OSM_BOT_ACCESS_TOKEN).'},
+            status=500,
+        )
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
+
+    elem_type = data.get('osm_type') or 'node'
+    if elem_type not in ('node', 'way'):
+        elem_type = 'node'
+    try:
+        elem_id = int(data.get('node_id'))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'Missing or invalid node_id'}, status=400)
+
+    def _as_float(value):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    user_lat = _as_float(data.get('lat'))
+    user_lon = _as_float(data.get('lon'))
+
+    try:
+        new_version = _update_survey_date(
+            elem_type, elem_id, bot_osm_token, user_lat, user_lon
+        )
+    except PermissionError as exc:
+        return JsonResponse({'error': str(exc)}, status=403)
+    except Exception as exc:
+        print("still_here update error:", exc)
+        return JsonResponse(
+            {'error': f'OpenStreetMap update failed: {exc}'},
+            status=502,
+        )
+
+    print(f"still_here: tg user {tg_user_id} confirmed {elem_type} {elem_id}")
+    return JsonResponse({
+        'ok': True,
+        'version': new_version,
+        'date': datetime.date.today().isoformat(),
+    })

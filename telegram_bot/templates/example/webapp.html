@@ -63,14 +63,46 @@
                 <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
                 <span>Still here</span>
             </button>
-            <button class="sheet-btn" id="btn-modify">
-                <svg viewBox="0 0 24 24"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>
-                <span>Modify</span>
-            </button>
-            <button class="sheet-btn" id="btn-share">
-                <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-                <span>Share</span>
-            </button>
+            <div class="sheet-btn-wrap" id="btn-modify-wrap">
+                <button class="sheet-btn" id="btn-modify" aria-haspopup="menu" aria-expanded="false" aria-label="Modify">
+                    <svg viewBox="0 0 24 24"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>
+                    <span>Modify</span>
+                </button>
+                <div class="share-menu" id="modify-menu" role="menu" aria-label="Modify options">
+                    <button class="share-menu-item" id="modify-in-app" role="menuitem">
+                        <svg viewBox="0 0 24 24" class="share-menu-icon" aria-hidden="true"><path d="M14.06 9.02l.92.92L5.92 19H5v-.92l9.06-9.06M17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83 3.75 3.75 1.83-1.83c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"/></svg>
+                        <span>Modify in app</span>
+                    </button>
+                    <button class="share-menu-item" id="modify-in-osm" role="menuitem">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="share-menu-icon share-menu-icon--osm" aria-hidden="true">
+                            <path fill="#7EBC6F" d="M50 5C25.1 5 5 25.1 5 50s20.1 45 45 45 45-20.1 45-45S74.9 5 50 5z"/>
+                            <path fill="#fff" d="M73 50c0 12.7-10.3 23-23 23S27 62.7 27 50s10.3-23 23-23 23 10.3 23 23z"/>
+                            <path fill="#7EBC6F" d="M64 50c0 7.7-6.3 14-14 14s-14-6.3-14-14 6.3-14 14-14 14 6.3 14 14z"/>
+                        </svg>
+                        <span>Modify in OSM</span>
+                    </button>
+                </div>
+            </div>
+            <div class="sheet-btn-wrap" id="btn-share-wrap">
+                <button class="sheet-btn" id="btn-share" aria-haspopup="menu" aria-expanded="false" aria-label="Share">
+                    <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                    <span>Share</span>
+                </button>
+                <div class="share-menu" id="share-menu" role="menu" aria-label="Share options">
+                    <button class="share-menu-item" id="share-open-osm" role="menuitem">
+                        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="share-menu-icon share-menu-icon--osm" aria-hidden="true">
+                            <path fill="#7EBC6F" d="M50 5C25.1 5 5 25.1 5 50s20.1 45 45 45 45-20.1 45-45S74.9 5 50 5z"/>
+                            <path fill="#fff" d="M73 50c0 12.7-10.3 23-23 23S27 62.7 27 50s10.3-23 23-23 23 10.3 23 23z"/>
+                            <path fill="#7EBC6F" d="M64 50c0 7.7-6.3 14-14 14s-14-6.3-14-14 6.3-14 14-14 14 6.3 14 14z"/>
+                        </svg>
+                        <span>Open in OSM</span>
+                    </button>
+                    <button class="share-menu-item" id="share-share" role="menuitem">
+                        <svg viewBox="0 0 24 24" class="share-menu-icon" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
+                        <span>Share</span>
+                    </button>
+                </div>
+            </div>
         </div>
         
         <div class="sheet-content" id="sheet-content">
@@ -233,7 +265,11 @@
         <!-- Logged-in state -->
         <div class="add-logged-in" id="add-logged-in" style="display: none;">
             <div class="add-header">
-                <h2>Submit</h2>
+                <h2 id="add-header-title">Submit</h2>
+                <button type="button" class="add-edit-cancel-btn" id="add-edit-cancel" style="display: none;">
+                    <span class="material-symbols-outlined">close</span>
+                    Cancel
+                </button>
             </div>
             
             <div class="add-form-scroll">
@@ -504,6 +540,7 @@
     {# SVG icons injected as JS globals — needed before webapp.js loads #}
     <script>
         window.translateToken  = "{{ translate_token }}";
+        window.stillHereToken  = "{{ still_here_token }}";
         window.styleJsonUrl    = "{% static 'example/style.json' %}";
         // Django URL for the OSM OAuth 2.0 start endpoint
         window.osmOauthStartUrl = "{% url 'osm_oauth_start' %}";

@@ -715,6 +715,101 @@ html, body {
     margin-bottom: 5px;
 }
 
+/* ----------------------------------------------------------------------
+   Share context menu (dark panel, consistent with the app theme)
+-------------------------------------------------------------------------- */
+.sheet-btn-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    min-width: 0;
+}
+
+.sheet-btn-wrap .sheet-btn {
+    width: 100%;
+}
+
+.share-menu {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    min-width: 184px;
+    padding: 6px;
+    background: var(--color-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+    transform: translateX(-50%) scale(0.95);
+    transform-origin: bottom center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.15), visibility 0.16s;
+    z-index: 130;
+}
+
+.share-menu.open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(-50%) scale(1);
+}
+
+/* caret pointing down at the Share button */
+.share-menu::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    margin-top: -7px;
+    background: var(--color-secondary);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transform: rotate(45deg);
+    border-bottom-right-radius: 4px;
+}
+
+.share-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 11px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.14s ease;
+}
+
+.share-menu-item:hover,
+.share-menu-item:active {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.share-menu-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.share-menu-icon--osm {
+    width: 22px;
+    height: 22px;
+}
+
+.share-menu-item svg:not(.share-menu-icon--osm) {
+    fill: var(--color-accent);
+}
+
 .sheet-content {
     flex: 1;
     overflow-y: auto;
@@ -1315,6 +1410,36 @@ input:checked + .slider:before {
     padding: var(--page-header-top) 20px 16px 20px;
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.add-edit-cancel-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--color-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    color: var(--color-text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s;
+    flex-shrink: 0;
+}
+
+.add-edit-cancel-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.95);
+}
+
+.add-edit-cancel-btn .material-symbols-outlined {
+    font-size: 16px;
 }
 
 .add-header h2 {
@@ -1323,6 +1448,9 @@ input:checked + .slider:before {
     font-size: 22px;
     font-weight: 600;
     color: var(--color-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .add-form-scroll {

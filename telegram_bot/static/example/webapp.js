@@ -323,6 +323,7 @@ async function loadGlobalPianos() {
                geometry: { type: 'Point', coordinates: [Number(lon), Number(lat)] },
                properties: {
                 id: Number(el.id),
+                osm_type: el.type || 'node',
                 name: t.name || 'Piano',
                 access: t.access || 'unknown',
                 description: t.description || '',
@@ -553,7 +554,7 @@ map.on('load', () => {
         }
     });
 
-    loadGlobalPianos();
+    loadGlobalPianos().then(handlePianoDeepLink);
     initLocation();
     startWatchingLocation();
 
@@ -629,6 +630,7 @@ function setTranslateY(val, animate = false) {
 }
 
 function snapTo(state) {
+    if (state === 'closed') closeShareMenu();
     sheetState = state;
     const snaps = getSnaps();
     setTranslateY(snaps[state], true);
@@ -1071,7 +1073,8 @@ if (photoLightboxEl) {
 }
 
 function showBottomSheet(props, coords) {
-    activePianoCoords = coords; 
+    activePianoCoords = coords;
+    closeShareMenu();
 
     document.getElementById('sheet-title').innerText = props.name || 'Piano';
     
@@ -1950,6 +1953,10 @@ tabs.forEach(tab => {
             if (settingsContainer) settingsContainer.style.display = 'none';
             if (addContainer) addContainer.style.display = 'flex';
             updateAddTabAuthViewState();
+            // Leaving edit mode (or a fresh Add): reset edit state + UI.
+            editPianoId = null;
+            editPianoType = 'node';
+            resetEditTabUI();
         } else {
             if (mapContainer) mapContainer.style.display = 'block';
             if (searchContainer) searchContainer.style.display = 'block';
@@ -2015,7 +2022,8 @@ document.getElementById('btn-still-here').addEventListener('click', (e) => {
                 
                 showNotification("Thank you for confirming!");
                 
-                // TODO: Send backend API update request here
+                // Update the survey:date tag on OSM via the bot's backend
+                confirmPianoStillHere();
             } else {
                 showNotification("You are too far away from this piano to confirm its presence.");
             }
@@ -2027,8 +2035,367 @@ document.getElementById('btn-still-here').addEventListener('click', (e) => {
     );
 });
 
-document.getElementById('btn-modify').addEventListener('click', (e) => { e.stopPropagation(); });
-document.getElementById('btn-share').addEventListener('click', (e) => { e.stopPropagation(); });
+/* "Still here" confirmation – updates the OSM element's survey:date to today.
+   - Inside Telegram: the server endpoint edits with the BOT's OSM account, so
+     the user does not need to log in (authenticated via Telegram initData).
+   - Outside Telegram: there is no signed initData, so the bot endpoint cannot
+     be used. We fall back to editing with the user's OWN OSM account directly
+     against the OSM API – same defenses: only a real logged-in user can do it,
+     the edit is attributed to them (no shared bot account to abuse), the
+     proximity check in the button handler still applies, and a per-user quota
+     is enforced locally. */
+async function confirmPianoStillHere() {
+    const feature = getActivePianoFeature();
+    if (!feature) return;
+
+    if (!tgWebApp) {
+        await confirmStillHereWithOwnAccount(feature);
+        return;
+    }
+
+    const id = feature.properties.id;
+    const osmType = feature.properties.osm_type || 'node';
+
+    try {
+        const coords = activePianoCoords || [0, 0];
+        const resp = await fetch('/api/still-here/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Still-Here-Token': window.stillHereToken || '',
+                // Signed by Telegram with the bot token – proves this request
+                // comes from a real Mini App session (server validates it).
+                'X-Telegram-Init-Data': tgWebApp ? tgWebApp.initData : ''
+            },
+            body: JSON.stringify({ node_id: id, osm_type: osmType, lon: coords[0], lat: coords[1] })
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+            console.error('Still-here update failed:', data);
+            showNotification(data.error || 'Could not update the survey date.');
+            return;
+        }
+
+        // Reflect the fresh survey date locally so the map + sheet update
+        // immediately (the world dataset refreshes via the fetch workflow).
+        // Use the date the server actually wrote (server-local, not UTC).
+        applySurveyDateLocally(id, data.date || new Date().toISOString().slice(0, 10));
+    } catch (err) {
+        console.error('Still-here update error:', err);
+        showNotification('Could not reach the server. Please try again.');
+    }
+}
+
+// Update the local feature/marker/sheet with the fresh survey date so the UI
+// reflects the change immediately (the world dataset refreshes later via the
+// fetch workflow).
+function applySurveyDateLocally(id, today) {
+    const local = allFeatures.find(f => f.properties.id === id);
+    if (local) {
+        const tags = { ...(local.properties.tags || {}) };
+        tags['survey:date'] = today;
+        local.properties.tags = tags;
+        local.properties.last_seen = today;
+    }
+    const lastSeenEl = document.getElementById('info-last-seen');
+    if (lastSeenEl) lastSeenEl.innerText = `${today} (Confirmed)`;
+    if (markers[`p_${id}`]) {
+        markers[`p_${id}`].remove();
+        delete markers[`p_${id}`];
+    }
+    delete markersOnScreen[`p_${id}`];
+    if (map.getSource('pianos')) {
+        map.getSource('pianos').setData({ type: 'FeatureCollection', features: allFeatures });
+    }
+}
+
+// ── Outside-Telegram quota (client-side, best effort) ──────────────────────
+// Mirrors the server-side per-user rate limit of the Telegram path. Stored in
+// localStorage so it survives reloads; it can be bypassed by clearing storage,
+// but this path edits with the user's own OSM account anyway, so the damage an
+// abuser can do is bounded by their own OSM account.
+const STILL_HERE_OWN_QUOTA  = 10;
+const STILL_HERE_OWN_WINDOW = 24 * 60 * 60 * 1000; // rolling day
+const STILL_HERE_OWN_KEY    = 'still_here_own_count';
+
+function stillHereOwnQuotaRemaining() {
+    try {
+        const raw = JSON.parse(safeGetStorage(STILL_HERE_OWN_KEY, '[]'));
+        const cutoff = Date.now() - STILL_HERE_OWN_WINDOW;
+        const recent = Array.isArray(raw) ? raw.filter(ts => ts > cutoff) : [];
+        safeSetStorage(STILL_HERE_OWN_KEY, JSON.stringify(recent)); // prune stale
+        return STILL_HERE_OWN_QUOTA - recent.length;
+    } catch (e) {
+        return STILL_HERE_OWN_QUOTA;
+    }
+}
+
+function recordStillHereOwn() {
+    try {
+        const raw = JSON.parse(safeGetStorage(STILL_HERE_OWN_KEY, '[]'));
+        const cutoff = Date.now() - STILL_HERE_OWN_WINDOW;
+        const recent = Array.isArray(raw) ? raw.filter(ts => ts > cutoff) : [];
+        recent.push(Date.now());
+        safeSetStorage(STILL_HERE_OWN_KEY, JSON.stringify(recent));
+    } catch (e) {}
+}
+
+/* "Still here" outside Telegram – edits OSM directly with the user's OWN
+   account (no bot account, no bot=yes: this is a human edit attributed to the
+   logged-in user). Mirrors the server-side flow: changeset -> GET node for
+   version -> set survey:date -> PUT -> close changeset. */
+async function confirmStillHereWithOwnAccount(feature) {
+    const token = osmAuth.getToken();
+    const id = feature.properties.id;
+    const osmType = feature.properties.osm_type || 'node';
+
+    // Dev mode on localhost: simulate the commit without touching the OSM API
+    if (IS_DEV_MODE && !token) {
+        applySurveyDateLocally(id, new Date().toISOString().slice(0, 10));
+        showNotification(`[DEV] Node ${id} survey:date would be updated here.`);
+        return;
+    }
+
+    if (!token) {
+        showNotification("Please log in with OpenStreetMap in Settings to confirm pianos outside Telegram.");
+        return;
+    }
+    if (osmType !== 'node') {
+        showNotification("Only node pianos can be confirmed here. Use 'Modify in OSM' for ways.");
+        return;
+    }
+    if (stillHereOwnQuotaRemaining() <= 0) {
+        showNotification("You have confirmed too many pianos today. Please try again tomorrow.");
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        // Step 1: open a changeset (human edit – no bot=yes tag)
+        const csXml = '<osm><changeset><tag k="created_by" v="Telegram Piano Bot WebApp"/><tag k="comment" v="Survey date update (Still here)"/></changeset></osm>';
+        const csResp = await fetch('https://api.openstreetmap.org/api/0.6/changeset/create', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/xml' },
+            body: csXml
+        });
+        if (!csResp.ok) throw new Error(`Failed to create changeset (HTTP ${csResp.status})`);
+        const changesetId = (await csResp.text()).trim();
+
+        // Step 2: fetch the node – the update must carry its version
+        const getResp = await fetch(`https://api.openstreetmap.org/api/0.6/node/${id}`);
+        if (!getResp.ok) throw new Error(`Failed to fetch node ${id} (HTTP ${getResp.status})`);
+        const doc = new DOMParser().parseFromString(await getResp.text(), 'application/xml');
+        const nodeEl = doc.querySelector('node');
+        const version = nodeEl ? nodeEl.getAttribute('version') : null;
+        if (!version) throw new Error('Could not read the node version from OpenStreetMap.');
+
+        // Step 3: keep every tag, set survey:date=today (check_date, which
+        // StreetComplete may have set, is left untouched). Only actual pianos
+        // may be confirmed – refuse anything else.
+        const mergedTags = {};
+        nodeEl.querySelectorAll('tag').forEach(t => {
+            mergedTags[t.getAttribute('k')] = t.getAttribute('v');
+        });
+        if (mergedTags['amenity'] !== 'piano') {
+            throw new Error('This element is not tagged amenity=piano.');
+        }
+        mergedTags['survey:date'] = today;
+        mergedTags['amenity'] = 'piano';
+
+        let tagsXml = '';
+        for (const [k, v] of Object.entries(mergedTags)) {
+            tagsXml += `<tag k="${escapeXml(k)}" v="${escapeXml(v)}"/>`;
+        }
+        const nodeXml = `<osm><node id="${id}" version="${escapeXml(version)}" lat="${nodeEl.getAttribute('lat')}" lon="${nodeEl.getAttribute('lon')}" changeset="${changesetId}">${tagsXml}</node></osm>`;
+
+        // Step 4: PUT the updated node
+        const putResp = await fetch(`https://api.openstreetmap.org/api/0.6/node/${id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/xml' },
+            body: nodeXml
+        });
+        if (!putResp.ok) {
+            let detail = '';
+            try { detail = `: ${(await putResp.text()).slice(0, 200)}`; } catch (e) {}
+            throw new Error(`Failed to update node (HTTP ${putResp.status})${detail}`);
+        }
+
+        // Step 5: close the changeset
+        try {
+            await fetch(`https://api.openstreetmap.org/api/0.6/changeset/${changesetId}/close`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (e) {
+            console.warn("Changeset close warning:", e);
+        }
+
+        recordStillHereOwn();
+        applySurveyDateLocally(id, today);
+    } catch (err) {
+        console.error("Still-here (own account) error:", err);
+        showNotification(`Could not update the survey date: ${err.message}`);
+    }
+}
+
+/* -------------------------------------------------------------------------
+   Context menus – Share ("Open in OSM" / "Share link") and Modify
+   ("Modify in app" / "Modify in OSM"). Both buttons open a small menu;
+   all menus share the .share-menu styling.
+------------------------------------------------------------------------- */
+const shareBtn = document.getElementById('btn-share');
+const shareMenu = document.getElementById('share-menu');
+const shareBtnWrap = document.getElementById('btn-share-wrap');
+const shareOpenOsm = document.getElementById('share-open-osm');
+const shareShare = document.getElementById('share-share');
+
+const modifyBtn = document.getElementById('btn-modify');
+const modifyMenu = document.getElementById('modify-menu');
+const modifyBtnWrap = document.getElementById('btn-modify-wrap');
+const modifyInApp = document.getElementById('modify-in-app');
+const modifyInOsm = document.getElementById('modify-in-osm');
+
+function closeShareMenu() {
+    // Close every open context menu (share + modify). DOM lookups keep early
+    // calls (e.g. from snapTo / showBottomSheet) safe.
+    document.querySelectorAll('.share-menu.open').forEach(menu => {
+        menu.classList.remove('open');
+        const wrap = menu.parentElement;
+        const btn = wrap ? wrap.querySelector('.sheet-btn') : null;
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function toggleShareMenu() {
+    if (!shareMenu) return;
+    const willOpen = !shareMenu.classList.contains('open');
+    if (willOpen) closeShareMenu(); // close the modify menu first
+    shareMenu.classList.toggle('open', willOpen);
+    if (shareBtn) shareBtn.setAttribute('aria-expanded', String(willOpen));
+}
+
+function toggleModifyMenu() {
+    if (!modifyMenu) return;
+    const willOpen = !modifyMenu.classList.contains('open');
+    if (willOpen) closeShareMenu(); // close the share menu first
+    modifyMenu.classList.toggle('open', willOpen);
+    if (modifyBtn) modifyBtn.setAttribute('aria-expanded', String(willOpen));
+}
+
+function getActivePianoFeature() {
+    return allFeatures.find(f => f.properties.id === activePianoId) || null;
+}
+
+function buildPianoShareUrl() {
+    if (!activePianoId) return null;
+    const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('piano', activePianoId);
+    return url.toString();
+}
+
+function openPianoInOsm() {
+    const feature = getActivePianoFeature();
+    if (!feature) return;
+    closeShareMenu();
+    const osmType = feature.properties.osm_type || 'node';
+    const osmUrl = `https://www.openstreetmap.org/${osmType}/${feature.properties.id}`;
+    if (tgWebApp && typeof tgWebApp.openLink === 'function') {
+        // Standard Telegram API: opens in the device's real browser.
+        tgWebApp.openLink(osmUrl, { try_instant_view: false });
+    } else {
+        window.open(osmUrl, '_blank', 'noopener,noreferrer');
+    }
+}
+
+async function sharePianoLink() {
+    const url = buildPianoShareUrl();
+    if (!url) return;
+    closeShareMenu();
+    const feature = getActivePianoFeature();
+    const name = feature ? (feature.properties.name || 'Piano') : 'Piano';
+
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: `${name} · Public Piano Map`,
+                text: `Public piano on the map: ${name}`,
+                url
+            });
+            return;
+        } catch (err) {
+            // AbortError = user closed the sheet; just stop quietly.
+            if (err && err.name === 'AbortError') return;
+        }
+    }
+
+    // Fallback: copy the deep link to the clipboard
+    try {
+        await navigator.clipboard.writeText(url);
+        showNotification('Link copied to clipboard');
+    } catch (err) {
+        showNotification('Could not copy the link.');
+    }
+}
+
+if (shareBtn) {
+    shareBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleShareMenu();
+    });
+}
+if (shareOpenOsm) shareOpenOsm.addEventListener('click', (e) => { e.stopPropagation(); openPianoInOsm(); });
+if (shareShare) shareShare.addEventListener('click', (e) => { e.stopPropagation(); sharePianoLink(); });
+
+if (modifyBtn) {
+    modifyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleModifyMenu();
+    });
+}
+if (modifyInApp) modifyInApp.addEventListener('click', (e) => { e.stopPropagation(); openModifyInApp(); });
+if (modifyInOsm) modifyInOsm.addEventListener('click', (e) => { e.stopPropagation(); openModifyInOsm(); });
+
+// Keep the menus themselves from starting a sheet drag
+if (shareMenu) shareMenu.addEventListener('pointerdown', (e) => e.stopPropagation());
+if (modifyMenu) modifyMenu.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+// Close the menus when tapping anywhere outside of them, or pressing Escape
+function handleShareMenuOutsideClick(e) {
+    const insideShare = shareBtnWrap && shareBtnWrap.contains(e.target);
+    const insideModify = modifyBtnWrap && modifyBtnWrap.contains(e.target);
+    if (!insideShare && !insideModify) {
+        closeShareMenu();
+    }
+}
+document.addEventListener('click', handleShareMenuOutsideClick);
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeShareMenu();
+});
+
+/* "Modify in OSM": open the element in the OSM editor (iD) */
+function openModifyInOsm() {
+    const feature = getActivePianoFeature();
+    if (!feature) return;
+    closeShareMenu();
+    const osmType = feature.properties.osm_type || 'node';
+    const osmUrl = `https://www.openstreetmap.org/edit?${osmType}=${feature.properties.id}`;
+    if (tgWebApp && typeof tgWebApp.openLink === 'function') {
+        tgWebApp.openLink(osmUrl, { try_instant_view: false });
+    } else {
+        window.open(osmUrl, '_blank', 'noopener,noreferrer');
+    }
+}
+
+// Deep link: /webapp/?piano=<id> opens straight on that piano once loaded
+function handlePianoDeepLink() {
+    const params = new URLSearchParams(window.location.search);
+    const pianoId = params.get('piano');
+    if (!pianoId) return;
+    const feature = allFeatures.find(f => f.properties.id == pianoId);
+    if (!feature) return;
+    map.jumpTo({ center: feature.geometry.coordinates, zoom: 15 });
+    showBottomSheet(feature.properties, feature.geometry.coordinates);
+}
 
 // ==========================================================================
 // OSM Authentication module
@@ -2437,6 +2804,11 @@ let addFormTags = [
     { key: 'amenity', value: 'piano', readonly: true }
 ];
 let selectedPinCoords = null; // [lng, lat]
+
+// Edit (Modify in app) state: when editPianoId is set, the Add form acts as
+// an editor for that existing OSM element instead of creating a new node.
+let editPianoId = null;   // OSM element id being edited (null = add mode)
+let editPianoType = 'node';
 
 // Inline Yes/No segmented selector for boolean tags
 function createYesNoToggle(isYes, onChange) {
@@ -3243,10 +3615,295 @@ pickerSearchClear?.addEventListener('click', () => {
     if (pickerSearchResults) pickerSearchResults.style.display = 'none';
 });
 
+// -------------------------------------------------------------------------
+// Modify in app – reuse the Add form as an editor for an existing piano.
+// The form is pre-filled from the piano's OSM tags; submitting updates the
+// node via the OSM API (changeset create -> GET node for version -> PUT).
+// -------------------------------------------------------------------------
+
+function setSubmitLabel(isEdit) {
+    if (!addSubmitBtn) return;
+    addSubmitBtn.innerHTML = isEdit
+        ? '<span class="material-symbols-outlined">save</span><span>Save changes</span>'
+        : '<span>Submit</span>';
+}
+
+function resetEditTabUI() {
+    // Restore the Add tab to its plain "Submit" state. Called by the tab
+    // handler every time the Add tab is opened, and when leaving edit mode.
+    const titleEl = document.getElementById('add-header-title');
+    if (titleEl) titleEl.textContent = 'Submit';
+    const cancelBtn = document.getElementById('add-edit-cancel');
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    setSubmitLabel(false);
+}
+
+function resetAddForm() {
+    if (addNameInput) addNameInput.value = '';
+    if (addDescInput) addDescInput.value = '';
+    if (nameWarningDropdown) nameWarningDropdown.style.display = 'none';
+    if (descHintBox) descHintBox.style.display = 'none';
+    selectedPinCoords = null;
+    const titleEl = document.getElementById('add-location-title');
+    const subEl = document.getElementById('add-location-coords');
+    if (titleEl) titleEl.textContent = "Tap to set location on map";
+    if (subEl) subEl.textContent = "No pin selected";
+    const triggerCard = document.getElementById('add-location-trigger');
+    const embedContainer = document.getElementById('add-location-embed-container');
+    if (triggerCard) triggerCard.style.display = '';
+    if (embedContainer) embedContainer.style.display = 'none';
+    addFormTags = [{ key: 'amenity', value: 'piano', readonly: true }];
+    renderAddTagsList();
+}
+
+function openModifyInApp() {
+    const feature = getActivePianoFeature();
+    if (!feature) return;
+    if ((feature.properties.osm_type || 'node') !== 'node') {
+        showNotification("This piano is a way — use 'Modify in OSM' to edit it.");
+        return;
+    }
+    const token = osmAuth.getToken();
+    if (!token && !IS_DEV_MODE) {
+        showNotification("Please log in with OpenStreetMap in Settings first.");
+        return;
+    }
+
+    closeShareMenu();
+
+    const tags = feature.properties.tags || {};
+    const name = tags.name || '';
+    const description = tags['description'] || '';
+    if (addNameInput) addNameInput.value = name;
+    if (addDescInput) addDescInput.value = description;
+    if (nameWarningDropdown) nameWarningDropdown.style.display = 'none';
+    if (descHintBox) descHintBox.style.display = 'none';
+
+    // Pre-fill the tag editor with the piano's existing OSM tags (name and
+    // description have their own fields; amenity stays fixed/readonly).
+    addFormTags = Object.entries(tags)
+        .filter(([k]) => k !== 'name' && k !== 'description')
+        .map(([k, v]) => ({
+            key: k,
+            value: (v === null || v === undefined) ? '' : v,
+            readonly: k === 'amenity'
+        }));
+    if (!addFormTags.some(t => t.key === 'amenity')) {
+        addFormTags.unshift({ key: 'amenity', value: 'piano', readonly: true });
+    }
+    renderAddTagsList();
+
+    const [lon, lat] = feature.geometry.coordinates;
+    selectedPinCoords = [lon, lat];
+
+    // Switch to the Add tab. Its handler resets the edit state/UI to the
+    // default Add mode, so we apply the edit mode AFTER the click.
+    const addTab = document.getElementById('tab-add');
+    if (addTab) addTab.click();
+
+    editPianoId = feature.properties.id;
+    editPianoType = feature.properties.osm_type || 'node';
+
+    const titleEl = document.getElementById('add-header-title');
+    if (titleEl) titleEl.textContent = name ? `Modify: ${name}` : 'Modify';
+    const cancelBtn = document.getElementById('add-edit-cancel');
+    if (cancelBtn) cancelBtn.style.display = 'flex';
+    setSubmitLabel(true);
+
+    // The embed map needs a visible container, so render it only now.
+    renderLocationEmbedMap(lon, lat);
+}
+
+function exitEditMode(resetForm) {
+    editPianoId = null;
+    editPianoType = 'node';
+    resetEditTabUI();
+    if (resetForm) resetAddForm();
+    const mapTab = document.getElementById('tab-map');
+    if (mapTab) mapTab.click();
+}
+
+document.getElementById('add-edit-cancel')?.addEventListener('click', () => {
+    exitEditMode(true);
+});
+
+function updateLocalFeature(id, name, description, lon, lat) {
+    const existing = allFeatures.find(f => f.properties.id === id);
+    const tags = { ...(existing ? (existing.properties.tags || {}) : {}) };
+    if (name) tags.name = name; else delete tags.name;
+    if (description) tags.description = description; else delete tags.description;
+    addFormTags.forEach(t => {
+        const k = (t.key || '').trim();
+        if (!k) return;
+        if (t.value === undefined || t.value === null || String(t.value).trim() === '') {
+            delete tags[k];
+        } else {
+            tags[k] = String(t.value).trim();
+        }
+    });
+    tags.amenity = 'piano';
+
+    const props = {
+        id,
+        osm_type: 'node',
+        name: tags.name || 'Piano',
+        access: tags.access || 'unknown',
+        description: tags.description || '',
+        musical_instrument: tags.musical_instrument || '',
+        last_seen: existing ? existing.properties.last_seen : 'Just now',
+        tags
+    };
+    if (existing) {
+        existing.properties = props;
+        existing.geometry.coordinates = [lon, lat];
+    } else {
+        allFeatures.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [lon, lat] }, properties: props });
+    }
+    // Drop the cached marker so updateMarkers rebuilds it with the new
+    // access color / icon instead of keeping the stale one. The markersOnScreen
+    // entry must go too, otherwise updateMarkers sees a stale reference to the
+    // removed marker and never re-adds the fresh one (marker disappears).
+    if (markers[`p_${id}`]) {
+        markers[`p_${id}`].remove();
+        delete markers[`p_${id}`];
+    }
+    delete markersOnScreen[`p_${id}`];
+    if (map.getSource('pianos')) {
+        map.getSource('pianos').setData({ type: 'FeatureCollection', features: allFeatures });
+    }
+}
+
+async function submitPianoEdit() {
+    if (editPianoId === null) return;
+    if (!selectedPinCoords) {
+        showNotification("Please set a location pin on the map first.");
+        return;
+    }
+
+    const token = osmAuth.getToken();
+    const id = editPianoId;
+    const name = addNameInput ? addNameInput.value.trim() : '';
+    const description = addDescInput ? addDescInput.value.trim() : '';
+    const [lon, lat] = selectedPinCoords;
+
+    // Dev mode on localhost: simulate the commit without hitting the OSM API
+    if (IS_DEV_MODE && !token) {
+        updateLocalFeature(id, name, description, lon, lat);
+        showNotification(`[DEV] Node ${id} would be updated here.`);
+        exitEditMode(true);
+        const updated = allFeatures.find(f => f.properties.id === id);
+        if (updated) {
+            map.flyTo({ center: updated.geometry.coordinates, zoom: 16 });
+            showBottomSheet(updated.properties, updated.geometry.coordinates);
+        }
+        return;
+    }
+
+    if (!token) {
+        showNotification("Please log in with OpenStreetMap in Settings first.");
+        return;
+    }
+    if (editPianoType !== 'node') {
+        showNotification("Only node pianos can be edited in-app. Use 'Modify in OSM' for ways.");
+        return;
+    }
+
+    addSubmitBtn.disabled = true;
+    addSubmitBtn.innerHTML = '<span class="material-symbols-outlined">sync</span> Saving...';
+
+    try {
+        // Step 1: open a changeset
+        const commentText = name ? `Update piano location: ${name}` : 'Update piano location via Telegram Bot';
+        const csXml = `<osm><changeset><tag k="created_by" v="Telegram Piano Bot WebApp"/><tag k="comment" v="${escapeXml(commentText)}"/></changeset></osm>`;
+        const csResp = await fetch('https://api.openstreetmap.org/api/0.6/changeset/create', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/xml' },
+            body: csXml
+        });
+        if (!csResp.ok) throw new Error(`Failed to create changeset (HTTP ${csResp.status})`);
+        const changesetId = (await csResp.text()).trim();
+
+        // Step 2: fetch the current node – the OSM API requires its version
+        // on update, and this also gives us any tags the form doesn't manage.
+        const getResp = await fetch(`https://api.openstreetmap.org/api/0.6/node/${id}`);
+        if (!getResp.ok) throw new Error(`Failed to fetch node ${id} (HTTP ${getResp.status})`);
+        const doc = new DOMParser().parseFromString(await getResp.text(), 'application/xml');
+        const nodeEl = doc.querySelector('node');
+        const version = nodeEl ? nodeEl.getAttribute('version') : null;
+        if (!version) throw new Error('Could not read the node version from OpenStreetMap.');
+
+        // Step 3: merge tags – start from the live node, apply field + form edits
+        const mergedTags = {};
+        nodeEl.querySelectorAll('tag').forEach(t => {
+            mergedTags[t.getAttribute('k')] = t.getAttribute('v');
+        });
+        if (name) mergedTags['name'] = name; else delete mergedTags['name'];
+        if (description) mergedTags['description'] = description; else delete mergedTags['description'];
+        addFormTags.forEach(t => {
+            const k = (t.key || '').trim();
+            if (!k) return;
+            if (t.value === undefined || t.value === null || String(t.value).trim() === '') {
+                delete mergedTags[k];
+            } else {
+                mergedTags[k] = String(t.value).trim();
+            }
+        });
+        mergedTags['amenity'] = 'piano';
+
+        let tagsXml = '';
+        for (const [k, v] of Object.entries(mergedTags)) {
+            tagsXml += `<tag k="${escapeXml(k)}" v="${escapeXml(v)}"/>`;
+        }
+        const nodeXml = `<osm><node id="${id}" version="${escapeXml(version)}" lat="${lat}" lon="${lon}" changeset="${changesetId}">${tagsXml}</node></osm>`;
+
+        // Step 4: PUT the updated node
+        const putResp = await fetch(`https://api.openstreetmap.org/api/0.6/node/${id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/xml' },
+            body: nodeXml
+        });
+        if (!putResp.ok) {
+            let detail = '';
+            try { detail = `: ${(await putResp.text()).slice(0, 200)}`; } catch (e) {}
+            throw new Error(`Failed to update node (HTTP ${putResp.status})${detail}`);
+        }
+
+        // Step 5: close the changeset
+        try {
+            await fetch(`https://api.openstreetmap.org/api/0.6/changeset/${changesetId}/close`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+        } catch (e) {
+            console.warn("Changeset close warning:", e);
+        }
+
+        showNotification('Changes saved to OpenStreetMap!');
+        updateLocalFeature(id, name, description, lon, lat);
+        exitEditMode(true);
+        const updated = allFeatures.find(f => f.properties.id === id);
+        if (updated) {
+            map.flyTo({ center: updated.geometry.coordinates, zoom: 16 });
+            showBottomSheet(updated.properties, updated.geometry.coordinates);
+        }
+    } catch (err) {
+        console.error("OSM update error:", err);
+        showNotification(`Error saving to OpenStreetMap: ${err.message}`);
+    } finally {
+        addSubmitBtn.disabled = false;
+        setSubmitLabel(editPianoId !== null);
+    }
+}
+
 // Commit to OpenStreetMap API
 const addSubmitBtn = document.getElementById('add-submit-btn');
 
 addSubmitBtn?.addEventListener('click', async () => {
+    // In edit mode the same button drives the node update instead
+    if (editPianoId !== null) {
+        await submitPianoEdit();
+        return;
+    }
     if (!selectedPinCoords) {
         showNotification("Please set a location pin on the map first.");
         return;
@@ -3415,7 +4072,7 @@ addSubmitBtn?.addEventListener('click', async () => {
         showNotification(`Error saving to OpenStreetMap: ${err.message}`);
     } finally {
         addSubmitBtn.disabled = false;
-        addSubmitBtn.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span><span>Commit to OpenStreetMap</span>';
+        setSubmitLabel(false); // always keep "Submit" in add mode
     }
 });
 
