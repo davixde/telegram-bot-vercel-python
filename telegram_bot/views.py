@@ -586,7 +586,9 @@ def _haversine_m(lat1, lon1, lat2, lon2):
 
 def _update_survey_date(elem_type, elem_id, bot_token, user_lat=None, user_lon=None):
     """Set the survey:date tag of an OSM element to today, preserving every
-    other tag (and node refs for ways). Returns the new element version."""
+    other tag (and node refs for ways). Returns (version, already_confirmed),
+    where already_confirmed is True when survey:date was already today and no
+    write was needed (no changeset, no version churn)."""
     today = datetime.date.today().isoformat()
 
     # 1) Fetch the current element – the update must carry its version and
@@ -604,6 +606,11 @@ def _update_survey_date(elem_type, elem_id, bot_token, user_lat=None, user_lon=N
     el_tags = {t.get("k"): t.get("v") for t in el.findall("tag")}
     if el_tags.get("amenity") != "piano":
         raise PermissionError("This element is not a piano (amenity=piano).")
+
+    # Already confirmed today? Nothing to write – skip the changeset and the
+    # PUT entirely (no useless OSM version churn).
+    if el_tags.get("survey:date") == today:
+        return el.get("version"), True
 
     # Defense in depth: the client already checks proximity, but the signed
     # token is effectively public, so enforce the 150 m rule server-side too
@@ -653,9 +660,12 @@ def _update_survey_date(elem_type, elem_id, bot_token, user_lat=None, user_lon=N
         payload = ("<osm>" + ET.tostring(el, encoding="unicode") + "</osm>").encode()
 
         # 4) PUT the updated element
-        return _osm_api_request(
-            f"/{elem_type}/{elem_id}", method="PUT", body=payload, token=bot_token
-        ).strip()
+        return (
+            _osm_api_request(
+                f"/{elem_type}/{elem_id}", method="PUT", body=payload, token=bot_token
+            ).strip(),
+            False,
+        )
     finally:
         # 5) Always close the changeset (even when the PUT failed)
         try:
@@ -735,7 +745,7 @@ def still_here(request):
     user_lon = _as_float(data.get('lon'))
 
     try:
-        new_version = _update_survey_date(
+        new_version, already = _update_survey_date(
             elem_type, elem_id, bot_osm_token, user_lat, user_lon
         )
     except PermissionError as exc:
@@ -752,4 +762,5 @@ def still_here(request):
         'ok': True,
         'version': new_version,
         'date': datetime.date.today().isoformat(),
+        'already': already,
     })

@@ -26,6 +26,12 @@ function safeSetStorage(key, value) {
     } catch (e) {}
 }
 
+// Today's date as YYYY-MM-DD in UTC – matches the server's survey:date format
+// (Django TIME_ZONE=UTC).
+function todayIso() {
+    return new Date().toISOString().slice(0, 10);
+}
+
 function getTelegramWebApp() {
     const webapp = window.Telegram && window.Telegram.WebApp;
     if (!webapp) return null;
@@ -1999,6 +2005,17 @@ document.getElementById('btn-still-here').addEventListener('click', (e) => {
 
     if (!activePianoCoords) return;
 
+    // If this piano was already confirmed today there is nothing to write –
+    // acknowledge the confirmation and skip the GPS/API roundtrip entirely.
+    // (The local copy is updated right after a confirmation, so this catches
+    // repeated taps; the server re-checks authoritatively too.)
+    const activeFeature = getActivePianoFeature();
+    if (activeFeature && activeFeature.properties.tags &&
+        activeFeature.properties.tags['survey:date'] === todayIso()) {
+        showNotification("Thank you for confirming!");
+        return;
+    }
+
     if (!navigator.geolocation) {
         showNotification("Geolocation is not supported by your browser.");
         return;
@@ -2079,7 +2096,7 @@ async function confirmPianoStillHere() {
         // Reflect the fresh survey date locally so the map + sheet update
         // immediately (the world dataset refreshes via the fetch workflow).
         // Use the date the server actually wrote (server-local, not UTC).
-        applySurveyDateLocally(id, data.date || new Date().toISOString().slice(0, 10));
+        applySurveyDateLocally(id, data.date || todayIso());
     } catch (err) {
         console.error('Still-here update error:', err);
         showNotification('Could not reach the server. Please try again.');
@@ -2142,8 +2159,8 @@ function recordStillHereOwn() {
 
 /* "Still here" outside Telegram – edits OSM directly with the user's OWN
    account (no bot account, no bot=yes: this is a human edit attributed to the
-   logged-in user). Mirrors the server-side flow: changeset -> GET node for
-   version -> set survey:date -> PUT -> close changeset. */
+   logged-in user). Mirrors the server-side flow: GET node for version + live
+   tags -> check -> changeset -> set survey:date -> PUT -> close changeset. */
 async function confirmStillHereWithOwnAccount(feature) {
     const token = osmAuth.getToken();
     const id = feature.properties.id;
@@ -2151,7 +2168,7 @@ async function confirmStillHereWithOwnAccount(feature) {
 
     // Dev mode on localhost: simulate the commit without touching the OSM API
     if (IS_DEV_MODE && !token) {
-        applySurveyDateLocally(id, new Date().toISOString().slice(0, 10));
+        applySurveyDateLocally(id, todayIso());
         showNotification(`[DEV] Node ${id} survey:date would be updated here.`);
         return;
     }
@@ -2169,19 +2186,11 @@ async function confirmStillHereWithOwnAccount(feature) {
         return;
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayIso();
     try {
-        // Step 1: open a changeset (human edit – no bot=yes tag)
-        const csXml = '<osm><changeset><tag k="created_by" v="Telegram Piano Bot WebApp"/><tag k="comment" v="Survey date update (Still here)"/></changeset></osm>';
-        const csResp = await fetch('https://api.openstreetmap.org/api/0.6/changeset/create', {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/xml' },
-            body: csXml
-        });
-        if (!csResp.ok) throw new Error(`Failed to create changeset (HTTP ${csResp.status})`);
-        const changesetId = (await csResp.text()).trim();
-
-        // Step 2: fetch the node – the update must carry its version
+        // Step 1: fetch the node first – we need its version AND its live tags
+        // to check amenity and whether it was already confirmed today, before
+        // creating any changeset.
         const getResp = await fetch(`https://api.openstreetmap.org/api/0.6/node/${id}`);
         if (!getResp.ok) throw new Error(`Failed to fetch node ${id} (HTTP ${getResp.status})`);
         const doc = new DOMParser().parseFromString(await getResp.text(), 'application/xml');
@@ -2189,7 +2198,7 @@ async function confirmStillHereWithOwnAccount(feature) {
         const version = nodeEl ? nodeEl.getAttribute('version') : null;
         if (!version) throw new Error('Could not read the node version from OpenStreetMap.');
 
-        // Step 3: keep every tag, set survey:date=today (check_date, which
+        // Step 2: keep every tag, set survey:date=today (check_date, which
         // StreetComplete may have set, is left untouched). Only actual pianos
         // may be confirmed – refuse anything else.
         const mergedTags = {};
@@ -2199,8 +2208,24 @@ async function confirmStillHereWithOwnAccount(feature) {
         if (mergedTags['amenity'] !== 'piano') {
             throw new Error('This element is not tagged amenity=piano.');
         }
+        if (mergedTags['survey:date'] === today) {
+            // Already confirmed today – nothing to write, no changeset needed.
+            // The confirmation message was already shown by the button handler.
+            applySurveyDateLocally(id, today);
+            return;
+        }
         mergedTags['survey:date'] = today;
         mergedTags['amenity'] = 'piano';
+
+        // Step 3: open a changeset (human edit – no bot=yes tag)
+        const csXml = '<osm><changeset><tag k="created_by" v="Telegram Piano Bot WebApp"/><tag k="comment" v="Survey date update (Still here)"/></changeset></osm>';
+        const csResp = await fetch('https://api.openstreetmap.org/api/0.6/changeset/create', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/xml' },
+            body: csXml
+        });
+        if (!csResp.ok) throw new Error(`Failed to create changeset (HTTP ${csResp.status})`);
+        const changesetId = (await csResp.text()).trim();
 
         let tagsXml = '';
         for (const [k, v] of Object.entries(mergedTags)) {
