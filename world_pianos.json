@@ -2,7 +2,7 @@
   "version": 0.6,
   "generator": "Overpass API 0.7.62.11 87bfad18",
   "osm3s": {
-    "timestamp_osm_base": "2026-08-09T01:07:21Z",
+    "timestamp_osm_base": "2026-08-16T00:50:35Z",
     "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
   },
   "elements": [
@@ -3070,7 +3070,10 @@
   "lon": 19.2646386,
   "tags": {
     "access": "yes",
+    "addr:floor": "0",
     "amenity": "piano",
+    "check_date": "2026-08-11",
+    "level": "0",
     "musical_instrument": "piano",
     "opening_hours": "24/7"
   }
@@ -4033,6 +4036,27 @@
     "access": "customers",
     "amenity": "piano",
     "musical_instrument": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14081738187,
+  "lat": 51.2289808,
+  "lon": 2.9261102,
+  "tags": {
+    "amenity": "piano"
+  }
+},
+{
+  "type": "node",
+  "id": 14089513099,
+  "lat": 48.5223549,
+  "lon": 9.0566667,
+  "tags": {
+    "amenity": "piano",
+    "level": "1",
+    "note": "on the same level as road \"Am Stadtgraben\"",
+    "website": "https://ein-saal-fuer-tuebingen.de/aktuelles/wo-stehen-wir-gerade"
   }
 },
 {
